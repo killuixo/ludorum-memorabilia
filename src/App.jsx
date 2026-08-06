@@ -3,9 +3,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 const theme = {
   border: 'border-[3px] border-slate-900',
   card: 'bg-white shadow-[6px_6px_0_0_rgba(15,23,42,1)]',
-  cyan: 'bg-[#A8E6CF]', // Ciano pastel Mondrian
-  gold: 'bg-[#FFD3B6]', // Dourado pastel Mondrian
-  pink: 'bg-[#FF8B94]', // Pink pastel Mondrian
+  cyan: 'bg-[#A8E6CF]',
+  gold: 'bg-[#FFD3B6]',
+  pink: 'bg-[#FF8B94]',
   input: 'w-full p-2 border-[3px] border-slate-900 bg-white outline-none focus:bg-slate-50 transition-colors',
   btnBase: 'px-4 py-2 border-[3px] border-slate-900 font-black uppercase active:translate-y-1 active:translate-x-1 active:shadow-none transition-all shadow-[4px_4px_0_0_rgba(15,23,42,1)]',
 };
@@ -17,6 +17,7 @@ const getConsoleColor = (consoleName) => {
   if (name.includes('xbox')) return '#86EFAC';
   if (name.includes('nintendo') || name.includes('switch') || name.includes('wii')) return '#FCA5A5';
   if (name.includes('pc') || name.includes('steam')) return '#D1D5DB';
+  if (name.includes('ds') || name.includes('gba') || name.includes('gamecube')) return '#C4B5FD';
   return '#FDE047';
 };
 
@@ -73,12 +74,11 @@ const DonutChart = ({ data }) => {
 };
 
 export default function App() {
-  // appState: 'booting', 'loading', 'ready', 'config'
   const [appState, setAppState] = useState('booting'); 
   const [activeTab, setActiveTab] = useState('finished');
   const [configUrl, setConfigUrl] = useState('');
   const [games, setGames] = useState([]);
-  const [uiError, setUiError] = useState('');
+  const [syncStatus, setSyncStatus] = useState({ type: 'idle', message: '' });
   
   const [formData, setFormData] = useState({
     id: '', titulo: '', status: 'Backlog', plataforma: '', franquia: '', 
@@ -87,7 +87,7 @@ export default function App() {
   });
 
   useEffect(() => {
-    // Tempo mínimo da tela de Splash para efeito visual
+    // Efeito de Splash Screen Inicial
     const bootTimer = setTimeout(() => {
       const savedUrl = localStorage.getItem('gas_url');
       if (savedUrl) {
@@ -97,35 +97,37 @@ export default function App() {
       } else {
         setAppState('config');
       }
-    }, 1500);
+    }, 2000);
 
     return () => clearTimeout(bootTimer);
   }, []);
 
   const fetchGames = async (url) => {
-    setUiError('');
+    setSyncStatus({ type: 'loading', message: 'Sincronizando com a Planilha...' });
     try {
       const response = await fetch(url);
       const data = await response.json();
       
       if(data.error) throw new Error(data.error);
 
-      // Tratamento defensivo caso os arrays venham undefined
-      const finishedGames = Array.isArray(data.finished) ? data.finished.map(g => ({ ...g, status: 'Finalizado' })) : [];
-      const backlogGames = Array.isArray(data.backlog) ? data.backlog.map(g => ({ ...g, status: 'Backlog' })) : [];
+      const finishedGames = Array.isArray(data.finished) ? data.finished : [];
+      const backlogGames = Array.isArray(data.backlog) ? data.backlog : [];
       
       setGames([...finishedGames, ...backlogGames]);
       setAppState('ready');
+      setSyncStatus({ type: 'success', message: 'Sincronizado com Sucesso!' });
+      
+      setTimeout(() => setSyncStatus({ type: 'idle', message: '' }), 3000);
     } catch (err) {
       console.error(err);
-      setUiError('Erro ao carregar dados. A URL pode estar incorreta ou precisa de uma Nova Implantação no Apps Script.');
-      setAppState('config'); // Volta para a tela de config em caso de erro fatal
+      setSyncStatus({ type: 'error', message: 'Falha ao Sincronizar! Verifique o link e se você publicou a Nova Versão.' });
+      setAppState('config');
     }
   };
 
   const saveConfig = () => {
     if(!configUrl.includes('script.google.com')) {
-      setUiError('Por favor, insira uma URL válida do Google Apps Script.');
+      setSyncStatus({ type: 'error', message: 'Insira um Link válido do Google Apps Script.' });
       return;
     }
     localStorage.setItem('gas_url', configUrl);
@@ -140,14 +142,14 @@ export default function App() {
     const isNew = !formData.id;
     const payload = {
       action: isNew ? 'ADD' : 'UPDATE',
-      data: { ...formData, id: isNew ? crypto.randomUUID() : formData.id }
+      data: { ...formData, id: isNew ? 'temp_id' : formData.id }
     };
 
     try {
       const res = await fetch(configUrl, {
         method: 'POST',
         body: JSON.stringify(payload),
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' } // Crucial para evitar preflight (CORS)
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
       });
       const result = await res.json();
       if(result.error) throw new Error(result.error);
@@ -156,13 +158,13 @@ export default function App() {
       setActiveTab(formData.status === 'Finalizado' ? 'finished' : 'backlog');
       resetForm();
     } catch (err) {
-      setUiError('Erro ao salvar no Sheets. Verifique sua conexão e a implantação do script.');
+      setSyncStatus({ type: 'error', message: 'Erro ao salvar. Verifique a conexão.' });
       setAppState('ready');
     }
   };
 
   const deleteGame = async (id) => {
-    if(!window.confirm('Tem certeza que deseja excluir? Esta ação não pode ser desfeita.')) return;
+    if(!window.confirm('Tem certeza que deseja excluir?')) return;
     setAppState('loading');
     try {
       await fetch(configUrl, {
@@ -172,7 +174,7 @@ export default function App() {
       });
       await fetchGames(configUrl);
     } catch (err) {
-      setUiError('Erro ao deletar. Tente novamente.');
+      setSyncStatus({ type: 'error', message: 'Erro ao deletar.' });
       setAppState('ready');
     }
   };
@@ -195,37 +197,30 @@ export default function App() {
       const finished = games.filter(g => g.status === 'Finalizado');
       const backlog = games.filter(g => g.status === 'Backlog');
       
-      const totalSpent = games.reduce((acc, g) => acc + (parseFloat(String(g.preco).replace(',','.')) || 0), 0);
-      const totalTime = games.reduce((acc, g) => acc + (parseFloat(String(g.tempo).replace(',','.')) || 0), 0);
+      const parseValue = (val) => {
+        if(typeof val === 'number') return val;
+        let str = String(val).replace('R$', '').trim().replace(',', '.');
+        return parseFloat(str) || 0;
+      };
+
+      const totalSpent = games.reduce((acc, g) => acc + parseValue(g.preco), 0);
+      const totalTime = games.reduce((acc, g) => acc + parseValue(g.tempo), 0);
       
       const consoleCounts = {};
       games.forEach(g => {
         const plat = g.plataforma || 'Outros';
         consoleCounts[plat] = (consoleCounts[plat] || 0) + 1;
       });
+      
       const consoleChartData = Object.entries(consoleCounts)
-        .sort((a,b) => b[1] - a[1]).slice(0, 5) // Pega top 5 para o gráfico
+        .sort((a,b) => b[1] - a[1]).slice(0, 5)
         .map(([label, value]) => ({ label, value, color: getConsoleColor(label) }));
       
       const maxConsoleCount = Math.max(...consoleChartData.map(d => d.value), 1);
 
-      const diffCounts = { 'Fácil': 0, 'Médio': 0, 'Difícil': 0, 'Extremo': 0 };
-      finished.forEach(g => { 
-        const d = g.dificuldade || 'Médio';
-        if(diffCounts[d] !== undefined) diffCounts[d]++; 
-      });
-      
-      const diffChartData = [
-        { label: 'Fácil', value: diffCounts['Fácil'], color: '#A8E6CF' },
-        { label: 'Médio', value: diffCounts['Médio'], color: '#FFD3B6' },
-        { label: 'Difícil', value: diffCounts['Difícil'], color: '#FF8B94' },
-        { label: 'Extremo', value: diffCounts['Extremo'], color: '#CBD5E1' }
-      ];
-
-      return { total: games.length, finished: finished.length, backlog: backlog.length, totalSpent, totalTime, consoleChartData, maxConsoleCount, diffChartData };
+      return { total: games.length, finished: finished.length, backlog: backlog.length, totalSpent, totalTime, consoleChartData, maxConsoleCount };
     } catch(e) {
-      console.error("Erro ao calcular stats", e);
-      return { total: 0, finished: 0, backlog: 0, totalSpent: 0, totalTime: 0, consoleChartData: [], maxConsoleCount: 1, diffChartData: [] };
+      return { total: 0, finished: 0, backlog: 0, totalSpent: 0, totalTime: 0, consoleChartData: [], maxConsoleCount: 1 };
     }
   }, [games]);
 
@@ -253,7 +248,7 @@ export default function App() {
           </div>
           <div className="mt-8 text-slate-500 font-bold uppercase text-sm flex items-center gap-2">
             <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-            Sincronizando com a Planilha...
+            Iniciando Biblioteca...
           </div>
         </div>
       </div>
@@ -265,12 +260,14 @@ export default function App() {
       <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-4">
         <div className={`max-w-md w-full ${theme.cyan} p-8 ${theme.border} ${theme.card}`}>
           <div className="flex justify-center mb-6">
-             <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Logo" className="w-24 h-24" />
+             <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Logo" className="w-24 h-24 drop-shadow-md" />
           </div>
           <h2 className="text-2xl font-black mb-2 uppercase text-center">Conectar Planilha</h2>
-          <p className="text-sm mb-6 text-center font-medium">Cole a URL do seu App Script abaixo. Seus dados ficam salvos apenas neste dispositivo.</p>
+          <p className="text-sm mb-6 text-center font-medium">Cole a URL do seu App Script abaixo. Os dados são carregados de forma segura e local.</p>
           
-          {uiError && <div className={`p-3 mb-4 ${theme.pink} border-[2px] border-slate-900 font-bold text-sm`}>{uiError}</div>}
+          {syncStatus.type === 'error' && (
+            <div className={`p-3 mb-4 ${theme.pink} border-[2px] border-slate-900 font-bold text-sm text-center`}>{syncStatus.message}</div>
+          )}
           
           <input 
             type="url" 
@@ -290,7 +287,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans p-2 sm:p-6 selection:bg-pink-200">
       
-      {/* Header Visual Mondrian */}
+      {/* Header Visual */}
       <div className="max-w-6xl mx-auto mb-6 flex flex-col sm:flex-row items-center gap-4">
         <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Logo" className="w-16 h-16 object-contain" />
         <div className={`p-2 sm:p-3 ${theme.cyan} ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
@@ -312,7 +309,7 @@ export default function App() {
           <NavButton tab="settings" icon={Icons.Settings} label="Config" />
         </nav>
 
-        {/* Loader Secundário */}
+        {/* Loader Secundário Animado */}
         {appState === 'loading' && (
           <div className="h-1.5 w-full bg-slate-200 relative overflow-hidden border-b-[3px] border-slate-900">
             <div className="absolute top-0 left-0 h-full bg-[#FF8B94] animate-[pulse_1s_ease-in-out_infinite] w-full origin-left"></div>
@@ -320,23 +317,37 @@ export default function App() {
         )}
 
         <main className="p-4 sm:p-8">
-          {uiError && <div className={`p-4 mb-6 ${theme.pink} ${theme.border} font-bold`}>{uiError}</div>}
 
-          {/* VIEW: SETTINGS */}
+          {/* VIEW: SETTINGS COM FEEDBACK DE SYNC */}
           {activeTab === 'settings' && (
             <div className={`max-w-lg mx-auto ${theme.cyan} p-6 ${theme.border} ${theme.card}`}>
               <h2 className="text-2xl font-black mb-4 uppercase">Alterar Conexão</h2>
               <input type="url" value={configUrl} onChange={(e) => setConfigUrl(e.target.value)} className={`${theme.input} mb-4`} />
-              <button onClick={saveConfig} className={`${theme.btnBase} ${theme.gold} w-full`}>Reconectar</button>
+              
+              {/* STATUS DE SINCRONIZAÇÃO */}
+              {syncStatus.type !== 'idle' && (
+                <div className={`p-3 mb-4 font-bold text-sm border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] text-center
+                  ${syncStatus.type === 'success' ? 'bg-[#86EFAC]' : syncStatus.type === 'error' ? theme.pink : 'bg-white'}
+                `}>
+                  {syncStatus.type === 'loading' && (
+                    <svg className="animate-spin inline-block h-4 w-4 mr-2" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                  )}
+                  {syncStatus.message}
+                </div>
+              )}
+
+              <button onClick={saveConfig} disabled={appState === 'loading'} className={`${theme.btnBase} ${theme.gold} w-full`}>
+                {appState === 'loading' ? 'Reconectando...' : 'Reconectar'}
+              </button>
             </div>
           )}
 
-          {/* VIEW: DASHBOARD */}
+          {}
           {activeTab === 'dashboard' && (
             <div className="flex flex-col gap-8">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className={`p-4 ${theme.border} ${theme.card} ${theme.cyan}`}>
-                  <div className="text-xs font-black uppercase mb-1">Total de Jogos</div>
+                  <div className="text-xs font-black uppercase mb-1">Total na Base</div>
                   <div className="text-4xl font-black">{stats.total}</div>
                 </div>
                 <div className={`p-4 ${theme.border} ${theme.card} bg-white`}>
@@ -344,7 +355,7 @@ export default function App() {
                   <div className="text-2xl font-black">{stats.finished} <span className="text-slate-400">/</span> {stats.backlog}</div>
                 </div>
                 <div className={`p-4 ${theme.border} ${theme.card} ${theme.gold}`}>
-                  <div className="text-xs font-black uppercase mb-1">Tempo Jogado</div>
+                  <div className="text-xs font-black uppercase mb-1">Tempo Total</div>
                   <div className="text-2xl font-black">{stats.totalTime}h</div>
                 </div>
                 <div className={`p-4 ${theme.border} ${theme.card} ${theme.pink}`}>
@@ -370,7 +381,7 @@ export default function App() {
             </div>
           )}
 
-          {/* VIEW: LISTAGEM (FINALIZADOS / BACKLOG) */}
+          {}
           {(activeTab === 'finished' || activeTab === 'backlog') && (
             <div className="overflow-x-auto border-[3px] border-slate-900">
               <table className={`w-full text-left border-collapse bg-white whitespace-nowrap min-w-[600px]`}>
@@ -403,14 +414,14 @@ export default function App() {
                     </tr>
                   ))}
                   {games.filter(g => g.status === (activeTab === 'finished' ? 'Finalizado' : 'Backlog')).length === 0 && (
-                    <tr><td colSpan="5" className="p-8 text-center text-slate-500 font-bold">Nenhum jogo nesta lista.</td></tr>
+                    <tr><td colSpan="5" className="p-8 text-center text-slate-500 font-bold">Nenhum jogo nesta lista (ou Nome em branco).</td></tr>
                   )}
                 </tbody>
               </table>
             </div>
           )}
 
-          {/* VIEW: ADD / EDIT GAME */}
+          {}
           {activeTab === 'add' && (
             <form onSubmit={saveGame} className={`p-6 sm:p-8 bg-white ${theme.border} ${theme.card}`}>
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b-[3px] border-slate-900 pb-4 gap-4">
@@ -429,63 +440,59 @@ export default function App() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Título *</label>
+                  <label className="text-xs font-black uppercase">Nome *</label>
                   <input required value={formData.titulo} onChange={e => setFormData({...formData, titulo: e.target.value})} className={theme.input} />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Plataforma</label>
+                  <label className="text-xs font-black uppercase">Console</label>
                   <input value={formData.plataforma} onChange={e => setFormData({...formData, plataforma: e.target.value})} className={theme.input} />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Franquia</label>
+                  <label className="text-xs font-black uppercase">Gênero</label>
                   <input value={formData.franquia} onChange={e => setFormData({...formData, franquia: e.target.value})} className={theme.input} />
                 </div>
                 
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Nota (0-10)</label>
-                  <input type="number" step="0.1" min="0" max="10" value={formData.nota} onChange={e => setFormData({...formData, nota: e.target.value})} className={theme.input} />
+                  <label className="text-xs font-black uppercase">Nota</label>
+                  <input type="number" step="0.1" value={formData.nota} onChange={e => setFormData({...formData, nota: e.target.value})} className={theme.input} />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-black uppercase">Dificuldade</label>
-                  <select value={formData.dificuldade} onChange={e => setFormData({...formData, dificuldade: e.target.value})} className={theme.input}>
-                    <option>Fácil</option><option>Médio</option><option>Difícil</option><option>Extremo</option>
-                  </select>
+                  <input value={formData.dificuldade} onChange={e => setFormData({...formData, dificuldade: e.target.value})} className={theme.input} />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Tempo Jogado (h)</label>
-                  <input type="number" step="0.1" value={formData.tempo} onChange={e => setFormData({...formData, tempo: e.target.value})} className={theme.input} />
+                  <label className="text-xs font-black uppercase">Tempo</label>
+                  <input value={formData.tempo} onChange={e => setFormData({...formData, tempo: e.target.value})} className={theme.input} />
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Preço (R$)</label>
-                  <input type="number" step="0.01" value={formData.preco} onChange={e => setFormData({...formData, preco: e.target.value})} className={theme.input} />
+                  <label className="text-xs font-black uppercase">Preço Pago (R$)</label>
+                  <input value={formData.preco} onChange={e => setFormData({...formData, preco: e.target.value})} className={theme.input} />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Mídia</label>
-                  <select value={formData.midia} onChange={e => setFormData({...formData, midia: e.target.value})} className={theme.input}>
-                    <option>Digital</option><option>Física</option>
-                  </select>
+                  <label className="text-xs font-black uppercase">Condição/Conquistas</label>
+                  <input value={formData.conquistas} onChange={e => setFormData({...formData, conquistas: e.target.value})} className={theme.input} />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Suporte / Dev</label>
+                  <label className="text-xs font-black uppercase">Suporte</label>
                   <input value={formData.suporte} onChange={e => setFormData({...formData, suporte: e.target.value})} className={theme.input} />
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Data Início</label>
-                  <input type="date" value={formData.inicio} onChange={e => setFormData({...formData, inicio: e.target.value})} className={theme.input} />
+                  <label className="text-xs font-black uppercase">Início</label>
+                  <input value={formData.inicio} onChange={e => setFormData({...formData, inicio: e.target.value})} className={theme.input} />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Data Término</label>
-                  <input type="date" value={formData.fim} onChange={e => setFormData({...formData, fim: e.target.value})} className={theme.input} />
+                  <label className="text-xs font-black uppercase">Fim</label>
+                  <input value={formData.fim} onChange={e => setFormData({...formData, fim: e.target.value})} className={theme.input} />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Conquistas (%)</label>
-                  <input type="number" min="0" max="100" value={formData.conquistas} onChange={e => setFormData({...formData, conquistas: e.target.value})} className={theme.input} />
+                  <label className="text-xs font-black uppercase">Link</label>
+                  <input value={formData.midia} onChange={e => setFormData({...formData, midia: e.target.value})} className={theme.input} />
                 </div>
                 
                 <div className="flex flex-col gap-1 md:col-span-3">
-                  <label className="text-xs font-black uppercase">Comentários</label>
+                  <label className="text-xs font-black uppercase">Observação</label>
                   <textarea rows="2" value={formData.comentarios} onChange={e => setFormData({...formData, comentarios: e.target.value})} className={theme.input}></textarea>
                 </div>
               </div>
