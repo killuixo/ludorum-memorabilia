@@ -259,8 +259,10 @@ export default function App() {
       const response = await fetch(url);
       const data = await response.json();
       if(data.error) throw new Error(data.error);
-      const finishedGames = Array.isArray(data.finished) ? data.finished : [];
-      const backlogGames = Array.isArray(data.backlog) ? data.backlog : [];
+      
+      const finishedGames = Array.isArray(data.finished) ? data.finished.map((g, idx, arr) => ({...g, _fallbackId: arr.length - idx})) : [];
+      const backlogGames = Array.isArray(data.backlog) ? data.backlog.map((g, idx, arr) => ({...g, _fallbackId: arr.length - idx})) : [];
+      
       setGames([...finishedGames, ...backlogGames]);
       setAppState('ready');
       setSyncStatus({ type: 'success', message: 'Sincronizado com Sucesso!' });
@@ -301,8 +303,8 @@ export default function App() {
       let valA, valB;
       
       if (sortConfig.key === 'ordem') {
-        valA = parseInt(a['#'] || a['ordem'] || getVal(a, ['#', 'ordem', 'numero'])) || 0;
-        valB = parseInt(b['#'] || b['ordem'] || getVal(b, ['#', 'ordem', 'numero'])) || 0;
+        valA = parseInt(a['#'] || a['ordem'] || getVal(a, ['#', 'ordem', 'numero']) || a._fallbackId) || 0;
+        valB = parseInt(b['#'] || b['ordem'] || getVal(b, ['#', 'ordem', 'numero']) || b._fallbackId) || 0;
       } else if (sortConfig.key === 'nota') {
         const p = x => {
           let s = String(x).toUpperCase().trim();
@@ -339,7 +341,6 @@ export default function App() {
         valB = String(getVal(b, [sortConfig.key])).toLowerCase();
       }
 
-      // Itens vazios vão sempre para o fim, em qualquer ordenação (asc ou desc)
       let isBlank = (val) => val === '' || val === null || val === undefined || val === '-' || (typeof val === 'number' && isNaN(val)) || (typeof val === 'number' && val === 0 && sortConfig.key !== 'nota' && sortConfig.key !== 'desconto');
       let blankA = isBlank(valA);
       let blankB = isBlank(valB);
@@ -545,8 +546,8 @@ export default function App() {
                   </thead>
                   <tbody>
                     {sortedAndFilteredGames.map((game, i) => {
-                      // O aplicativo extrai a ordem bruta perfeitamente a partir do JSON (exatamente como vier da planilha A2 em diante).
-                      let rawVisualId = game['#'] || game['ordem'] || getVal(game, ['#', 'ordem', 'numero']); 
+                      
+                      let rawVisualId = game['#'] || game['ordem'] || getVal(game, ['#', 'ordem', 'numero']) || game._fallbackId; 
                       let visualId = rawVisualId && rawVisualId !== '-' ? rawVisualId : ''; 
                       
                       let titulo = getVal(game, ['titulo', 'nome']);
