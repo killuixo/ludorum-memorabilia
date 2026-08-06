@@ -227,8 +227,7 @@ export default function App() {
   const [games, setGames] = useState([]);
   const [syncStatus, setSyncStatus] = useState({ type: 'idle', message: '' });
   const [searchTerm, setSearchTerm] = useState('');
-  
-  const [sortConfig, setSortConfig] = useState({ key: 'ordem', direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'ordem', direction: 'desc' });
 
   const [viewModal, setViewModal] = useState(null);
   const [isEditingFicha, setIsEditingFicha] = useState(false);
@@ -299,10 +298,10 @@ export default function App() {
     list.sort((a, b) => {
       let valA, valB;
       
-      // Mapeamento especial para cada tipo de ordenação
       if (sortConfig.key === 'ordem') {
-        valA = parseInt(getVal(a, ['#', 'ordem', 'id'])) || 0;
-        valB = parseInt(getVal(b, ['#', 'ordem', 'id'])) || 0;
+        // Removemos o 'id' desta busca para garantir que leia APENAS a coluna visual da planilha
+        valA = parseInt(getVal(a, ['#', 'ordem'])) || 0;
+        valB = parseInt(getVal(b, ['#', 'ordem'])) || 0;
       } else if (sortConfig.key === 'nota') {
         const p = x => {
           let s = String(x).toUpperCase().trim();
@@ -318,25 +317,24 @@ export default function App() {
         valA = p(getVal(a, ['preco', 'preco pago'])); valB = p(getVal(b, ['preco', 'preco pago']));
       } else if (sortConfig.key === 'preco_original') {
         const p = x => parseFloat(String(x).replace('R$', '').trim().replace(',', '.')) || 0;
-        valA = p(getVal(a, ['preco_original', 'preco sem desconto'])); valB = p(getVal(b, ['preco_original', 'preco sem desconto']));
+        valA = p(getVal(a, ['preco_original', 'preco sem desconto', 'preço sem desconto'])); valB = p(getVal(b, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
       } else if (sortConfig.key === 'desconto') {
-        const getDesc = x => calculateDiscount(getVal(x, ['preco', 'preco pago']), getVal(x, ['preco_original', 'preco sem desconto'])).rawDiff;
+        const getDesc = x => calculateDiscount(getVal(x, ['preco', 'preco pago']), getVal(x, ['preco_original', 'preco sem desconto', 'preço sem desconto'])).rawDiff;
         valA = getDesc(a); valB = getDesc(b);
       } else {
         valA = String(getVal(a, [sortConfig.key])).toLowerCase();
         valB = String(getVal(b, [sortConfig.key])).toLowerCase();
       }
 
-      // LÓGICA DE ORDENAÇÃO: Células vazias SEMPRE no final
+      // Células vazias SEMPRE no final, independente de ser Ascendente ou Decrescente
       let isBlank = (val) => val === '' || val === null || val === undefined || val === '-' || (typeof val === 'number' && isNaN(val)) || (typeof val === 'number' && val === 0 && sortConfig.key !== 'nota');
       let blankA = isBlank(valA);
       let blankB = isBlank(valB);
 
       if (blankA && blankB) return 0;
-      if (blankA) return 1;  // Joga o A vazio pro final, independente de ser ASC ou DESC
-      if (blankB) return -1; // Joga o B vazio pro final, independente de ser ASC ou DESC
+      if (blankA) return 1;  
+      if (blankB) return -1; 
 
-      // Ordenação normal para preenchidos
       if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
       if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
@@ -434,7 +432,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans p-2 sm:p-4 selection:bg-pink-200 relative">
       
-      {/* Header Mondrian com Busca Ao Lado */}
+      {/* Header com Busca */}
       <div className="max-w-[1600px] mx-auto mb-6 flex flex-wrap items-center gap-4 sm:gap-6">
         <div className="flex items-center gap-4">
           <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Logo" className="w-12 h-12 sm:w-14 sm:h-14" />
@@ -446,7 +444,6 @@ export default function App() {
           </div>
         </div>
         
-        {/* Barra de Busca Exatamente ao lado */}
         {(activeTab === 'finished' || activeTab === 'backlog') && (
           <div className="flex-grow max-w-sm sm:ml-4">
             <input type="text" placeholder="🔍 Buscar por título, console ou gênero..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={theme.input} />
@@ -499,6 +496,7 @@ export default function App() {
              </div>
           )}
 
+          {}
           {/* TAB: LISTAS (Tabela Principal) */}
           {(activeTab === 'finished' || activeTab === 'backlog') && (
             <div className="flex flex-col gap-4">
@@ -534,9 +532,10 @@ export default function App() {
                   </thead>
                   <tbody>
                     {sortedAndFilteredGames.map((game, i) => {
-                      // Busca as propriedades com base em várias palavras-chave pra driblar erros de digitação/quebra de linha da planilha
-                      let rawId = getVal(game, ['#', 'ordem', 'id']);
-                      let visualId = rawId && rawId !== '-' ? rawId : ''; // Se por milagre não achar na API, ele vai pelo menos manter a célula limpa
+                      
+                      // Extração sem usar o game.id como fallback para evitar que exiba "Games Finalizados|2"
+                      let rawVisualId = getVal(game, ['#', 'ordem']); 
+                      let visualId = rawVisualId && rawVisualId !== '-' ? rawVisualId : ''; 
                       
                       let titulo = getVal(game, ['titulo', 'nome']);
                       let plataforma = getVal(game, ['plataforma', 'console']);
@@ -548,13 +547,12 @@ export default function App() {
                       let dif = getVal(game, ['dificuldade']);
                       let cond = getVal(game, ['conquistas', 'condicao', 'condição']);
                       let pricePago = getVal(game, ['preco', 'preco pago']);
-                      let priceSemDesc = getVal(game, ['preco_original', 'preco sem desconto']);
+                      let priceSemDesc = getVal(game, ['preco_original', 'preco sem desconto', 'preço sem desconto']);
                       let sup = getVal(game, ['suporte']);
                       
                       let discount = calculateDiscount(pricePago, priceSemDesc);
                       const consoleStyle = getConsoleStyle(plataforma);
                       
-                      // Tratamento para não exibir o traço "-"
                       const displayClean = (val) => (val && val !== '-' ? val : '');
                       
                       return (
@@ -565,8 +563,8 @@ export default function App() {
                           </td>
                           
                           <td onClick={() => { 
-                                setFichaData({...game, '#': rawId, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc}); 
-                                setViewModal({type:'game', data: {...game, '#': rawId, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc, inicio, fim, tempo, nota, dificuldade: dif, conquistas: cond, suporte: sup}}); 
+                                setFichaData({...game, '#': visualId, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc}); 
+                                setViewModal({type:'game', data: {...game, '#': visualId, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc, inicio, fim, tempo, nota, dificuldade: dif, conquistas: cond, suporte: sup}}); 
                                 setIsEditingFicha(false); 
                               }} 
                               className="p-2 border-r-[3px] border-slate-900 font-black text-xs cursor-pointer hover:text-blue-600 transition-colors underline decoration-slate-300 underline-offset-4 whitespace-normal break-words min-w-[150px]">
@@ -605,9 +603,8 @@ export default function App() {
                                 ) : null}
                               </td>
                               
-                              <td className="p-2 border-r-[3px] border-slate-900 max-w-[150px] truncate whitespace-nowrap" title={displayClean(cond)}>{displayClean(cond)}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 max-w-[150px] whitespace-normal break-words">{displayClean(cond)}</td>
                               
-                              {/* BLOCOS MONDRIAN PARA OS 3 PREÇOS */}
                               <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
                                 {displayClean(pricePago) ? (
                                   <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(pricePago)}}>
@@ -626,7 +623,7 @@ export default function App() {
                               
                               <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
                                 {discount.has ? (
-                                  <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(discount.rawDiff)}}>
+                                  <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-[#047857] bg-[#D1FAE5]">
                                     {discount.val} ({discount.pct})
                                   </span>
                                 ) : null}
@@ -645,7 +642,7 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB: ADICIONAR NOVO (Inserção na Linha 2 via Script, mantendo Coluna A imaculada) */}
+          {/* TAB: ADICIONAR NOVO (Inserção na Linha 2) */}
           {activeTab === 'add' && (
             <div className={`p-6 bg-white ${theme.border} ${theme.card} max-w-4xl mx-auto`}>
               <h2 className="text-xl font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-2">Adicionar Novo (Insere no topo sem quebrar fórmulas)</h2>
@@ -689,6 +686,7 @@ export default function App() {
         </main>
       </div>
 
+      {}
       {/* MODAL DE FICHAS */}
       {viewModal && (
         <div className="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
@@ -754,7 +752,6 @@ export default function App() {
                         <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Tempo de Jogo</span><span className="font-black text-blue-700">{formatTempoStr(viewModal.data.tempo)}</span></div>
                         <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Duração Span</span><span className="font-bold">{calculateTimeSpan(viewModal.data.inicio, viewModal.data.fim)}</span></div>
                         
-                        {/* Blocos Mondrian nas Fichas também */}
                         <div className="flex flex-col">
                           <span className="text-[10px] font-black uppercase text-slate-500 mb-1">Preço Pago</span>
                           {viewModal.data.preco && viewModal.data.preco !== '-' ? (
