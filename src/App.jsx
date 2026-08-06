@@ -10,7 +10,6 @@ const theme = {
   btnBase: 'px-4 py-2 border-[3px] border-slate-900 font-black uppercase active:translate-y-1 active:translate-x-1 active:shadow-none transition-all shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer',
 };
 
-// EXTRATOR INTELIGENTE: Lê os dados ignorando espaços em branco e quebras de linha vindos da planilha
 const getVal = (game, possibleKeys) => {
   if (!game) return '';
   const keys = Object.keys(game);
@@ -25,7 +24,7 @@ const getVal = (game, possibleKeys) => {
 };
 
 const formatCurrency = (val) => {
-  if (val === undefined || val === null || val === '') return '';
+  if (val === undefined || val === null || val === '' || val === '-') return '';
   let strVal = String(val).replace('R$', '').trim().replace(/\s/g, '').replace(',', '.');
   let num = parseFloat(strVal);
   if (isNaN(num)) return String(val);
@@ -33,7 +32,7 @@ const formatCurrency = (val) => {
 };
 
 const formatDateStr = (str) => {
-  if (!str) return '';
+  if (!str || str === '-') return '';
   let s = String(str).trim();
   if (s.includes('T') && s.includes('Z')) {
     try {
@@ -48,7 +47,7 @@ const formatDateStr = (str) => {
 };
 
 const formatTempoStr = (tempoVal) => {
-  if (!tempoVal) return '';
+  if (!tempoVal || tempoVal === '-') return '';
   let str = String(tempoVal).trim();
   if (/^\d+:\d+(:\d+)?$/.test(str)) {
     let parts = str.split(':');
@@ -104,7 +103,7 @@ const calculateTimeSpan = (inicio, fim) => {
 
 const calculateDiscount = (pPago, pOrig) => {
   const parseVal = (v) => {
-    if (!v) return 0;
+    if (!v || v === '-') return 0;
     let c = String(v).replace('R$', '').trim().replace(',', '.');
     return parseFloat(c) || 0;
   };
@@ -113,9 +112,9 @@ const calculateDiscount = (pPago, pOrig) => {
   if (orig > pago && orig > 0) {
     let diff = orig - pago;
     let pct = Math.round((diff / orig) * 100);
-    return { val: `R$ ${diff.toFixed(2).replace('.', ',')}`, pct: `${pct}%`, has: true };
+    return { val: `R$ ${diff.toFixed(2).replace('.', ',')}`, pct: `${pct}%`, has: true, rawDiff: diff };
   }
-  return { has: false };
+  return { has: false, rawDiff: 0 };
 };
 
 const getYoutubeId = (url) => {
@@ -126,16 +125,17 @@ const getYoutubeId = (url) => {
 
 const getConsoleStyle = (name) => {
   if (!name) return { bg: 'transparent', text: 'inherit' };
-  let n = String(name).toUpperCase();
-  if (n === 'PS1') return { bg: '#D9D9D9', text: '#222222' };
-  if (n === 'PS2') return { bg: '#0B1E5B', text: '#79B8FF' };
-  if (n === 'PS4' || n === 'PS5') return { bg: '#003791', text: '#FFFFFF' };
-  if (n === 'SNES') return { bg: '#6B4BAE', text: '#FFFFFF' };
-  if (n === 'NES') return { bg: '#5B5B5B', text: '#E60012' };
+  let n = String(name).toUpperCase().trim();
+  if (n === 'PS1' || n === 'PLAYSTATION 1') return { bg: '#D9D9D9', text: '#222222' };
+  if (n === 'PS2' || n === 'PLAYSTATION 2') return { bg: '#0B1E5B', text: '#79B8FF' };
+  if (n === 'PS3' || n === 'PLAYSTATION 3') return { bg: '#000000', text: '#FFFFFF' };
+  if (n === 'PS4' || n === 'PS5' || n.includes('PLAYSTATION')) return { bg: '#003791', text: '#FFFFFF' };
+  if (n === 'SNES' || n === 'SUPER NINTENDO') return { bg: '#6B4BAE', text: '#FFFFFF' };
+  if (n === 'NES' || n === 'NINTENDINHO') return { bg: '#5B5B5B', text: '#E60012' };
   if (n === 'WII') return { bg: '#FFFFFF', text: '#00AEEF' };
-  if (n === 'GBA') return { bg: '#4B4B9F', text: '#FFFFFF' };
-  if (n === 'GB') return { bg: '#5B6D4A', text: '#DFF5C0' };
-  if (n === 'MEGA DRIVE') return { bg: '#111111', text: '#D4AF37' };
+  if (n === 'GBA' || n === 'GAME BOY ADVANCE') return { bg: '#4B4B9F', text: '#FFFFFF' };
+  if (n === 'GB' || n === 'GAME BOY' || n === 'GBC') return { bg: '#5B6D4A', text: '#DFF5C0' };
+  if (n === 'MEGA DRIVE' || n === 'GENESIS') return { bg: '#111111', text: '#D4AF37' };
   if (n === 'MASTER SYSTEM') return { bg: '#111111', text: '#E53935' };
   if (n === 'DS' || n === '3DS') return { bg: '#F5F5F5', text: '#444444' };
   if (n === 'PC' || n === 'STEAM') return { bg: '#111111', text: '#76B900' };
@@ -159,6 +159,7 @@ const ConsoleIcon = ({ consoleName }) => {
 
 const getGenreColor = (name) => {
   let g = String(name || '').toLowerCase();
+  if (!g || g === '-') return 'transparent';
   if (g.includes('rpg')) return '#C4B5FD'; 
   if (g.includes('ação') || g.includes('acao')) return '#FF8B94'; 
   if (g.includes('plataforma')) return '#A8E6CF'; 
@@ -174,7 +175,7 @@ const getGenreColor = (name) => {
 
 const getDifficultyBadge = (dif) => {
   let d = String(dif || '').toUpperCase().trim();
-  if (!d) return { text: '', bg: 'transparent' };
+  if (!d || d === '-') return { text: '', bg: 'transparent' };
   if (d === 'A') return { text: 'A', bg: '#FF8B94' };
   if (d === 'B') return { text: 'B', bg: '#FFB3BA' };
   if (d === 'C') return { text: 'C', bg: '#A8E6CF' };
@@ -184,7 +185,7 @@ const getDifficultyBadge = (dif) => {
 };
 
 const getRatingBadge = (notaVal) => {
-  if (!notaVal) return null;
+  if (!notaVal || notaVal === '-') return null;
   let s = String(notaVal).trim().toUpperCase();
   if (s === 'S' || s === 'RANK S') return (
     <span className="inline-block px-3 py-1 font-black text-xs uppercase border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] bg-gradient-to-r from-[#FF8B94] via-[#A8E6CF] to-[#FFD3B6] animate-pulse text-slate-900">
@@ -192,7 +193,7 @@ const getRatingBadge = (notaVal) => {
     </span>
   );
   let num = parseFloat(s.replace(',', '.'));
-  if (isNaN(num)) return <span>{s}</span>;
+  if (isNaN(num)) return <span className="font-bold">{s}</span>;
   let bg = num >= 9.0 ? '#A8E6CF' : num >= 7.5 ? '#C7F0DB' : num >= 6.0 ? '#FFE5B4' : '#FFD3B6';
   return (
     <span className="inline-block px-2.5 py-1 font-black text-xs border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]" style={{ backgroundColor: bg }}>
@@ -202,9 +203,9 @@ const getRatingBadge = (notaVal) => {
 };
 
 const getPriceColor = (priceVal) => {
-  if (!priceVal) return 'transparent';
+  if (!priceVal || priceVal === '-') return 'transparent';
   let p = parseFloat(String(priceVal).replace('R$', '').trim().replace(',', '.'));
-  if (isNaN(p)) return 'transparent';
+  if (isNaN(p) || p === 0) return 'transparent';
   if (p >= 100) return '#FF8B94'; 
   if (p >= 40) return '#A8E6CF';
   return '#FFD3B6'; 
@@ -283,6 +284,7 @@ export default function App() {
 
   const sortedAndFilteredGames = useMemo(() => {
     let list = games.filter(g => g.status === (activeTab === 'finished' ? 'Finalizado' : 'Backlog'));
+    
     if (searchTerm) {
       list = list.filter(g => {
         let t = getVal(g, ['titulo', 'nome']);
@@ -293,11 +295,14 @@ export default function App() {
                String(f).toLowerCase().includes(searchTerm.toLowerCase());
       });
     }
+
     list.sort((a, b) => {
       let valA, valB;
+      
+      // Mapeamento especial para cada tipo de ordenação
       if (sortConfig.key === 'ordem') {
-        valA = parseInt(getVal(a, ['ordem', '#', 'id'])) || 99999;
-        valB = parseInt(getVal(b, ['ordem', '#', 'id'])) || 99999;
+        valA = parseInt(getVal(a, ['#', 'ordem', 'id'])) || 0;
+        valB = parseInt(getVal(b, ['#', 'ordem', 'id'])) || 0;
       } else if (sortConfig.key === 'nota') {
         const p = x => {
           let s = String(x).toUpperCase().trim();
@@ -314,15 +319,29 @@ export default function App() {
       } else if (sortConfig.key === 'preco_original') {
         const p = x => parseFloat(String(x).replace('R$', '').trim().replace(',', '.')) || 0;
         valA = p(getVal(a, ['preco_original', 'preco sem desconto'])); valB = p(getVal(b, ['preco_original', 'preco sem desconto']));
+      } else if (sortConfig.key === 'desconto') {
+        const getDesc = x => calculateDiscount(getVal(x, ['preco', 'preco pago']), getVal(x, ['preco_original', 'preco sem desconto'])).rawDiff;
+        valA = getDesc(a); valB = getDesc(b);
       } else {
         valA = String(getVal(a, [sortConfig.key])).toLowerCase();
         valB = String(getVal(b, [sortConfig.key])).toLowerCase();
       }
 
+      // LÓGICA DE ORDENAÇÃO: Células vazias SEMPRE no final
+      let isBlank = (val) => val === '' || val === null || val === undefined || val === '-' || (typeof val === 'number' && isNaN(val)) || (typeof val === 'number' && val === 0 && sortConfig.key !== 'nota');
+      let blankA = isBlank(valA);
+      let blankB = isBlank(valB);
+
+      if (blankA && blankB) return 0;
+      if (blankA) return 1;  // Joga o A vazio pro final, independente de ser ASC ou DESC
+      if (blankB) return -1; // Joga o B vazio pro final, independente de ser ASC ou DESC
+
+      // Ordenação normal para preenchidos
       if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
       if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
+
     return list;
   }, [games, activeTab, searchTerm, sortConfig]);
 
@@ -415,8 +434,8 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans p-2 sm:p-4 selection:bg-pink-200 relative">
       
-      {/* HEADER MONDRIAN COM BUSCA AO LADO */}
-      <div className="max-w-[1600px] mx-auto mb-6 flex flex-wrap items-center gap-6">
+      {/* Header Mondrian com Busca Ao Lado */}
+      <div className="max-w-[1600px] mx-auto mb-6 flex flex-wrap items-center gap-4 sm:gap-6">
         <div className="flex items-center gap-4">
           <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Logo" className="w-12 h-12 sm:w-14 sm:h-14" />
           <div className={`p-1.5 sm:p-2 ${theme.cyan} ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] transform -rotate-1`}>
@@ -427,10 +446,10 @@ export default function App() {
           </div>
         </div>
         
-        {/* CAIXA DE BUSCA */}
+        {/* Barra de Busca Exatamente ao lado */}
         {(activeTab === 'finished' || activeTab === 'backlog') && (
-          <div className="flex-grow max-w-sm ml-auto sm:ml-0">
-            <input type="text" placeholder="🔍 Buscar Título, Console ou Gênero..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={theme.input} />
+          <div className="flex-grow max-w-sm sm:ml-4">
+            <input type="text" placeholder="🔍 Buscar por título, console ou gênero..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={theme.input} />
           </div>
         )}
       </div>
@@ -480,7 +499,7 @@ export default function App() {
              </div>
           )}
 
-          {}
+          {/* TAB: LISTAS (Tabela Principal) */}
           {(activeTab === 'finished' || activeTab === 'backlog') && (
             <div className="flex flex-col gap-4">
               <div className="flex justify-end">
@@ -492,31 +511,33 @@ export default function App() {
                   <thead>
                     <tr className={`${activeTab === 'finished' ? theme.gold : theme.cyan} border-b-[3px] border-slate-900 uppercase font-black text-slate-900`}>
                       <Th label="#" sortKey="ordem" className="text-center w-10" />
-                      <Th label="Nome do Jogo" sortKey="titulo" />
-                      <Th label="Console" sortKey="plataforma" />
-                      <Th label="Gênero" sortKey="franquia" />
+                      <Th label="NOME DO JOGO" sortKey="titulo" />
+                      <Th label="CONSOLE" sortKey="plataforma" />
+                      <Th label="GÊNERO" sortKey="franquia" />
                       
                       {activeTab === 'finished' && (
                         <>
-                          <Th label="Início" sortKey="inicio" className="text-center" />
-                          <Th label="Fim" sortKey="fim" className="text-center" />
-                          <Th label="Tempo Total" sortKey="tempo" className="text-center" />
-                          <Th label="Duração" sortKey="duracao" className="text-center" />
-                          <Th label="Nota" sortKey="nota" className="text-center" />
-                          <Th label="Dif" sortKey="dificuldade" className="text-center" />
-                          <Th label="Condição" sortKey="conquistas" />
-                          <Th label="Preço Pago" sortKey="preco" className="text-center" />
-                          <Th label="Preço S/ Desc." sortKey="preco_original" className="text-center" />
-                          <Th label="Desconto" sortKey="desconto" className="text-center" />
-                          <Th label="Suporte" sortKey="suporte" className="text-center border-r-0" />
+                          <Th label="INÍCIO" sortKey="inicio" className="text-center" />
+                          <Th label="FIM" sortKey="fim" className="text-center" />
+                          <Th label="TEMPO TOTAL" sortKey="tempo" className="text-center" />
+                          <Th label="DURAÇÃO" sortKey="duracao" className="text-center" />
+                          <Th label="NOTA" sortKey="nota" className="text-center" />
+                          <Th label="DIF" sortKey="dificuldade" className="text-center" />
+                          <Th label="CONDIÇÃO" sortKey="conquistas" />
+                          <Th label="PREÇO PAGO" sortKey="preco" className="text-center" />
+                          <Th label="PREÇO S/ DESC." sortKey="preco_original" className="text-center" />
+                          <Th label="DESCONTO" sortKey="desconto" className="text-center" />
+                          <Th label="SUPORTE" sortKey="suporte" className="text-center border-r-0" />
                         </>
                       )}
                     </tr>
                   </thead>
                   <tbody>
                     {sortedAndFilteredGames.map((game, i) => {
-                      // Usando o Extrator Inteligente
-                      let visualId = getVal(game, ['#', 'ordem']);
+                      // Busca as propriedades com base em várias palavras-chave pra driblar erros de digitação/quebra de linha da planilha
+                      let rawId = getVal(game, ['#', 'ordem', 'id']);
+                      let visualId = rawId && rawId !== '-' ? rawId : ''; // Se por milagre não achar na API, ele vai pelo menos manter a célula limpa
+                      
                       let titulo = getVal(game, ['titulo', 'nome']);
                       let plataforma = getVal(game, ['plataforma', 'console']);
                       let genero = getVal(game, ['franquia', 'genero', 'gênero']);
@@ -527,11 +548,14 @@ export default function App() {
                       let dif = getVal(game, ['dificuldade']);
                       let cond = getVal(game, ['conquistas', 'condicao', 'condição']);
                       let pricePago = getVal(game, ['preco', 'preco pago']);
-                      let priceSemDesc = getVal(game, ['preco_original', 'preco sem desconto', 'preco original']);
+                      let priceSemDesc = getVal(game, ['preco_original', 'preco sem desconto']);
                       let sup = getVal(game, ['suporte']);
                       
                       let discount = calculateDiscount(pricePago, priceSemDesc);
                       const consoleStyle = getConsoleStyle(plataforma);
+                      
+                      // Tratamento para não exibir o traço "-"
+                      const displayClean = (val) => (val && val !== '-' ? val : '');
                       
                       return (
                         <tr key={game.id || i} className="border-b-[2px] border-slate-900 hover:bg-slate-50 transition-colors">
@@ -540,27 +564,25 @@ export default function App() {
                             {visualId}
                           </td>
                           
-                          {/* Nome do Jogo: Permite quebra de linha elegante */}
                           <td onClick={() => { 
-                                // Garante que a ficha receba os valores exatos que localizamos
-                                setFichaData({...game, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc}); 
-                                setViewModal({type:'game', data: {...game, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc, inicio, fim, tempo, nota, dificuldade: dif, conquistas: cond, suporte: sup}}); 
+                                setFichaData({...game, '#': rawId, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc}); 
+                                setViewModal({type:'game', data: {...game, '#': rawId, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc, inicio, fim, tempo, nota, dificuldade: dif, conquistas: cond, suporte: sup}}); 
                                 setIsEditingFicha(false); 
                               }} 
                               className="p-2 border-r-[3px] border-slate-900 font-black text-xs cursor-pointer hover:text-blue-600 transition-colors underline decoration-slate-300 underline-offset-4 whitespace-normal break-words min-w-[150px]">
-                            {titulo || ''}
+                            {displayClean(titulo)}
                           </td>
                           
-                          <td onClick={() => setViewModal({type:'console', data: plataforma})} className="p-2 border-r-[3px] border-slate-900 cursor-pointer whitespace-nowrap">
-                            {plataforma ? (
+                          <td onClick={() => { if(displayClean(plataforma)) setViewModal({type:'console', data: plataforma}) }} className="p-2 border-r-[3px] border-slate-900 cursor-pointer whitespace-nowrap">
+                            {displayClean(plataforma) ? (
                               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform font-black uppercase" style={{ backgroundColor: consoleStyle.bg, color: consoleStyle.text }}>
                                 <ConsoleIcon consoleName={plataforma} /> {plataforma}
                               </span>
                             ) : null}
                           </td>
                           
-                          <td onClick={() => setViewModal({type:'genre', data: genero})} className="p-2 border-r-[3px] border-slate-900 cursor-pointer whitespace-nowrap">
-                            {genero ? (
+                          <td onClick={() => { if(displayClean(genero)) setViewModal({type:'genre', data: genero}) }} className="p-2 border-r-[3px] border-slate-900 cursor-pointer whitespace-nowrap">
+                            {displayClean(genero) ? (
                                <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 uppercase font-black shadow-[1px_1px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform" style={{backgroundColor: getGenreColor(genero)}}>
                                  {genero}
                                </span>
@@ -569,51 +591,64 @@ export default function App() {
 
                           {activeTab === 'finished' && (
                             <>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(inicio) || ''}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(fim) || ''}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center font-black whitespace-nowrap">{formatTempoStr(tempo) || ''}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{calculateTimeSpan(inicio, fim) || ''}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{getRatingBadge(nota) || null}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(inicio)}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(fim)}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center font-black whitespace-nowrap">{formatTempoStr(tempo)}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{calculateTimeSpan(inicio, fim)}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{getRatingBadge(nota)}</td>
                               
                               <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
-                                {dif ? (
+                                {displayClean(dif) ? (
                                   <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] uppercase font-black" style={{backgroundColor: getDifficultyBadge(dif).bg}}>
                                     {getDifficultyBadge(dif).text}
                                   </span>
                                 ) : null}
                               </td>
                               
-                              <td className="p-2 border-r-[3px] border-slate-900 max-w-[150px] truncate whitespace-nowrap" title={cond}>{cond || ''}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 max-w-[150px] truncate whitespace-nowrap" title={displayClean(cond)}>{displayClean(cond)}</td>
                               
+                              {/* BLOCOS MONDRIAN PARA OS 3 PREÇOS */}
                               <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
-                                {pricePago ? (
+                                {displayClean(pricePago) ? (
                                   <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(pricePago)}}>
                                     {formatCurrency(pricePago)}
                                   </span>
                                 ) : null}
                               </td>
                               
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center text-slate-600 font-bold whitespace-nowrap">{formatCurrency(priceSemDesc) || ''}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
+                                {displayClean(priceSemDesc) ? (
+                                  <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(priceSemDesc)}}>
+                                    {formatCurrency(priceSemDesc)}
+                                  </span>
+                                ) : null}
+                              </td>
                               
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center text-green-700 font-black whitespace-nowrap">{discount.has ? `${discount.val} (${discount.pct})` : ''}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
+                                {discount.has ? (
+                                  <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(discount.rawDiff)}}>
+                                    {discount.val} ({discount.pct})
+                                  </span>
+                                ) : null}
+                              </td>
                               
-                              <td className="p-2 border-slate-900 text-center whitespace-nowrap">{sup || ''}</td>
+                              <td className="p-2 border-slate-900 text-center whitespace-nowrap">{displayClean(sup)}</td>
                             </>
                           )}
                         </tr>
                       );
                     })}
-                    {sortedAndFilteredGames.length === 0 && <tr><td colSpan="15" className="p-8 text-center text-slate-500 font-black">Nenhum jogo encontrado.</td></tr>}
+                    {sortedAndFilteredGames.length === 0 && <tr><td colSpan="15" className="p-8 text-center text-slate-500 font-black uppercase tracking-widest text-lg">Nenhum jogo nesta lista.</td></tr>}
                   </tbody>
                 </table>
               </div>
             </div>
           )}
 
-          {}
+          {/* TAB: ADICIONAR NOVO (Inserção na Linha 2 via Script, mantendo Coluna A imaculada) */}
           {activeTab === 'add' && (
             <div className={`p-6 bg-white ${theme.border} ${theme.card} max-w-4xl mx-auto`}>
-              <h2 className="text-xl font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-2">Adicionar Novo (Inserido na Linha 2)</h2>
+              <h2 className="text-xl font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-2">Adicionar Novo (Insere no topo sem quebrar fórmulas)</h2>
               <form onSubmit={handleCreateNew} className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Status *</label><select value={formData.status} onChange={e=>setFormData({...formData, status: e.target.value})} className={theme.input}><option>Finalizado</option><option>Backlog</option></select></div>
@@ -637,11 +672,12 @@ export default function App() {
             </div>
           )}
 
+          {/* TAB: CONFIGURAÇÕES */}
           {activeTab === 'config' && (
              <div className={`max-w-xl mx-auto bg-white p-8 ${theme.border} ${theme.card}`}>
                 <h2 className="text-2xl font-black mb-4 uppercase text-center">Alterar Conexão</h2>
                 {syncStatus.type !== 'idle' && (
-                  <div className={`p-3 mb-4 border-[2px] border-slate-900 font-bold text-xs text-center shadow-[4px_4px_0_0_rgba(15,23,42,1)] ${syncStatus.type === 'success' ? 'bg-[#86EFAC]' : syncStatus.type === 'error' ? theme.pink : 'bg-amber-200'}`}>
+                  <div className={`p-3 mb-4 border-[2px] border-slate-900 font-bold text-xs text-center shadow-[4px_4px_0_0_rgba(15,23,42,1)] uppercase ${syncStatus.type === 'success' ? 'bg-[#86EFAC]' : syncStatus.type === 'error' ? theme.pink : 'bg-amber-200'}`}>
                     {syncStatus.message}
                   </div>
                 )}
@@ -653,7 +689,7 @@ export default function App() {
         </main>
       </div>
 
-      {}
+      {/* MODAL DE FICHAS */}
       {viewModal && (
         <div className="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
           <div className={`w-full max-w-4xl bg-white ${theme.border} ${theme.card} flex flex-col my-auto shadow-2xl`}>
@@ -669,11 +705,11 @@ export default function App() {
 
             <div className="p-4 sm:p-6 bg-slate-50 overflow-y-auto max-h-[75vh]">
               
-              {/* FICHA DO JOGO */}
+              {/* === FICHA DO JOGO === */}
               {viewModal.type === 'game' && (
                 <>
                   {fichaStatus.type !== 'idle' && (
-                    <div className={`p-3 mb-4 font-bold text-sm text-center border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] ${fichaStatus.type === 'loading' ? 'bg-amber-200' : fichaStatus.type === 'success' ? 'bg-[#86EFAC]' : theme.pink}`}>
+                    <div className={`p-3 mb-4 font-bold text-sm text-center uppercase border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] ${fichaStatus.type === 'loading' ? 'bg-amber-200' : fichaStatus.type === 'success' ? 'bg-[#86EFAC]' : theme.pink}`}>
                       {fichaStatus.message}
                     </div>
                   )}
@@ -713,14 +749,15 @@ export default function App() {
                           ) : null}
                         </div>
                         
-                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Início</span><span className="font-bold">{formatDateStr(viewModal.data.inicio) || ''}</span></div>
-                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Fim</span><span className="font-bold">{formatDateStr(viewModal.data.fim) || ''}</span></div>
-                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Tempo de Jogo</span><span className="font-black text-blue-700">{formatTempoStr(viewModal.data.tempo) || ''}</span></div>
-                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Duração Span</span><span className="font-bold">{calculateTimeSpan(viewModal.data.inicio, viewModal.data.fim) || ''}</span></div>
+                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Início</span><span className="font-bold">{formatDateStr(viewModal.data.inicio)}</span></div>
+                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Fim</span><span className="font-bold">{formatDateStr(viewModal.data.fim)}</span></div>
+                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Tempo de Jogo</span><span className="font-black text-blue-700">{formatTempoStr(viewModal.data.tempo)}</span></div>
+                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Duração Span</span><span className="font-bold">{calculateTimeSpan(viewModal.data.inicio, viewModal.data.fim)}</span></div>
                         
+                        {/* Blocos Mondrian nas Fichas também */}
                         <div className="flex flex-col">
                           <span className="text-[10px] font-black uppercase text-slate-500 mb-1">Preço Pago</span>
-                          {viewModal.data.preco ? (
+                          {viewModal.data.preco && viewModal.data.preco !== '-' ? (
                              <div>
                                <span className="inline-block px-2 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(viewModal.data.preco)}}>
                                  {formatCurrency(viewModal.data.preco)}
@@ -728,14 +765,23 @@ export default function App() {
                              </div>
                           ) : null}
                         </div>
-                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Preço s/ Desconto</span><span className="font-bold text-slate-600">{formatCurrency(viewModal.data.preco_original) || ''}</span></div>
-                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Suporte</span><span className="font-bold">{viewModal.data.suporte || ''}</span></div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-black uppercase text-slate-500 mb-1">Preço s/ Desconto</span>
+                          {viewModal.data.preco_original && viewModal.data.preco_original !== '-' ? (
+                             <div>
+                               <span className="inline-block px-2 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(viewModal.data.preco_original)}}>
+                                 {formatCurrency(viewModal.data.preco_original)}
+                               </span>
+                             </div>
+                          ) : null}
+                        </div>
+                        <div className="flex flex-col col-span-2"><span className="text-[10px] font-black uppercase text-slate-500">Suporte</span><span className="font-bold">{viewModal.data.suporte && viewModal.data.suporte !== '-' ? viewModal.data.suporte : ''}</span></div>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="p-4 bg-white border-[2px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)]">
                           <span className="text-[10px] font-black uppercase text-slate-500 block mb-2">Condição</span>
-                          <p className="font-bold text-sm whitespace-pre-wrap">{viewModal.data.conquistas || ''}</p>
+                          <p className="font-bold text-sm whitespace-pre-wrap">{viewModal.data.conquistas && viewModal.data.conquistas !== '-' ? viewModal.data.conquistas : ''}</p>
                         </div>
                         <div className="p-4 bg-white border-[2px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)]">
                           <span className="text-[10px] font-black uppercase text-slate-500 block mb-2">Observações</span>
@@ -748,12 +794,12 @@ export default function App() {
                          let linkUrl = getVal(viewModal.data, ['midia', 'link']);
                          let ytb = getYoutubeId(linkUrl) || getYoutubeId(viewModal.data.suporte);
                          if (ytb) return (
-                           <div className="w-full aspect-video border-[3px] border-slate-900 shadow-[6px_6px_0_0_rgba(15,23,42,1)]">
+                           <div className="w-full aspect-video border-[3px] border-slate-900 shadow-[6px_6px_0_0_rgba(15,23,42,1)] mt-2">
                              <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${ytb}`} title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
                            </div>
                          );
-                         if (linkUrl) return (
-                           <div className="flex flex-col gap-2">
+                         if (linkUrl && linkUrl !== '-') return (
+                           <div className="flex flex-col gap-2 mt-2">
                              <span className="text-[10px] font-black uppercase text-slate-500">Link</span>
                              <a href={linkUrl} target="_blank" rel="noreferrer" className="text-blue-600 font-bold hover:underline break-all">{linkUrl}</a>
                            </div>
@@ -783,7 +829,7 @@ export default function App() {
                 </>
               )}
 
-              {/* FICHA DE CONSOLE OU GÊNERO */}
+              {/* === FICHA DE CONSOLE OU GÊNERO === */}
               {(viewModal.type === 'console' || viewModal.type === 'genre') && (() => {
                  let filteredList = games.filter(g => {
                     let vPlat = getVal(g, ['plataforma', 'console']);
@@ -829,14 +875,13 @@ export default function App() {
 
             </div>
 
-            {/* RODAPÉ DO MODAL DO JOGO COM O BOTÃO DE REMOVER DISCRETO */}
+            {/* RODAPÉ DO MODAL (Com botão discreto de Remover) */}
             {viewModal.type === 'game' && (
               <div className="p-4 border-t-[3px] border-slate-900 bg-white flex justify-between items-center gap-4">
                 
-                {/* BOTÃO DISCRETO PARA REMOVER ITEM */}
                 <button 
                   onClick={() => {
-                     if(window.confirm('Tem certeza que deseja excluir este jogo?')) {
+                     if(window.confirm('Tem certeza que deseja excluir este jogo da planilha?')) {
                         handleDelete(viewModal.data.id);
                         setViewModal(null);
                      }
