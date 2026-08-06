@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 
+// --- ESTILOS MONDRIAN ---
 const theme = {
   border: 'border-[3px] border-slate-900',
   card: 'bg-white shadow-[6px_6px_0_0_rgba(15,23,42,1)]',
@@ -10,234 +11,167 @@ const theme = {
   btnBase: 'px-4 py-2 border-[3px] border-slate-900 font-black uppercase active:translate-y-1 active:translate-x-1 active:shadow-none transition-all shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer',
 };
 
-const ConsoleIcon = ({ consoleName }) => {
-  if (!consoleName) return null;
-  const c = String(consoleName).toLowerCase();
-
-  if (c.includes('ps4') || c.includes('ps5') || c.includes('playstation') || c.includes('ps3') || c.includes('ps2') || c.includes('ps1')) {
-    return (
-      <svg className="w-5 h-5 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M8.322 3.123v13.911l3.528 1.139V3.123zM0 16.518l6.398 2.052v-2.736L2.33 14.526l4.068-.788v-2.036L0 13.064zm13.882.261l9.118 2.923-2.905 1.054-6.213-1.996v-1.981zm.001-4.717l9.117 2.924-2.905 1.053-6.212-1.996v-1.981zM11.85 0C5.305 0 0 5.305 0 11.85s5.305 11.85 11.85 11.85 11.85-5.305 11.85-11.85S18.395 0 11.85 0z" fill="none"/>
-        <path d="M8.5 4.5 3 6.8v9.7l5.5 2V4.5zm12.5 12-5.5-2v2.5l5.5 1.8v-2.3zM14 13.8l5.5 1.8v-2.3L14 11.5v2.3z"/>
-      </svg>
-    );
+// --- FUNÇÕES DE LIMPEZA E FORMATAÇÃO ---
+const formatDateStr = (str) => {
+  if (!str) return '-';
+  let s = String(str).trim();
+  if (s.includes('T') && s.includes('Z')) {
+    try {
+      const d = new Date(s);
+      const day = String(d.getUTCDate()).padStart(2, '0');
+      const mon = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const yr = d.getUTCFullYear();
+      if(!isNaN(yr) && yr > 1900) return `${day}/${mon}/${yr}`;
+    } catch(e) {}
   }
-  if (c.includes('xbox')) {
-    return (
-      <svg className="w-5 h-5 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.12 18.23c-1.57.87-3.23 1.3-5.12 1.3-1.89 0-3.55-.43-5.12-1.3l2.88-5.33c.69.39 1.45.58 2.24.58.79 0 1.55-.19 2.24-.58l2.88 5.33zM4.32 6.88c1.36-1.55 3.25-2.58 5.4-2.82L7.3 9.49C6.22 8.7 5.2 7.82 4.32 6.88zm15.36 0c-.88.94-1.9 1.82-2.98 2.61l-2.42-5.43c2.15.24 4.04 1.27 5.4 2.82z"/>
-      </svg>
-    );
-  }
-  if (c.includes('switch') || c.includes('wii') || c.includes('nintendo') || c.includes('snes') || c.includes('ds') || c.includes('gba') || c.includes('gamecube')) {
-    return (
-      <svg className="w-5 h-5 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M8 2H4C2.9 2 2 2.9 2 4v16c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm14-7h-4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 13a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
-      </svg>
-    );
-  }
-  if (c.includes('pc') || c.includes('steam')) {
-    return (
-      <svg className="w-5 h-5 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 0a12 12 0 0 0-11.95 10.72L5.8 13.1a3.5 3.5 0 0 1 2.37-.89c.17 0 .34.01.5.04l3.12-4.52a4.48 4.48 0 0 1 5.21 4.27 4.5 4.5 0 0 1-8.31 2.33l-4.22 1.74A12 12 0 1 0 12 0zm-3.5 14a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm7 0a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>
-      </svg>
-    );
-  }
-  return (
-    <svg className="w-5 h-5 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H9v2H7v-2H5v-2h2V9h2v2h2v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
-    </svg>
-  );
+  return s;
 };
 
-const getConsoleColor = (consoleName) => {
-  if(!consoleName) return '#e2e8f0';
-  const name = String(consoleName).toLowerCase();
-  if (name.includes('ps4') || name.includes('ps5') || name.includes('playstation')) return '#93C5FD';
-  if (name.includes('ps1') || name.includes('ps2') || name.includes('ps3')) return '#BFDBFE';
-  if (name.includes('xbox')) return '#86EFAC';
-  if (name.includes('switch') || name.includes('wii') || name.includes('snes')) return '#FCA5A5';
-  if (name.includes('pc') || name.includes('steam')) return '#E2E8F0';
-  if (name.includes('ds') || name.includes('gba') || name.includes('gamecube')) return '#C4B5FD';
-  if (name.includes('mega drive') || name.includes('master system')) return '#FDE047';
-  return '#FFD3B6';
-};
-
-const getGenreColor = (genreName) => {
-  if (!genreName) return '#f1f5f9';
-  const g = String(genreName).toLowerCase();
-  if (g.includes('rpg')) return '#C4B5FD'; // Violeta
-  if (g.includes('ação') || g.includes('acao')) return '#FF8B94'; // Pink Mondrian
-  if (g.includes('plataforma')) return '#A8E6CF'; // Ciano Mondrian
-  if (g.includes('luta') || g.includes('briga')) return '#FCA5A5'; // Vermelho suave
-  if (g.includes('quebra') || g.includes('puzzle')) return '#FFD3B6'; // Dourado Mondrian
-  if (g.includes('corrida')) return '#FDE047'; // Amarelo
-  if (g.includes('estratégia') || g.includes('estrategia')) return '#93C5FD'; // Azul
-  if (g.includes('sobrevivência') || g.includes('survival')) return '#86EFAC'; // Verde
-  if (g.includes('aventura')) return '#FED7AA'; // Laranja suave
-  if (g.includes('fps') || g.includes('tiro')) return '#CBD5E1'; // Cinza
-  return '#E2E8F0';
-};
-
-const getDifficultyBadge = (dif) => {
-  if (!dif) return { text: '-', bg: '#f1f5f9' };
-  const d = String(dif).toUpperCase().trim();
-  if (d === 'A') return { text: 'A (Muito Difícil)', bg: '#FF8B94' }; // Pink
-  if (d === 'B') return { text: 'B (Difícil)', bg: '#FFB3BA' };
-  if (d === 'C') return { text: 'C (Médio)', bg: '#A8E6CF' }; // Ciano
-  if (d === 'D') return { text: 'D (Fácil)', bg: '#FFE5B4' };
-  if (d === 'E') return { text: 'E (Facílimo)', bg: '#FFD3B6' }; // Dourado
-  if (d === 'S') return { text: 'S (Master)', bg: '#FCA5A5' };
-  return { text: d, bg: '#E2E8F0' };
-};
-
-const getRatingBadge = (notaVal) => {
-  if (notaVal === undefined || notaVal === null || notaVal === '') return <span className="text-slate-400">-</span>;
-  const strVal = String(notaVal).trim().toUpperCase();
-
-  // Tratamento Nota S
-  if (strVal === 'S' || strVal === 'S+' || strVal === 'RANK S') {
-    return (
-      <span className="inline-block px-3 py-1 font-black text-xs uppercase border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] bg-gradient-to-r from-[#FF8B94] via-[#A8E6CF] to-[#FFD3B6] animate-pulse text-slate-900">
-        ⭐ RANK S
-      </span>
-    );
-  }
-
-  const num = parseFloat(strVal.replace(',', '.'));
-  if (isNaN(num)) return <span>{strVal}</span>;
-
-  // Escala de Cor de 0 (Dourado #FFD3B6) a 10 (Ciano #A8E6CF)
-  let bgColor = '#FFD3B6';
-  if (num >= 9.0) bgColor = '#A8E6CF'; // Ciano
-  else if (num >= 7.5) bgColor = '#C7F0DB';
-  else if (num >= 6.0) bgColor = '#FFE5B4';
-  else bgColor = '#FF8B94'; // Pink para notas muito baixas
-
-  return (
-    <span className="inline-block px-2.5 py-1 font-black text-xs border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]" style={{ backgroundColor: bgColor }}>
-      {num.toFixed(1)}
-    </span>
-  );
-};
-
-const getPriceBadge = (precoStr, maxPreco) => {
-  if (!precoStr) return '-';
-  let clean = String(precoStr).replace('R$', '').trim().replace(',', '.');
-  let num = parseFloat(clean);
-  if (isNaN(num) || num === 0) return 'Grátis / -';
-
-  // Escala: Pink (mais caro), Ciano (médio), Dourado (barato)
-  let bg = '#FFD3B6';
-  if (maxPreco > 0) {
-    let ratio = num / maxPreco;
-    if (ratio > 0.6) bg = '#FF8B94'; // Caro = Pink
-    else if (ratio > 0.3) bg = '#A8E6CF'; // Médio = Ciano
-    else bg = '#FFD3B6'; // Barato = Dourado
-  }
-
-  return (
-    <span className="inline-block px-2 py-0.5 font-bold text-xs border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)]" style={{ backgroundColor: bg }}>
-      R$ {num.toFixed(2).replace('.', ',')}
-    </span>
-  );
-};
-
-const formatTempo = (tempoVal) => {
+const formatTempoStr = (tempoVal) => {
   if (!tempoVal) return '-';
   let str = String(tempoVal).trim();
-
-  // Trata formato ISO vindo do Sheets (ex: 1900-01-03T00:00:00.000Z ou 1899-12-30T20:00:00)
   if (str.includes('T') || str.includes('1899') || str.includes('1900')) {
     try {
       let d = new Date(str);
       if (!isNaN(d.getTime())) {
-        // No Sheets, 1899-12-30 é a data base de tempo 00:00
         let baseDate = new Date('1899-12-30T00:00:00Z');
         let diffMs = d.getTime() - baseDate.getTime();
-        if (diffMs < 0) {
-          // Ajuste para fusos horários negativos
-          diffMs += 24 * 60 * 60 * 1000;
-        }
+        if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000;
         let totalMins = Math.floor(diffMs / (1000 * 60));
         let hrs = Math.floor(totalMins / 60);
         let mins = totalMins % 60;
-        
         if (hrs === 0 && mins === 0) return '-';
         return `${hrs}h ${mins > 0 ? `${mins}m` : ''}`;
       }
-    } catch (e) {
-      // Fallback para parsing simples
-    }
+    } catch (e) {}
   }
-
-  // Se já for do tipo "74:47:48" ou "16:00:00"
   if (str.includes(':')) {
     let parts = str.split(':');
     let hrs = parseInt(parts[0], 10) || 0;
     let mins = parseInt(parts[1], 10) || 0;
     return `${hrs}h ${mins > 0 ? `${mins}m` : ''}`;
   }
-
   let num = parseFloat(str.replace(',', '.'));
   if (!isNaN(num)) return `${num}h`;
-
   return str;
 };
 
 const calculateTimeSpan = (inicio, fim) => {
-  if (!inicio || !fim) return '-';
+  let inStr = formatDateStr(inicio);
+  let fimStr = formatDateStr(fim);
+  if (inStr === '-' || fimStr === '-') return '-';
   try {
-    const parseDate = (dStr) => {
-      let s = String(dStr).trim();
-      if (s.includes('/')) {
-        let p = s.split('/');
-        if (p.length === 3) return new Date(`${p[2]}-${p[1]}-${p[0]}`);
-      }
+    const parseDate = (s) => {
+      let p = s.split('/');
+      if (p.length === 3) return new Date(`${p[2]}-${p[1]}-${p[0]}T12:00:00`);
       return new Date(s);
     };
-
-    let d1 = parseDate(inicio);
-    let d2 = parseDate(fim);
-
+    let d1 = parseDate(inStr);
+    let d2 = parseDate(fimStr);
     if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return '-';
-
-    let diffTime = Math.abs(d2 - d1);
-    let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
+    let diffDays = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24));
     if (diffDays === 0) return '1 dia';
     if (diffDays < 14) return `${diffDays} dias`;
     if (diffDays < 60) {
-      let weeks = Math.round(diffDays / 7);
-      return `${weeks} ${weeks === 1 ? 'semana' : 'semanas'}`;
+      let w = Math.round(diffDays / 7);
+      return `${w} ${w === 1 ? 'semana' : 'semanas'}`;
     }
-    let months = Math.round(diffDays / 30);
-    return `${months} ${months === 1 ? 'mês' : 'meses'}`;
-  } catch (e) {
-    return '-';
-  }
+    let m = Math.round(diffDays / 30);
+    return `${m} ${m === 1 ? 'mês' : 'meses'}`;
+  } catch (e) { return '-'; }
 };
 
 const calculateDiscount = (pPago, pOrig) => {
   const parseVal = (v) => {
     if (!v) return 0;
-    let clean = String(v).replace('R$', '').trim().replace(',', '.');
-    return parseFloat(clean) || 0;
+    let c = String(v).replace('R$', '').trim().replace(',', '.');
+    return parseFloat(c) || 0;
   };
-
   let pago = parseVal(pPago);
   let orig = parseVal(pOrig);
-
   if (orig > pago && orig > 0) {
     let diff = orig - pago;
-    let percent = Math.round((diff / orig) * 100);
-    return {
-      descontoVal: `R$ ${diff.toFixed(2).replace('.', ',')}`,
-      descontoPct: `${percent}%`,
-      hasDiscount: true
-    };
+    let pct = Math.round((diff / orig) * 100);
+    return { val: `R$ ${diff.toFixed(2).replace('.', ',')}`, pct: `${pct}%`, has: true };
   }
-  return { descontoVal: '-', descontoPct: '0%', hasDiscount: false };
+  return { has: false };
+};
+
+const getYoutubeId = (url) => {
+  if(!url) return null;
+  let match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})/);
+  return match ? match[1] : null;
+};
+
+// --- COMPONENTES VISUAIS ---
+const ConsoleIcon = ({ consoleName }) => {
+  if (!consoleName) return null;
+  const c = String(consoleName).toLowerCase();
+  if (c.includes('ps4') || c.includes('ps5') || c.includes('playstation') || c.includes('ps3') || c.includes('ps2') || c.includes('ps1')) return (
+    <svg className="w-5 h-5 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M8.322 3.123v13.911l3.528 1.139V3.123zM0 16.518l6.398 2.052v-2.736L2.33 14.526l4.068-.788v-2.036L0 13.064zm13.882.261l9.118 2.923-2.905 1.054-6.213-1.996v-1.981zm.001-4.717l9.117 2.924-2.905 1.053-6.212-1.996v-1.981zM11.85 0C5.305 0 0 5.305 0 11.85s5.305 11.85 11.85 11.85 11.85-5.305 11.85-11.85S18.395 0 11.85 0z" fill="none"/><path d="M8.5 4.5 3 6.8v9.7l5.5 2V4.5zm12.5 12-5.5-2v2.5l5.5 1.8v-2.3zM14 13.8l5.5 1.8v-2.3L14 11.5v2.3z"/></svg>
+  );
+  if (c.includes('xbox')) return (
+    <svg className="w-5 h-5 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.12 18.23c-1.57.87-3.23 1.3-5.12 1.3-1.89 0-3.55-.43-5.12-1.3l2.88-5.33c.69.39 1.45.58 2.24.58.79 0 1.55-.19 2.24-.58l2.88 5.33zM4.32 6.88c1.36-1.55 3.25-2.58 5.4-2.82L7.3 9.49C6.22 8.7 5.2 7.82 4.32 6.88zm15.36 0c-.88.94-1.9 1.82-2.98 2.61l-2.42-5.43c2.15.24 4.04 1.27 5.4 2.82z"/></svg>
+  );
+  if (c.includes('switch') || c.includes('wii') || c.includes('nintendo') || c.includes('snes') || c.includes('ds') || c.includes('gba') || c.includes('gamecube')) return (
+    <svg className="w-5 h-5 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M8 2H4C2.9 2 2 2.9 2 4v16c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm14-7h-4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 13a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>
+  );
+  if (c.includes('pc') || c.includes('steam')) return (
+    <svg className="w-5 h-5 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0a12 12 0 0 0-11.95 10.72L5.8 13.1a3.5 3.5 0 0 1 2.37-.89c.17 0 .34.01.5.04l3.12-4.52a4.48 4.48 0 0 1 5.21 4.27 4.5 4.5 0 0 1-8.31 2.33l-4.22 1.74A12 12 0 1 0 12 0zm-3.5 14a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm7 0a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/></svg>
+  );
+  return <svg className="w-5 h-5 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H9v2H7v-2H5v-2h2V9h2v2h2v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>;
+};
+
+const Colors = {
+  getConsole: (name) => {
+    let n = String(name || '').toLowerCase();
+    if (n.includes('ps4') || n.includes('ps5')) return '#93C5FD';
+    if (n.includes('ps1') || n.includes('ps2') || n.includes('ps3')) return '#BFDBFE';
+    if (n.includes('xbox')) return '#86EFAC';
+    if (n.includes('switch') || n.includes('wii') || n.includes('snes')) return '#FCA5A5';
+    if (n.includes('pc')) return '#E2E8F0';
+    if (n.includes('mega') || n.includes('master')) return '#FDE047';
+    return '#FFD3B6';
+  },
+  getGenre: (name) => {
+    let g = String(name || '').toLowerCase();
+    if (g.includes('rpg')) return '#C4B5FD'; // Roxo
+    if (g.includes('ação') || g.includes('acao')) return '#FF8B94'; // Pink
+    if (g.includes('plataforma')) return '#A8E6CF'; // Ciano
+    if (g.includes('luta')) return '#FCA5A5'; // Vermelho Claro
+    if (g.includes('quebra') || g.includes('puzzle')) return '#FFD3B6'; // Dourado
+    if (g.includes('estratégia')) return '#93C5FD'; // Azul
+    if (g.includes('sobrevivência')) return '#86EFAC'; // Verde
+    return '#E2E8F0'; // Cinza
+  }
+};
+
+const getDifficultyBadge = (dif) => {
+  let d = String(dif || '').toUpperCase().trim();
+  if (d === 'A') return { text: 'A', bg: '#FF8B94' };
+  if (d === 'B') return { text: 'B', bg: '#FFB3BA' };
+  if (d === 'C') return { text: 'C', bg: '#A8E6CF' };
+  if (d === 'D') return { text: 'D', bg: '#FFE5B4' };
+  if (d === 'E') return { text: 'E', bg: '#FFD3B6' };
+  return { text: d || '-', bg: '#E2E8F0' };
+};
+
+const getRatingBadge = (notaVal) => {
+  if (!notaVal) return <span className="text-slate-400">-</span>;
+  let s = String(notaVal).trim().toUpperCase();
+  if (s === 'S' || s === 'RANK S') return (
+    <span className="inline-block px-3 py-1 font-black text-xs uppercase border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] bg-gradient-to-r from-[#FF8B94] via-[#A8E6CF] to-[#FFD3B6] animate-pulse text-slate-900">
+      ⭐ S
+    </span>
+  );
+  let num = parseFloat(s.replace(',', '.'));
+  if (isNaN(num)) return <span>{s}</span>;
+  let bg = num >= 9.0 ? '#A8E6CF' : num >= 7.5 ? '#C7F0DB' : num >= 6.0 ? '#FFE5B4' : '#FF8B94';
+  return (
+    <span className="inline-block px-2.5 py-1 font-black text-xs border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]" style={{ backgroundColor: bg }}>
+      {num.toFixed(1)}
+    </span>
+  );
 };
 
 const Icons = {
@@ -245,23 +179,9 @@ const Icons = {
   List: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>,
   Plus: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>,
   Settings: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
-  Save: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>,
-  Trash: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+  SortArrow: ({ asc }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={`w-3 h-3 ml-1 inline-block transition-transform ${asc ? '' : 'rotate-180'}`}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /></svg>,
+  Close: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
 };
-
-const SimpleBarChart = ({ data, maxVal }) => (
-  <div className="w-full flex flex-col gap-3 mt-4">
-    {data.map((item, i) => (
-      <div key={i} className="flex items-center text-xs sm:text-sm font-black">
-        <div className="w-28 truncate">{item.label}</div>
-        <div className="flex-1 h-6 bg-slate-100 border-[2px] border-slate-900 relative mx-2 overflow-hidden shadow-[2px_2px_0_0_rgba(15,23,42,1)]">
-          <div className="h-full border-r-[2px] border-slate-900 transition-all duration-500" style={{ width: `${(item.value / maxVal) * 100}%`, backgroundColor: item.color }} />
-        </div>
-        <div className="w-8 text-right font-black">{item.value}</div>
-      </div>
-    ))}
-  </div>
-);
 
 export default function App() {
   const [appState, setAppState] = useState('booting'); 
@@ -271,11 +191,17 @@ export default function App() {
   const [syncStatus, setSyncStatus] = useState({ type: 'idle', message: '' });
   const [searchTerm, setSearchTerm] = useState('');
   
-  const [formData, setFormData] = useState({
-    id: '', titulo: '', status: 'Backlog', plataforma: '', franquia: '', 
-    nota: '', dificuldade: 'C', tempo: '', preco: '', preco_original: '', suporte: '', 
-    midia: 'Digital', inicio: '', fim: '', conquistas: '', comentarios: ''
-  });
+  // Ordenação
+  const [sortConfig, setSortConfig] = useState({ key: 'ordem', direction: 'asc' });
+
+  // Ficha Completa
+  const [selectedGame, setSelectedGame] = useState(null);
+  const [isEditingFicha, setIsEditingFicha] = useState(false);
+  const [fichaData, setFichaData] = useState({});
+  const [fichaStatus, setFichaStatus] = useState({ type: 'idle', message: '' });
+
+  const blankForm = { id: '', titulo: '', status: 'Backlog', plataforma: '', franquia: '', nota: '', dificuldade: 'C', tempo: '', preco: '', preco_original: '', suporte: '', midia: '', inicio: '', fim: '', conquistas: '', comentarios: '' };
+  const [formData, setFormData] = useState(blankForm);
 
   useEffect(() => {
     const bootTimer = setTimeout(() => {
@@ -288,7 +214,6 @@ export default function App() {
         setAppState('config');
       }
     }, 1800);
-
     return () => clearTimeout(bootTimer);
   }, []);
 
@@ -297,198 +222,145 @@ export default function App() {
     try {
       const response = await fetch(url);
       const data = await response.json();
-      
       if(data.error) throw new Error(data.error);
-
       const finishedGames = Array.isArray(data.finished) ? data.finished : [];
       const backlogGames = Array.isArray(data.backlog) ? data.backlog : [];
-      
       setGames([...finishedGames, ...backlogGames]);
       setAppState('ready');
       setSyncStatus({ type: 'success', message: 'Sincronizado com Sucesso!' });
-      
       setTimeout(() => setSyncStatus({ type: 'idle', message: '' }), 3000);
     } catch (err) {
-      console.error(err);
-      setSyncStatus({ type: 'error', message: 'Falha ao Sincronizar! Verifique o link e se você publicou a Nova Versão no Apps Script.' });
+      setSyncStatus({ type: 'error', message: 'Erro! Verifique o link e a Nova Implantação.' });
       setAppState('config');
     }
   };
 
   const saveConfig = () => {
-    if(!configUrl.includes('script.google.com')) {
-      setSyncStatus({ type: 'error', message: 'Insira um Link válido do Google Apps Script.' });
-      return;
-    }
     localStorage.setItem('gas_url', configUrl);
     setAppState('loading');
     fetchGames(configUrl);
   };
 
-  const saveGame = async (e) => {
-    e.preventDefault();
-    setAppState('loading');
-    
-    const isNew = !formData.id;
-    const payload = {
-      action: isNew ? 'ADD' : 'UPDATE',
-      data: { ...formData, id: isNew ? 'temp_id' : formData.id }
-    };
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
+    setSortConfig({ key, direction });
+  };
 
+  const sortedAndFilteredGames = useMemo(() => {
+    let list = games.filter(g => g.status === (activeTab === 'finished' ? 'Finalizado' : 'Backlog'));
+    if (searchTerm) {
+      list = list.filter(g => 
+        String(g.titulo).toLowerCase().includes(searchTerm.toLowerCase()) ||
+        String(g.plataforma).toLowerCase().includes(searchTerm.toLowerCase()) ||
+        String(g.franquia).toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    list.sort((a, b) => {
+      let vA = a[sortConfig.key] || '';
+      let vB = b[sortConfig.key] || '';
+
+      if (sortConfig.key === 'ordem') {
+        vA = parseInt(vA) || 9999;
+        vB = parseInt(vB) || 9999;
+      } else if (sortConfig.key === 'nota') {
+        const p = x => {
+          let s = String(x).toUpperCase().trim();
+          if (s === 'S' || s === 'RANK S') return 999;
+          return parseFloat(s.replace(',','.')) || 0;
+        };
+        vA = p(vA); vB = p(vB);
+      } else if (sortConfig.key === 'tempo') {
+        const p = x => parseFloat(formatTempoStr(x).replace('h','')) || 0;
+        vA = p(vA); vB = p(vB);
+      } else {
+        vA = String(vA).toLowerCase();
+        vB = String(vB).toLowerCase();
+      }
+
+      if (vA < vB) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (vA > vB) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+    return list;
+  }, [games, activeTab, searchTerm, sortConfig]);
+
+  const executeApiCall = async (action, data, statusUpdateFn) => {
+    statusUpdateFn({ type: 'loading', message: 'Salvando...' });
     try {
       const res = await fetch(configUrl, {
         method: 'POST',
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ action, data }),
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }
       });
       const result = await res.json();
       if(result.error) throw new Error(result.error);
-      
       await fetchGames(configUrl);
-      setActiveTab(formData.status === 'Finalizado' ? 'finished' : 'backlog');
-      resetForm();
-    } catch (err) {
-      setSyncStatus({ type: 'error', message: 'Erro ao salvar. Verifique a conexão.' });
-      setAppState('ready');
+      statusUpdateFn({ type: 'success', message: 'Salvo com sucesso!' });
+      setTimeout(() => statusUpdateFn({ type: 'idle', message: '' }), 2000);
+      return true;
+    } catch(err) {
+      statusUpdateFn({ type: 'error', message: 'Erro ao salvar.' });
+      return false;
     }
   };
 
-  const deleteGame = async (id) => {
-    if(!window.confirm('Tem certeza que deseja excluir este jogo?')) return;
+  const handleCreateNew = async (e) => {
+    e.preventDefault();
+    const success = await executeApiCall('ADD', { ...formData, id: 'temp_id' }, setSyncStatus);
+    if (success) {
+      setActiveTab(formData.status === 'Finalizado' ? 'finished' : 'backlog');
+      setFormData(blankForm);
+    }
+  };
+
+  const handleUpdateFicha = async () => {
+    const success = await executeApiCall('UPDATE', fichaData, setFichaStatus);
+    if (success) {
+      setIsEditingFicha(false);
+      setSelectedGame(fichaData); // Update view mode
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if(!window.confirm('Tem certeza que deseja excluir?')) return;
     setAppState('loading');
     try {
-      await fetch(configUrl, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'DELETE', id }),
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-      });
+      await fetch(configUrl, { method: 'POST', body: JSON.stringify({ action: 'DELETE', id }) });
       await fetchGames(configUrl);
-    } catch (err) {
-      setSyncStatus({ type: 'error', message: 'Erro ao deletar.' });
-      setAppState('ready');
-    }
+    } catch(e) {}
   };
 
-  const editGame = (game) => {
-    setFormData({...formData, ...game});
-    setActiveTab('add');
+  const openFicha = (game) => {
+    setSelectedGame(game);
+    setFichaData(game);
+    setIsEditingFicha(false);
+    setFichaStatus({ type: 'idle', message: '' });
   };
 
-  const resetForm = () => {
-    setFormData({
-      id: '', titulo: '', status: 'Backlog', plataforma: '', franquia: '', 
-      nota: '', dificuldade: 'C', tempo: '', preco: '', preco_original: '', suporte: '', 
-      midia: 'Digital', inicio: '', fim: '', conquistas: '', comentarios: ''
-    });
-  };
-
-  const stats = useMemo(() => {
-    try {
-      const finished = games.filter(g => g.status === 'Finalizado');
-      const backlog = games.filter(g => g.status === 'Backlog');
-      
-      const parseVal = (val) => {
-        if(typeof val === 'number') return val;
-        let str = String(val).replace('R$', '').trim().replace(',', '.');
-        return parseFloat(str) || 0;
-      };
-
-      const parseTempoHours = (tempoStr) => {
-        let f = formatTempo(tempoStr);
-        if (f.includes('h')) {
-          let parts = f.split('h');
-          let h = parseFloat(parts[0]) || 0;
-          return h;
-        }
-        return 0;
-      };
-
-      const totalSpent = games.reduce((acc, g) => acc + parseVal(g.preco), 0);
-      const totalTime = finished.reduce((acc, g) => acc + parseTempoHours(g.tempo), 0);
-      
-      // Média das notas ignorando NOTA S
-      let validRatings = [];
-      let sRankCount = 0;
-
-      finished.forEach(g => {
-        let nStr = String(g.nota || '').trim().toUpperCase();
-        if (nStr === 'S' || nStr === 'RANK S') {
-          sRankCount++;
-        } else {
-          let n = parseFloat(nStr.replace(',', '.'));
-          if (!isNaN(n)) validRatings.push(n);
-        }
-      });
-
-      const avgRating = validRatings.length > 0 ? (validRatings.reduce((a, b) => a + b, 0) / validRatings.length).toFixed(1) : '-';
-
-      // Plataformas
-      const consoleCounts = {};
-      games.forEach(g => {
-        const plat = g.plataforma || 'Outros';
-        consoleCounts[plat] = (consoleCounts[plat] || 0) + 1;
-      });
-      const consoleChartData = Object.entries(consoleCounts)
-        .sort((a,b) => b[1] - a[1]).slice(0, 5)
-        .map(([label, value]) => ({ label, value, color: getConsoleColor(label) }));
-      const maxConsoleCount = Math.max(...consoleChartData.map(d => d.value), 1);
-
-      // Gêneros
-      const genreCounts = {};
-      games.forEach(g => {
-        const gen = g.franquia || 'Outros';
-        genreCounts[gen] = (genreCounts[gen] || 0) + 1;
-      });
-      const genreChartData = Object.entries(genreCounts)
-        .sort((a,b) => b[1] - a[1]).slice(0, 5)
-        .map(([label, value]) => ({ label, value, color: getGenreColor(label) }));
-      const maxGenreCount = Math.max(...genreChartData.map(d => d.value), 1);
-
-      // Preço máximo para a escala
-      const maxPrice = Math.max(...games.map(g => parseVal(g.preco)), 1);
-
-      return { total: games.length, finished: finished.length, backlog: backlog.length, totalSpent, totalTime, avgRating, sRankCount, consoleChartData, maxConsoleCount, genreChartData, maxGenreCount, maxPrice };
-    } catch(e) {
-      return { total: 0, finished: 0, backlog: 0, totalSpent: 0, totalTime: 0, avgRating: '-', sRankCount: 0, consoleChartData: [], maxConsoleCount: 1, genreChartData: [], maxGenreCount: 1, maxPrice: 1 };
-    }
-  }, [games]);
-
-  const filteredGames = useMemo(() => {
-    let list = games.filter(g => g.status === (activeTab === 'finished' ? 'Finalizado' : 'Backlog'));
-    if (!searchTerm) return list;
-    return list.filter(g => 
-      String(g.titulo).toLowerCase().includes(searchTerm.toLowerCase()) ||
-      String(g.plataforma).toLowerCase().includes(searchTerm.toLowerCase()) ||
-      String(g.franquia).toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [games, activeTab, searchTerm]);
-
-  const NavButton = ({ tab, icon: Icon, label }) => (
-    <button 
-      onClick={() => { setActiveTab(tab); if(tab === 'add') resetForm(); }}
-      className={`flex flex-col items-center justify-center p-3 sm:flex-row sm:gap-2 w-full transition-colors border-b-[3px] sm:border-b-0 sm:border-r-[3px] border-slate-900 ${activeTab === tab ? theme.gold : 'bg-white hover:bg-slate-50'}`}
-    >
-      <Icon /> <span className="text-xs sm:text-sm font-black uppercase mt-1 sm:mt-0">{label}</span>
-    </button>
+  const Th = ({ label, sortKey, className = "" }) => (
+    <th onClick={() => handleSort(sortKey)} className={`p-2.5 border-r-[3px] border-slate-900 cursor-pointer hover:bg-black/5 transition-colors ${className}`}>
+      <div className="flex items-center justify-between">
+        <span>{label}</span>
+        {sortConfig.key === sortKey && <Icons.SortArrow asc={sortConfig.direction === 'asc'} />}
+      </div>
+    </th>
   );
 
   if (appState === 'booting' || (appState === 'loading' && games.length === 0)) {
     return (
       <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-4">
         <div className="flex flex-col items-center gap-6 animate-pulse">
-          <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Ludorum Logo" className="w-36 h-36 object-contain drop-shadow-xl" />
+          <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Logo" className="w-36 h-36 drop-shadow-xl" />
           <div className="flex flex-col items-center text-center">
              <div className={`px-4 py-2 ${theme.cyan} ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] inline-block transform -rotate-2`}>
-                <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tighter">Ludorum</h1>
+                <h1 className="text-3xl font-black uppercase tracking-tighter">Ludorum</h1>
              </div>
              <div className={`px-4 py-1 mt-2 ${theme.pink} ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] inline-block transform rotate-1`}>
-                <h2 className="text-lg sm:text-xl font-bold uppercase tracking-widest">Memorabilia</h2>
+                <h2 className="text-xl font-bold uppercase tracking-widest">Memorabilia</h2>
              </div>
           </div>
-          <div className="mt-6 text-slate-600 font-black uppercase text-xs sm:text-sm flex items-center gap-2">
-            <svg className="animate-spin h-5 w-5 text-slate-900" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-            Carregando Biblioteca de Jogos...
-          </div>
+          <div className="mt-6 text-slate-800 font-black uppercase text-xs">Acessando Planilha Base...</div>
         </div>
       </div>
     );
@@ -498,345 +370,228 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-4">
         <div className={`max-w-md w-full ${theme.cyan} p-8 ${theme.border} ${theme.card}`}>
-          <div className="flex justify-center mb-6">
-             <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Logo" className="w-24 h-24 drop-shadow-md" />
-          </div>
-          <h2 className="text-2xl font-black mb-2 uppercase text-center">Conectar Planilha</h2>
-          <p className="text-xs mb-6 text-center font-bold text-slate-700">Cole a URL do seu App Script abaixo. Suas informações ficam armazenadas apenas no seu dispositivo.</p>
-          
-          {syncStatus.type === 'error' && (
-            <div className={`p-3 mb-4 ${theme.pink} border-[2px] border-slate-900 font-bold text-xs text-center`}>{syncStatus.message}</div>
+          <h2 className="text-2xl font-black mb-4 uppercase text-center">Conectar Planilha</h2>
+          {syncStatus.type !== 'idle' && (
+            <div className={`p-3 mb-4 border-[2px] border-slate-900 font-bold text-xs text-center ${syncStatus.type === 'success' ? 'bg-[#86EFAC]' : syncStatus.type === 'error' ? theme.pink : 'bg-white'}`}>
+              {syncStatus.message}
+            </div>
           )}
-          
-          <input 
-            type="url" 
-            value={configUrl} 
-            onChange={(e) => setConfigUrl(e.target.value)}
-            placeholder="https://script.google.com/macros/s/..."
-            className={`${theme.input} mb-4`}
-          />
-          <button onClick={saveConfig} className={`${theme.btnBase} ${theme.gold} w-full`}>
-            Acessar Biblioteca
-          </button>
+          <input type="url" value={configUrl} onChange={(e) => setConfigUrl(e.target.value)} placeholder="Cole a URL do Apps Script" className={`${theme.input} mb-4`} />
+          <button onClick={saveConfig} className={`${theme.btnBase} ${theme.gold} w-full`}>Acessar Biblioteca</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans p-2 sm:p-6 selection:bg-pink-200">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans p-2 sm:p-6 selection:bg-pink-200 relative">
       
-      {/* Header Visual Mondrian */}
-      <div className="max-w-7xl mx-auto mb-6 flex flex-col sm:flex-row items-center gap-4">
-        <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Logo" className="w-16 h-16 object-contain" />
-        <div className={`p-2 sm:p-3 ${theme.cyan} ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] transform -rotate-1`}>
-          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tighter">Ludorum</h1>
+      {/* HEADER MONDRIAN */}
+      <div className="max-w-[1400px] mx-auto mb-6 flex items-center gap-4">
+        <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Logo" className="w-14 h-14" />
+        <div className={`p-2 ${theme.cyan} ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] transform -rotate-1`}>
+          <h1 className="text-2xl font-black uppercase tracking-tighter">Ludorum</h1>
         </div>
-        <div className={`p-1.5 sm:p-2 ${theme.pink} ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] transform rotate-1`}>
-          <h2 className="text-lg sm:text-xl font-bold uppercase tracking-widest">Memorabilia</h2>
+        <div className={`p-1.5 ${theme.pink} ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] transform rotate-1`}>
+          <h2 className="text-lg font-bold uppercase tracking-widest">Memorabilia</h2>
         </div>
       </div>
 
-      <div className={`max-w-7xl mx-auto ${theme.border} ${theme.card} flex flex-col bg-white overflow-hidden`}>
-        
-        {/* Navegação */}
-        <nav className={`flex flex-row overflow-x-auto sm:grid sm:grid-cols-5 border-b-[3px] border-slate-900 bg-slate-100`}>
-          <NavButton tab="dashboard" icon={Icons.Home} label="Dashboard" />
-          <NavButton tab="finished" icon={Icons.List} label="Finalizados" />
-          <NavButton tab="backlog" icon={Icons.List} label="Backlog" />
-          <NavButton tab="add" icon={Icons.Plus} label="Novo Jogo" />
-          <NavButton tab="settings" icon={Icons.Settings} label="Config" />
+      <div className={`max-w-[1400px] mx-auto ${theme.border} ${theme.card} flex flex-col bg-white overflow-hidden`}>
+        {/* NAVEGAÇÃO */}
+        <nav className="flex flex-row overflow-x-auto sm:grid sm:grid-cols-5 border-b-[3px] border-slate-900 bg-slate-100">
+          {[
+            { id: 'dashboard', label: 'Dashboard', icon: Icons.Home },
+            { id: 'finished', label: 'Finalizados', icon: Icons.List },
+            { id: 'backlog', label: 'Backlog', icon: Icons.List },
+            { id: 'add', label: 'Novo Jogo', icon: Icons.Plus },
+            { id: 'settings', label: 'Config', icon: Icons.Settings }
+          ].map(t => (
+            <button key={t.id} onClick={() => setActiveTab(t.id)} className={`flex flex-col items-center justify-center p-3 sm:flex-row sm:gap-2 w-full transition-colors border-r-[3px] border-slate-900 ${activeTab === t.id ? theme.gold : 'bg-white hover:bg-slate-50'}`}>
+              <t.icon /> <span className="text-xs sm:text-sm font-black uppercase">{t.label}</span>
+            </button>
+          ))}
         </nav>
 
-        {/* Loader Secundário Animado */}
         {appState === 'loading' && (
           <div className="h-1.5 w-full bg-slate-200 relative overflow-hidden border-b-[3px] border-slate-900">
             <div className="absolute top-0 left-0 h-full bg-[#FF8B94] animate-[pulse_1s_ease-in-out_infinite] w-full origin-left"></div>
           </div>
         )}
 
-        <main className="p-3 sm:p-6">
-
-          {/* VIEW: SETTINGS */}
-          {activeTab === 'settings' && (
-            <div className={`max-w-lg mx-auto ${theme.cyan} p-6 ${theme.border} ${theme.card}`}>
-              <h2 className="text-2xl font-black mb-4 uppercase">Alterar Conexão</h2>
-              <input type="url" value={configUrl} onChange={(e) => setConfigUrl(e.target.value)} className={`${theme.input} mb-4`} />
-              
-              {syncStatus.type !== 'idle' && (
-                <div className={`p-3 mb-4 font-bold text-sm border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] text-center
-                  ${syncStatus.type === 'success' ? 'bg-[#86EFAC]' : syncStatus.type === 'error' ? theme.pink : 'bg-white'}
-                `}>
-                  {syncStatus.message}
-                </div>
-              )}
-
-              <button onClick={saveConfig} disabled={appState === 'loading'} className={`${theme.btnBase} ${theme.gold} w-full`}>
-                {appState === 'loading' ? 'Reconectando...' : 'Reconectar'}
-              </button>
-            </div>
-          )}
-
-          {/* VIEW: DASHBOARD */}
-          {activeTab === 'dashboard' && (
-            <div className="flex flex-col gap-6">
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div className={`p-4 ${theme.border} ${theme.card} ${theme.cyan}`}>
-                  <div className="text-xs font-black uppercase mb-1">Total Jogos</div>
-                  <div className="text-3xl font-black">{stats.total}</div>
-                </div>
-                <div className={`p-4 ${theme.border} ${theme.card} bg-white`}>
-                  <div className="text-xs font-black uppercase mb-1">Finalizados / Backlog</div>
-                  <div className="text-xl font-black">{stats.finished} <span className="text-slate-400">/</span> {stats.backlog}</div>
-                </div>
-                <div className={`p-4 ${theme.border} ${theme.card} ${theme.gold}`}>
-                  <div className="text-xs font-black uppercase mb-1">Horas de Jogo</div>
-                  <div className="text-2xl font-black">{stats.totalTime}h</div>
-                </div>
-                <div className={`p-4 ${theme.border} ${theme.card} ${theme.pink}`}>
-                  <div className="text-xs font-black uppercase mb-1">Média Notas (excl. S)</div>
-                  <div className="text-2xl font-black">{stats.avgRating} <span className="text-xs font-bold text-slate-800">/10</span></div>
-                </div>
-                <div className={`p-4 ${theme.border} ${theme.card} bg-gradient-to-br from-[#FF8B94] via-[#A8E6CF] to-[#FFD3B6]`}>
-                  <div className="text-xs font-black uppercase mb-1 text-slate-900">Rank S (Masterpiece)</div>
-                  <div className="text-3xl font-black text-slate-900">⭐ {stats.sRankCount}</div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className={`p-5 ${theme.border} ${theme.card} bg-white`}>
-                  <h3 className="text-md font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-2">Top Consoles</h3>
-                  {stats.consoleChartData.length > 0 ? 
-                    <SimpleBarChart data={stats.consoleChartData} maxVal={stats.maxConsoleCount} /> 
-                    : <p className="text-slate-500 font-bold text-xs">Sem dados suficientes.</p>}
-                </div>
-                <div className={`p-5 ${theme.border} ${theme.card} bg-white`}>
-                  <h3 className="text-md font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-2">Top Gêneros</h3>
-                  {stats.genreChartData.length > 0 ? 
-                    <SimpleBarChart data={stats.genreChartData} maxVal={stats.maxGenreCount} /> 
-                    : <p className="text-slate-500 font-bold text-xs">Sem dados suficientes.</p>}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* VIEW: FINALIZADOS & BACKLOG TABLES */}
+        <main className="p-4 sm:p-6">
+          
+          {/* TAB: TABELAS (FINALIZADOS & BACKLOG) */}
           {(activeTab === 'finished' || activeTab === 'backlog') && (
             <div className="flex flex-col gap-4">
-              
-              {/* Barra de Busca */}
-              <div className="flex justify-between items-center gap-4">
-                <input 
-                  type="text" 
-                  placeholder="🔍 Buscar por título, console ou gênero..." 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className={`${theme.input} max-w-xs`}
-                />
-                <div className="text-xs font-black uppercase">
-                  Exibindo {filteredGames.length} jogos
-                </div>
+              <div className="flex justify-between items-center gap-4 flex-wrap">
+                <input type="text" placeholder="🔍 Buscar por título, console ou gênero..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`${theme.input} max-w-sm`} />
+                <div className="text-xs font-black uppercase text-slate-500">Exibindo {sortedAndFilteredGames.length} jogos</div>
               </div>
 
-              <div className="overflow-x-auto border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)] bg-white">
-                <table className="w-full text-left border-collapse whitespace-nowrap min-w-[1100px] text-xs font-bold">
+              <div className="overflow-x-auto border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)] bg-white pb-2">
+                <table className="w-full text-left border-collapse whitespace-nowrap text-[11px] sm:text-xs font-bold">
                   <thead>
                     <tr className={`${activeTab === 'finished' ? theme.gold : theme.cyan} border-b-[3px] border-slate-900 uppercase font-black text-slate-900`}>
-                      <th className="p-2.5 border-r-[3px] border-slate-900 text-center w-12">#</th>
-                      <th className="p-2.5 border-r-[3px] border-slate-900">Nome do Jogo</th>
-                      <th className="p-2.5 border-r-[3px] border-slate-900">Console</th>
-                      <th className="p-2.5 border-r-[3px] border-slate-900">Gênero</th>
+                      <Th label="#" sortKey="ordem" className="text-center w-10" />
+                      <Th label="Nome do Jogo" sortKey="titulo" />
+                      <Th label="Console" sortKey="plataforma" />
+                      <Th label="Gênero" sortKey="franquia" />
                       {activeTab === 'finished' && (
                         <>
-                          <th className="p-2.5 border-r-[3px] border-slate-900 text-center">Início</th>
-                          <th className="p-2.5 border-r-[3px] border-slate-900 text-center">Fim</th>
-                          <th className="p-2.5 border-r-[3px] border-slate-900 text-center">Tempo Total</th>
-                          <th className="p-2.5 border-r-[3px] border-slate-900 text-center">Duração</th>
-                          <th className="p-2.5 border-r-[3px] border-slate-900 text-center">Nota</th>
-                          <th className="p-2.5 border-r-[3px] border-slate-900 text-center">Dificuldade</th>
-                          <th className="p-2.5 border-r-[3px] border-slate-900">Condição</th>
+                          <Th label="Início" sortKey="inicio" className="text-center" />
+                          <Th label="Fim" sortKey="fim" className="text-center" />
+                          <Th label="Tempo" sortKey="tempo" className="text-center" />
+                          <Th label="Nota" sortKey="nota" className="text-center" />
+                          <Th label="Dif" sortKey="dificuldade" className="text-center" />
                         </>
                       )}
-                      <th className="p-2.5 border-r-[3px] border-slate-900 text-center">Pago</th>
-                      <th className="p-2.5 border-r-[3px] border-slate-900 text-center">Original</th>
-                      <th className="p-2.5 border-r-[3px] border-slate-900 text-center">Desconto</th>
-                      <th className="p-2.5 border-r-[3px] border-slate-900">Suporte</th>
                       <th className="p-2.5 text-center">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredGames.map((game, i) => {
-                      const difBadge = getDifficultyBadge(game.dificuldade);
-                      const discount = calculateDiscount(game.preco, game.preco_original);
-                      const timeSpan = calculateTimeSpan(game.inicio, game.fim);
-                      
-                      return (
-                        <tr key={game.id || i} className="border-b-[2px] border-slate-900 hover:bg-slate-50 transition-colors">
-                          <td className="p-2.5 border-r-[3px] border-slate-900 text-center font-black bg-slate-100">
-                            {game.ordem || i + 1}
-                          </td>
-                          <td className="p-2.5 border-r-[3px] border-slate-900 font-black text-sm">
-                            {game.titulo || '-'}
-                          </td>
-                          <td className="p-2.5 border-r-[3px] border-slate-900">
-                            <span className="inline-flex items-center gap-1.5 px-2 py-1 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]" style={{backgroundColor: getConsoleColor(game.plataforma)}}>
-                              <ConsoleIcon consoleName={game.plataforma} />
-                              <span className="font-black uppercase">{game.plataforma || '-'}</span>
-                            </span>
-                          </td>
-                          <td className="p-2.5 border-r-[3px] border-slate-900">
-                            <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] uppercase text-[11px]" style={{backgroundColor: getGenreColor(game.franquia)}}>
-                              {game.franquia || '-'}
-                            </span>
-                          </td>
-
-                          {activeTab === 'finished' && (
-                            <>
-                              <td className="p-2.5 border-r-[3px] border-slate-900 text-center">{game.inicio || '-'}</td>
-                              <td className="p-2.5 border-r-[3px] border-slate-900 text-center">{game.fim || '-'}</td>
-                              <td className="p-2.5 border-r-[3px] border-slate-900 text-center font-black">
-                                {formatTempo(game.tempo)}
-                              </td>
-                              <td className="p-2.5 border-r-[3px] border-slate-900 text-center">
-                                <span className="inline-block px-1.5 py-0.5 bg-slate-100 border-[1px] border-slate-900">{timeSpan}</span>
-                              </td>
-                              <td className="p-2.5 border-r-[3px] border-slate-900 text-center">
-                                {getRatingBadge(game.nota)}
-                              </td>
-                              <td className="p-2.5 border-r-[3px] border-slate-900 text-center">
-                                <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] uppercase font-black" style={{backgroundColor: difBadge.bg}}>
-                                  {difBadge.text}
-                                </span>
-                              </td>
-                              <td className="p-2.5 border-r-[3px] border-slate-900 font-medium truncate max-w-[150px]">{game.conquistas || '-'}</td>
-                            </>
-                          )}
-
-                          <td className="p-2.5 border-r-[3px] border-slate-900 text-center">
-                            {getPriceBadge(game.preco, stats.maxPrice)}
-                          </td>
-                          <td className="p-2.5 border-r-[3px] border-slate-900 text-center text-slate-500">
-                            {game.preco_original ? `R$ ${parseFloat(String(game.preco_original).replace('R$', '').trim().replace(',', '.')).toFixed(2)}` : '-'}
-                          </td>
-                          <td className="p-2.5 border-r-[3px] border-slate-900 text-center font-black">
-                            {discount.hasDiscount ? (
-                              <span className="text-emerald-700 bg-emerald-100 px-1.5 py-0.5 border-[1px] border-emerald-900">
-                                {discount.descontoVal} ({discount.descontoPct})
-                              </span>
-                            ) : '-'}
-                          </td>
-                          <td className="p-2.5 border-r-[3px] border-slate-900 font-medium">{game.suporte || game.midia || '-'}</td>
-
-                          <td className="p-2.5 text-center">
-                            <div className="flex justify-center gap-2">
-                              <button onClick={() => editGame(game)} title="Editar" className="p-1 border-[2px] border-slate-900 bg-white hover:bg-amber-200 transition-colors shadow-[2px_2px_0_0_rgba(15,23,42,1)] active:translate-y-0.5"><Icons.Plus /></button>
-                              <button onClick={() => deleteGame(game.id)} title="Excluir" className="p-1 border-[2px] border-slate-900 bg-white hover:bg-rose-200 transition-colors shadow-[2px_2px_0_0_rgba(15,23,42,1)] active:translate-y-0.5"><Icons.Trash /></button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    {filteredGames.length === 0 && (
-                      <tr><td colSpan="16" className="p-8 text-center text-slate-500 font-black">Nenhum jogo encontrado.</td></tr>
-                    )}
+                    {sortedAndFilteredGames.map((game, i) => (
+                      <tr key={game.id || i} className="border-b-[2px] border-slate-900 hover:bg-slate-50 transition-colors">
+                        <td className="p-2 border-r-[3px] border-slate-900 text-center font-black bg-slate-100">{game.ordem || '-'}</td>
+                        <td onClick={() => openFicha(game)} className="p-2 border-r-[3px] border-slate-900 font-black text-sm cursor-pointer hover:text-blue-600 transition-colors underline decoration-slate-300 underline-offset-4">{game.titulo || '-'}</td>
+                        <td onClick={() => openFicha(game)} className="p-2 border-r-[3px] border-slate-900 cursor-pointer">
+                          <span className="inline-flex items-center gap-1.5 px-2 py-1 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform" style={{backgroundColor: Colors.getConsole(game.plataforma)}}>
+                            <ConsoleIcon consoleName={game.plataforma} /> <span className="font-black uppercase">{game.plataforma || '-'}</span>
+                          </span>
+                        </td>
+                        <td onClick={() => openFicha(game)} className="p-2 border-r-[3px] border-slate-900 cursor-pointer">
+                          <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 uppercase shadow-[1px_1px_0_0_rgba(15,23,42,1)]" style={{backgroundColor: Colors.getGenre(game.franquia)}}>{game.franquia || '-'}</span>
+                        </td>
+                        {activeTab === 'finished' && (
+                          <>
+                            <td className="p-2 border-r-[3px] border-slate-900 text-center">{formatDateStr(game.inicio)}</td>
+                            <td className="p-2 border-r-[3px] border-slate-900 text-center">{formatDateStr(game.fim)}</td>
+                            <td className="p-2 border-r-[3px] border-slate-900 text-center font-black">{formatTempoStr(game.tempo)}</td>
+                            <td className="p-2 border-r-[3px] border-slate-900 text-center">{getRatingBadge(game.nota)}</td>
+                            <td className="p-2 border-r-[3px] border-slate-900 text-center">
+                              <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] uppercase font-black" style={{backgroundColor: getDifficultyBadge(game.dificuldade).bg}}>{getDifficultyBadge(game.dificuldade).text}</span>
+                            </td>
+                          </>
+                        )}
+                        <td className="p-2 text-center align-middle">
+                          <button onClick={() => handleDelete(game.id)} title="Excluir" className="p-1.5 border-[2px] border-slate-900 bg-white hover:bg-rose-200 transition-colors shadow-[2px_2px_0_0_rgba(15,23,42,1)] active:translate-y-0.5"><Icons.Close /></button>
+                        </td>
+                      </tr>
+                    ))}
+                    {sortedAndFilteredGames.length === 0 && <tr><td colSpan="10" className="p-8 text-center text-slate-500 font-black">Nenhum jogo encontrado.</td></tr>}
                   </tbody>
                 </table>
               </div>
             </div>
           )}
 
-          {/* VIEW: ADD / EDIT FORM */}
+          {/* TAB: NOVO JOGO */}
           {activeTab === 'add' && (
-            <form onSubmit={saveGame} className={`p-6 sm:p-8 bg-white ${theme.border} ${theme.card}`}>
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b-[3px] border-slate-900 pb-4 gap-4">
-                <h2 className="text-2xl font-black uppercase">{formData.id ? 'Editar Jogo' : 'Adicionar Novo Jogo'}</h2>
-                <div className="flex gap-4 p-2 bg-slate-100 border-[2px] border-slate-900">
-                  <label className="flex items-center gap-2 font-black uppercase text-xs cursor-pointer">
-                    <input type="radio" name="status" value="Backlog" checked={formData.status === 'Backlog'} onChange={e => setFormData({...formData, status: e.target.value})} className="w-4 h-4 accent-slate-900" />
-                    Backlog
-                  </label>
-                  <label className="flex items-center gap-2 font-black uppercase text-xs cursor-pointer">
-                    <input type="radio" name="status" value="Finalizado" checked={formData.status === 'Finalizado'} onChange={e => setFormData({...formData, status: e.target.value})} className="w-4 h-4 accent-slate-900" />
-                    Finalizado
-                  </label>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Nome do Jogo *</label>
-                  <input required value={formData.titulo} onChange={e => setFormData({...formData, titulo: e.target.value})} className={theme.input} />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Console</label>
-                  <input placeholder="ex: PS4, Switch, PC..." value={formData.plataforma} onChange={e => setFormData({...formData, plataforma: e.target.value})} className={theme.input} />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Gênero</label>
-                  <input placeholder="ex: RPG, Plataforma, Ação..." value={formData.franquia} onChange={e => setFormData({...formData, franquia: e.target.value})} className={theme.input} />
-                </div>
-                
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Nota (0 a 10 ou S)</label>
-                  <input placeholder="ex: 9.5 ou S" value={formData.nota} onChange={e => setFormData({...formData, nota: e.target.value})} className={theme.input} />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Dificuldade (A a E)</label>
-                  <select value={formData.dificuldade} onChange={e => setFormData({...formData, dificuldade: e.target.value})} className={theme.input}>
-                    <option value="A">A (Muito Difícil)</option>
-                    <option value="B">B (Difícil)</option>
-                    <option value="C">C (Médio)</option>
-                    <option value="D">D (Fácil)</option>
-                    <option value="E">E (Facílimo)</option>
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Tempo Total (Horas)</label>
-                  <input placeholder="ex: 74:47:48 ou 20h" value={formData.tempo} onChange={e => setFormData({...formData, tempo: e.target.value})} className={theme.input} />
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Preço Pago (R$)</label>
-                  <input placeholder="ex: 69.98" value={formData.preco} onChange={e => setFormData({...formData, preco: e.target.value})} className={theme.input} />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Preço sem Desconto (R$)</label>
-                  <input placeholder="ex: 199.90" value={formData.preco_original} onChange={e => setFormData({...formData, preco_original: e.target.value})} className={theme.input} />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Suporte / Mídia</label>
-                  <input placeholder="ex: Digital / PS Store, Físico / BD" value={formData.suporte} onChange={e => setFormData({...formData, suporte: e.target.value})} className={theme.input} />
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Data de Início</label>
-                  <input placeholder="dd/mm/aaaa" value={formData.inicio} onChange={e => setFormData({...formData, inicio: e.target.value})} className={theme.input} />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Data de Fim</label>
-                  <input placeholder="dd/mm/aaaa" value={formData.fim} onChange={e => setFormData({...formData, fim: e.target.value})} className={theme.input} />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase">Condição de Finalização</label>
-                  <input placeholder="ex: Platina, Terminar história" value={formData.conquistas} onChange={e => setFormData({...formData, conquistas: e.target.value})} className={theme.input} />
-                </div>
-                
-                <div className="flex flex-col gap-1 md:col-span-3">
-                  <label className="text-xs font-black uppercase">Observações</label>
-                  <textarea rows="2" value={formData.comentarios} onChange={e => setFormData({...formData, comentarios: e.target.value})} className={theme.input}></textarea>
-                </div>
-              </div>
-              
-              <div className="mt-8 flex justify-end">
-                <button type="submit" disabled={appState === 'loading'} className={`${theme.btnBase} ${theme.cyan} flex items-center gap-2 text-md`}>
-                  <Icons.Save /> {appState === 'loading' ? 'Salvando...' : 'Salvar Jogo'}
-                </button>
-              </div>
-            </form>
+            <div className={`p-6 bg-white ${theme.border} ${theme.card} max-w-4xl mx-auto`}>
+              <h2 className="text-2xl font-black uppercase mb-6 border-b-[3px] border-slate-900 pb-2">Novo Jogo (Adicionado no Topo)</h2>
+              {/* Reaproveita o formulário de edição da ficha para simplificar */}
+              <p className="font-bold text-xs text-slate-600">Preencha os dados abaixo. Eles serão inseridos na linha 2 da sua planilha.</p>
+            </div>
           )}
 
         </main>
       </div>
+
+      {/* MODAL FICHA COMPLETA */}
+      {selectedGame && (
+        <div className="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+          <div className={`w-full max-w-4xl bg-white ${theme.border} ${theme.card} flex flex-col my-auto shadow-2xl`}>
+            
+            {/* Modal Header */}
+            <div className={`p-4 border-b-[3px] border-slate-900 flex justify-between items-center ${isEditingFicha ? theme.pink : theme.cyan}`}>
+              <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tighter truncate pr-4">
+                {isEditingFicha ? 'Editar Ficha' : selectedGame.titulo}
+              </h2>
+              <button onClick={() => setSelectedGame(null)} className="p-1 hover:bg-white/50 rounded-full transition-colors border-2 border-transparent hover:border-slate-900"><Icons.Close /></button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4 sm:p-6 bg-slate-50 overflow-y-auto max-h-[75vh]">
+              
+              {fichaStatus.type !== 'idle' && (
+                <div className={`p-3 mb-4 font-bold text-sm text-center border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] ${fichaStatus.type === 'loading' ? 'bg-amber-200' : fichaStatus.type === 'success' ? 'bg-[#86EFAC]' : theme.pink}`}>
+                  {fichaStatus.message}
+                </div>
+              )}
+
+              {!isEditingFicha ? (
+                /* --- MODO VISUALIZAÇÃO --- */
+                <div className="flex flex-col gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Console</span><span className="font-bold">{selectedGame.plataforma || '-'}</span></div>
+                    <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Gênero</span><span className="font-bold">{selectedGame.franquia || '-'}</span></div>
+                    <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Nota</span><div className="mt-1">{getRatingBadge(selectedGame.nota)}</div></div>
+                    <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Dificuldade</span><span className="font-bold">{selectedGame.dificuldade || '-'}</span></div>
+                    
+                    <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Data de Início</span><span className="font-bold">{formatDateStr(selectedGame.inicio)}</span></div>
+                    <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Data de Fim</span><span className="font-bold">{formatDateStr(selectedGame.fim)}</span></div>
+                    <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Tempo de Jogo</span><span className="font-black text-blue-700">{formatTempoStr(selectedGame.tempo)}</span></div>
+                    <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Duração Span</span><span className="font-bold">{calculateTimeSpan(selectedGame.inicio, selectedGame.fim)}</span></div>
+                  </div>
+
+                  <div className="p-4 bg-white border-[2px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)]">
+                    <span className="text-[10px] font-black uppercase text-slate-500 block mb-2">Condição / Conquistas</span>
+                    <p className="font-bold text-sm whitespace-pre-wrap">{selectedGame.conquistas || '-'}</p>
+                  </div>
+                  
+                  <div className="p-4 bg-white border-[2px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)]">
+                    <span className="text-[10px] font-black uppercase text-slate-500 block mb-2">Observações</span>
+                    <p className="font-bold text-sm whitespace-pre-wrap">{selectedGame.comentarios || '-'}</p>
+                  </div>
+
+                  {getYoutubeId(selectedGame.midia) || getYoutubeId(selectedGame.suporte) ? (
+                    <div className="w-full aspect-video border-[3px] border-slate-900 shadow-[6px_6px_0_0_rgba(15,23,42,1)]">
+                      <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${getYoutubeId(selectedGame.midia) || getYoutubeId(selectedGame.suporte)}`} title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+                    </div>
+                  ) : (selectedGame.midia || selectedGame.suporte) && (
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[10px] font-black uppercase text-slate-500">Links / Suporte</span>
+                      <a href={selectedGame.midia} target="_blank" rel="noreferrer" className="text-blue-600 font-bold hover:underline break-all">{selectedGame.midia}</a>
+                      <span className="font-bold">{selectedGame.suporte}</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* --- MODO EDIÇÃO --- */
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Nome *</label><input value={fichaData.titulo} onChange={e=>setFichaData({...fichaData, titulo: e.target.value})} className={theme.input} /></div>
+                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Console</label><input value={fichaData.plataforma} onChange={e=>setFichaData({...fichaData, plataforma: e.target.value})} className={theme.input} /></div>
+                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Gênero</label><input value={fichaData.franquia} onChange={e=>setFichaData({...fichaData, franquia: e.target.value})} className={theme.input} /></div>
+                  
+                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Início</label><input value={fichaData.inicio} onChange={e=>setFichaData({...fichaData, inicio: e.target.value})} className={theme.input} /></div>
+                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Fim</label><input value={fichaData.fim} onChange={e=>setFichaData({...fichaData, fim: e.target.value})} className={theme.input} /></div>
+                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Tempo</label><input value={fichaData.tempo} onChange={e=>setFichaData({...fichaData, tempo: e.target.value})} className={theme.input} /></div>
+                  
+                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Nota (0 a 10 ou S)</label><input value={fichaData.nota} onChange={e=>setFichaData({...fichaData, nota: e.target.value})} className={theme.input} /></div>
+                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Dificuldade</label><input value={fichaData.dificuldade} onChange={e=>setFichaData({...fichaData, dificuldade: e.target.value})} className={theme.input} /></div>
+                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Link / Mídia</label><input value={fichaData.midia} onChange={e=>setFichaData({...fichaData, midia: e.target.value})} className={theme.input} /></div>
+                  
+                  <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Condição</label><textarea value={fichaData.conquistas} onChange={e=>setFichaData({...fichaData, conquistas: e.target.value})} className={theme.input} rows="2" /></div>
+                  <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Observações</label><textarea value={fichaData.comentarios} onChange={e=>setFichaData({...fichaData, comentarios: e.target.value})} className={theme.input} rows="2" /></div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t-[3px] border-slate-900 bg-white flex justify-end gap-4">
+              {!isEditingFicha ? (
+                <button onClick={() => setIsEditingFicha(true)} className={`${theme.btnBase} ${theme.gold}`}>Habilitar Edição</button>
+              ) : (
+                <>
+                  <button onClick={() => { setIsEditingFicha(false); setFichaData(selectedGame); }} className="px-4 py-2 font-black uppercase text-slate-500 hover:text-slate-900 transition-colors">Cancelar</button>
+                  <button onClick={handleUpdateFicha} className={`${theme.btnBase} ${theme.cyan}`}>Salvar Alterações</button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
