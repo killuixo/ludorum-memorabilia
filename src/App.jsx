@@ -6,7 +6,8 @@ const theme = {
   cyan: 'bg-[#A8E6CF]',
   gold: 'bg-[#FFD3B6]',
   pink: 'bg-[#FF8B94]',
-  blue: 'bg-[#3B82F6]', // Para os gráficos de preço
+  blue: 'bg-[#3B82F6]', 
+  red: 'bg-[#EF4444]',
   input: 'w-full p-2 border-[3px] border-slate-900 bg-white font-bold outline-none focus:bg-slate-50 transition-colors text-sm',
   btnBase: 'px-4 py-2 border-[3px] border-slate-900 font-black uppercase active:translate-y-1 active:translate-x-1 active:shadow-none transition-all shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer',
 };
@@ -14,14 +15,14 @@ const theme = {
 const getVal = (game, possibleKeys) => {
   if (!game) return '';
   for (let pk of possibleKeys) {
-     if (game[pk] !== undefined) return game[pk];
+     if (game[pk] !== undefined && game[pk] !== null && game[pk] !== '') return game[pk];
   }
   const keys = Object.keys(game);
   for (let k of keys) {
      const cleanK = String(k).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[\n\r]/g, ' ').replace(/\s+/g, ' ').trim();
      for (let pk of possibleKeys) {
         const cleanPk = String(pk).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[\n\r]/g, ' ').replace(/\s+/g, ' ').trim();
-        if (cleanK === cleanPk) return game[k];
+        if (cleanK === cleanPk && game[k] !== undefined && game[k] !== null && game[k] !== '') return game[k];
      }
   }
   return '';
@@ -31,14 +32,21 @@ const formatCurrency = (val) => {
   if (val === undefined || val === null || val === '' || val === '-') return '';
   let strVal = String(val).replace('R$', '').trim().replace(/\s/g, '').replace(',', '.');
   let num = parseFloat(strVal);
-  if (isNaN(num)) return String(val);
+  if (isNaN(num)) return '';
   return `R$ ${num.toFixed(2).replace('.', ',')}`;
+};
+
+const getNumericPrice = (val) => {
+  if (!val || val === '-') return 0;
+  let strVal = String(val).replace('R$', '').trim().replace(/\s/g, '').replace(',', '.');
+  let num = parseFloat(strVal);
+  return isNaN(num) ? 0 : num;
 };
 
 const formatDateStr = (str) => {
   if (!str || str === '-') return '';
   let s = String(str).trim();
-  if (s.includes('T') && s.includes('Z')) {
+  if (s.includes('T') && (s.includes('Z') || s.includes('-'))) {
     try {
       const d = new Date(s);
       const day = String(d.getUTCDate()).padStart(2, '0');
@@ -83,7 +91,7 @@ const formatTempoStr = (tempoVal) => {
 const parseDuracaoDays = (inicio, fim) => {
   let inStr = formatDateStr(inicio);
   let fimStr = formatDateStr(fim);
-  if (!inStr || !fimStr) return 0;
+  if (!inStr || !fimStr) return -1;
   try {
     const parseDate = (s) => {
       let p = s.split('/');
@@ -92,14 +100,15 @@ const parseDuracaoDays = (inicio, fim) => {
     };
     let d1 = parseDate(inStr);
     let d2 = parseDate(fimStr);
-    if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return 0;
+    if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return -1;
     return Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24));
-  } catch (e) { return 0; }
+  } catch (e) { return -1; }
 };
 
 const calculateTimeSpan = (inicio, fim) => {
   let diffDays = parseDuracaoDays(inicio, fim);
-  if (diffDays === 0) return '';
+  if (diffDays < 0) return '';
+  if (diffDays === 0) return '0 dias';
   if (diffDays === 1) return '1 dia';
   if (diffDays < 14) return `${diffDays} dias`;
   if (diffDays < 60) {
@@ -118,20 +127,26 @@ const calculateTimeSpan = (inicio, fim) => {
   return `${y} ${y === 1 ? 'ano' : 'anos'} e ${m} ${m === 1 ? 'mês' : 'meses'}`;
 };
 
+const getNumericTempo = (tempoVal) => {
+  let str = formatTempoStr(tempoVal);
+  let hrs = 0;
+  let mins = 0;
+  let hMatch = str.match(/(\d+)h/);
+  let mMatch = str.match(/(\d+)m/);
+  if (hMatch) hrs = parseInt(hMatch[1], 10);
+  if (mMatch) mins = parseInt(mMatch[1], 10);
+  return hrs + (mins / 60);
+};
+
 const calculateDiscount = (pPago, pOrig) => {
-  const parseVal = (v) => {
-    if (!v || v === '-') return 0;
-    let c = String(v).replace('R$', '').trim().replace(',', '.');
-    return parseFloat(c) || 0;
-  };
-  let pago = parseVal(pPago);
-  let orig = parseVal(pOrig);
+  let pago = getNumericPrice(pPago);
+  let orig = getNumericPrice(pOrig);
   if (orig > pago && orig > 0) {
     let diff = orig - pago;
     let pct = Math.round((diff / orig) * 100);
     return { val: `R$ ${diff.toFixed(2).replace('.', ',')}`, pct: `${pct}%`, has: true, rawDiff: diff, pago: pago, orig: orig };
   }
-  return { has: false, rawDiff: 0, pago: pago, orig: orig };
+  return { has: false, rawDiff: -1, pago: pago, orig: orig };
 };
 
 const getYoutubeId = (url) => {
@@ -204,7 +219,7 @@ const getRatingBadge = (notaVal) => {
   if (!notaVal || notaVal === '-') return null;
   let s = String(notaVal).trim().toUpperCase();
   if (s === 'S' || s === 'RANK S') return (
-    <span className="inline-block px-3 py-1 font-black text-xs uppercase border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] bg-gradient-to-r from-[#FF8B94] via-[#A8E6CF] to-[#FFD3B6] animate-pulse text-slate-900">
+    <span className="inline-block px-3 py-1 font-black text-xs uppercase border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] bg-gradient-to-r from-[#FF8B94] via-[#A8E6CF] to-[#FFD3B6] animate-[pulse_2s_ease-in-out_infinite] text-slate-900 cursor-pointer hover:-translate-y-0.5 transition-transform">
       ⭐ S
     </span>
   );
@@ -212,16 +227,16 @@ const getRatingBadge = (notaVal) => {
   if (isNaN(num)) return <span className="font-bold">{s}</span>;
   let bg = num >= 9.0 ? '#A8E6CF' : num >= 7.5 ? '#C7F0DB' : num >= 6.0 ? '#FFE5B4' : '#FFD3B6';
   return (
-    <span className="inline-block px-2.5 py-1 font-black text-xs border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]" style={{ backgroundColor: bg }}>
+    <span className="inline-block px-2.5 py-1 font-black text-xs border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] cursor-pointer hover:-translate-y-0.5 transition-transform" style={{ backgroundColor: bg }}>
       {num.toFixed(1)}
     </span>
   );
 };
 
 const getPriceColor = (priceVal) => {
-  if (!priceVal || priceVal === '-') return 'transparent';
-  let p = parseFloat(String(priceVal).replace('R$', '').trim().replace(',', '.'));
-  if (isNaN(p) || p === 0) return 'transparent';
+  if (priceVal === undefined || priceVal === null || priceVal === '' || priceVal === '-') return 'transparent';
+  let p = getNumericPrice(priceVal);
+  if (p === 0) return 'transparent';
   if (p >= 100) return '#FF8B94'; 
   if (p >= 40) return '#A8E6CF';
   return '#FFD3B6'; 
@@ -244,7 +259,7 @@ export default function App() {
   const [syncStatus, setSyncStatus] = useState({ type: 'idle', message: '' });
   const [addStatus, setAddStatus] = useState({ type: 'idle', message: '' });
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState({ key: 'ordem', direction: 'desc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'ordem', direction: 'asc' });
 
   const [viewModal, setViewModal] = useState(null);
   const [isEditingFicha, setIsEditingFicha] = useState(false);
@@ -300,6 +315,8 @@ export default function App() {
     setSortConfig({ key, direction });
   };
 
+  const isValBlank = (val) => val === '' || val === null || val === undefined || val === '-' || (typeof val === 'number' && isNaN(val)) || (typeof val === 'number' && val === -1);
+
   const sortedAndFilteredGames = useMemo(() => {
     let list = games.filter(g => g.status === (activeTab === 'finished' ? 'Finalizado' : 'Backlog'));
     
@@ -318,41 +335,41 @@ export default function App() {
       let valA, valB;
       
       if (sortConfig.key === 'ordem') {
-        valA = parseInt(a['#'] || a['ordem'] || getVal(a, ['#', 'ordem', 'numero']) || a._fallbackId) || 0;
-        valB = parseInt(b['#'] || b['ordem'] || getVal(b, ['#', 'ordem', 'numero']) || b._fallbackId) || 0;
+        valA = parseInt(getVal(a, ['#', 'ordem', 'numero'])) || a._fallbackId || 0;
+        valB = parseInt(getVal(b, ['#', 'ordem', 'numero'])) || b._fallbackId || 0;
       } else if (sortConfig.key === 'nota') {
         const p = x => {
           let s = String(x).toUpperCase().trim();
           if (s === 'S' || s === 'RANK S') return 999;
-          return parseFloat(s.replace(',','.')) || 0;
+          return parseFloat(s.replace(',','.')) || -1;
         };
         valA = p(getVal(a, ['nota'])); valB = p(getVal(b, ['nota']));
       } else if (sortConfig.key === 'tempo') {
-        const p = x => parseFloat(formatTempoStr(x).replace('h','')) || 0;
-        valA = p(getVal(a, ['tempo'])); valB = p(getVal(b, ['tempo']));
+        valA = getNumericTempo(getVal(a, ['tempo']));
+        valB = getNumericTempo(getVal(b, ['tempo']));
+        if (valA === 0) valA = -1; 
+        if (valB === 0) valB = -1;
       } else if (sortConfig.key === 'duracao') {
         valA = parseDuracaoDays(getVal(a, ['inicio', 'iniciado']), getVal(a, ['fim', 'termino']));
         valB = parseDuracaoDays(getVal(b, ['inicio', 'iniciado']), getVal(b, ['fim', 'termino']));
       } else if (sortConfig.key === 'preco') {
-        const p = x => parseFloat(String(x).replace('R$', '').trim().replace(',', '.')) || 0;
-        valA = p(getVal(a, ['preco', 'preco pago'])); valB = p(getVal(b, ['preco', 'preco pago']));
+        valA = getNumericPrice(getVal(a, ['preco', 'preco pago']));
+        valB = getNumericPrice(getVal(b, ['preco', 'preco pago']));
+        if (valA === 0) valA = -1; if (valB === 0) valB = -1;
       } else if (sortConfig.key === 'preco_original') {
-        const p = x => parseFloat(String(x).replace('R$', '').trim().replace(',', '.')) || 0;
-        valA = p(getVal(a, ['preco_original', 'preco sem desconto', 'preço sem desconto'])); valB = p(getVal(b, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
+        valA = getNumericPrice(getVal(a, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
+        valB = getNumericPrice(getVal(b, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
+        if (valA === 0) valA = -1; if (valB === 0) valB = -1;
       } else if (sortConfig.key === 'desconto') {
-        const getDesc = x => {
-          let d = calculateDiscount(getVal(x, ['preco', 'preco pago']), getVal(x, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
-          return d.has ? d.rawDiff : 0;
-        };
+        const getDesc = x => calculateDiscount(getVal(x, ['preco', 'preco pago']), getVal(x, ['preco_original', 'preco sem desconto', 'preço sem desconto'])).rawDiff;
         valA = getDesc(a); valB = getDesc(b);
       } else {
         valA = String(getVal(a, [sortConfig.key])).toLowerCase();
         valB = String(getVal(b, [sortConfig.key])).toLowerCase();
       }
 
-      let isBlank = (val) => val === '' || val === null || val === undefined || val === '-' || (typeof val === 'number' && isNaN(val)) || (typeof val === 'number' && val === 0 && sortConfig.key !== 'nota');
-      let blankA = isBlank(valA);
-      let blankB = isBlank(valB);
+      let blankA = isValBlank(valA);
+      let blankB = isValBlank(valB);
 
       if (blankA && blankB) return 0;
       if (blankA) return 1;  
@@ -385,14 +402,12 @@ export default function App() {
     };
 
     fin.forEach(g => {
-      // Finanças
-      let pPago = parseFloat(String(getVal(g, ['preco', 'preco pago'])).replace('R$', '').trim().replace(',', '.'));
-      let pOrig = parseFloat(String(getVal(g, ['preco_original', 'preco sem desconto', 'preço sem desconto'])).replace('R$', '').trim().replace(',', '.'));
-      pPago = isNaN(pPago) ? 0 : pPago; pOrig = isNaN(pOrig) ? 0 : pOrig;
+      let pPago = getNumericPrice(getVal(g, ['preco', 'preco pago']));
+      let pOrig = getNumericPrice(getVal(g, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
+      
       stats.totalGasto += pPago;
       if(pOrig > pPago && pOrig > 0) stats.totalEconomia += (pOrig - pPago);
 
-      // Notas Distribution
       let n = parseFloat(String(getVal(g, ['nota'])).replace(',','.'));
       if(!isNaN(n)) {
         if(n === 10) stats.notas['10']++;
@@ -403,14 +418,12 @@ export default function App() {
         else stats.notas['Outras']++;
       }
 
-      // Diff
       let d = String(getVal(g, ['dificuldade'])).toUpperCase().trim();
       if(stats.dif[d] !== undefined) stats.dif[d]++;
 
-      // Top Consoles / Generos Aggregations
       let consoleName = getVal(g, ['plataforma', 'console']) || 'Desconhecido';
       let genreName = getVal(g, ['franquia', 'genero', 'gênero']) || 'Desconhecido';
-      let tHrs = parseFloat(formatTempoStr(getVal(g, ['tempo'])).replace('h','')) || 0;
+      let tHrs = getNumericTempo(getVal(g, ['tempo']));
 
       if(consoleName && consoleName !== '-') {
         if(!stats.consoles[consoleName]) stats.consoles[consoleName] = { count: 0, totalNota: 0, notaCount: 0, totalTempo: 0 };
@@ -425,6 +438,13 @@ export default function App() {
         stats.generos[genreName].totalTempo += tHrs;
         if(!isNaN(n)) { stats.generos[genreName].totalNota += n; stats.generos[genreName].notaCount++; }
       }
+    });
+
+    Object.keys(stats.consoles).forEach(c => {
+       stats.consoles[c].avgNota = stats.consoles[c].notaCount > 0 ? (stats.consoles[c].totalNota / stats.consoles[c].notaCount).toFixed(1) : 0;
+    });
+    Object.keys(stats.generos).forEach(c => {
+       stats.generos[c].avgNota = stats.generos[c].notaCount > 0 ? (stats.generos[c].totalNota / stats.generos[c].notaCount).toFixed(1) : 0;
     });
 
     stats.totalGastoStr = `R$ ${stats.totalGasto.toFixed(2).replace('.',',')}`;
@@ -472,9 +492,7 @@ export default function App() {
   const handleCreateNew = async (e) => {
     e.preventDefault();
     const success = await executeApiCall('ADD', { ...formData, id: 'temp_id' }, setAddStatus);
-    if (success) {
-      setFormData(blankForm);
-    }
+    if (success) setFormData(blankForm);
   };
 
   const handleUpdateFicha = async () => {
@@ -503,12 +521,12 @@ export default function App() {
     </th>
   );
 
-  const renderGameTable = (list, isModal = false) => (
-    <div className={`overflow-x-auto ${isModal ? '' : 'border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)]'} bg-white pb-2 max-w-full`}>
+  const renderGameTable = (list) => (
+    <div className={`overflow-x-auto border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)] bg-white pb-2 max-w-full`}>
       <table className="w-full text-left border-collapse text-[10px] sm:text-[11px] font-bold">
         <thead>
-          <tr className={`${activeTab === 'finished' || isModal ? theme.gold : theme.cyan} border-b-[3px] border-slate-900 uppercase font-black text-slate-900`}>
-            {!isModal && <Th label="#" sortKey="ordem" className="text-center w-10" />}
+          <tr className={`${activeTab === 'finished' || viewModal ? theme.gold : theme.cyan} border-b-[3px] border-slate-900 uppercase font-black text-slate-900`}>
+            <Th label="#" sortKey="ordem" className="text-center w-10" />
             <Th label="NOME DO JOGO" sortKey="titulo" />
             <Th label="CONSOLE" sortKey="plataforma" />
             <Th label="GÊNERO" sortKey="franquia" />
@@ -547,11 +565,9 @@ export default function App() {
             
             return (
               <tr key={game.id || i} className="border-b-[2px] border-slate-900 hover:bg-slate-50 transition-colors">
-                {!isModal && (
-                  <td className="p-2 border-r-[3px] border-slate-900 text-center font-black bg-slate-100 whitespace-nowrap">
-                    {visualId}
-                  </td>
-                )}
+                <td className="p-2 border-r-[3px] border-slate-900 text-center font-black bg-slate-100 whitespace-nowrap">
+                  {visualId}
+                </td>
                 <td onClick={() => { 
                       setFichaData({...game, '#': visualId, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc}); 
                       setViewModal({type:'game', data: {...game, '#': visualId, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc, inicio, fim, tempo, nota, dificuldade: dif, conquistas: cond, suporte: sup}}); 
@@ -581,11 +597,14 @@ export default function App() {
                 <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(fim)}</td>
                 <td className="p-2 border-r-[3px] border-slate-900 text-center font-black whitespace-nowrap">{formatTempoStr(tempo)}</td>
                 <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap font-bold text-slate-600">{calculateTimeSpan(inicio, fim)}</td>
-                <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{getRatingBadge(nota)}</td>
                 
-                <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
+                <td onClick={() => { if(displayClean(nota)) setViewModal({type:'note', data: nota}) }} className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
+                  {getRatingBadge(nota)}
+                </td>
+                
+                <td onClick={() => { if(displayClean(dif)) setViewModal({type:'diff', data: dif}) }} className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
                   {displayClean(dif) && (
-                    <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] uppercase font-black" style={{backgroundColor: getDifficultyBadge(dif).bg}}>
+                    <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] uppercase font-black cursor-pointer hover:-translate-y-0.5 transition-transform" style={{backgroundColor: getDifficultyBadge(dif).bg}}>
                       {getDifficultyBadge(dif).text}
                     </span>
                   )}
@@ -649,8 +668,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans p-2 sm:p-4 selection:bg-pink-200 relative">
       
-      {/* Header com Busca Integrada */}
-      <div className="max-w-[1600px] mx-auto mb-6 flex flex-wrap items-center gap-4 sm:gap-6">
+      <div className="max-w-[1600px] mx-auto mb-6 flex flex-wrap items-center justify-between gap-4 sm:gap-6">
         <div className="flex items-center gap-4 shrink-0">
           <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Logo" className="w-12 h-12 sm:w-14 sm:h-14" />
           <div className={`p-1.5 sm:p-2 ${theme.cyan} ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] transform -rotate-1`}>
@@ -662,14 +680,13 @@ export default function App() {
         </div>
         
         {(activeTab === 'finished' || activeTab === 'backlog') && (
-          <div className="flex-grow min-w-[200px] sm:ml-4 flex items-center">
+          <div className="flex-grow max-w-md flex items-center">
             <input type="text" placeholder="🔍 Buscar por título, console ou gênero..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`${theme.input} shadow-[4px_4px_0_0_rgba(15,23,42,1)]`} />
           </div>
         )}
       </div>
 
       <div className={`max-w-[1600px] mx-auto ${theme.border} ${theme.card} flex flex-col bg-white overflow-hidden`}>
-        {/* Navegação de Abas */}
         <nav className="flex flex-row overflow-x-auto sm:grid sm:grid-cols-5 border-b-[3px] border-slate-900 bg-slate-100">
           {[
             { id: 'dashboard', label: 'Dashboard', icon: Icons.Home },
@@ -700,7 +717,7 @@ export default function App() {
                     <h3 className="text-xs font-black uppercase">Total Finalizados</h3>
                     <p className="text-4xl font-black">{dashboardStats.totalJogos}</p>
                   </div>
-                  <div className={`p-4 ${theme.border} bg-gradient-to-r from-[#FF8B94] to-[#FFD3B6] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
+                  <div onClick={() => setViewModal({type:'note', data: 'S'})} className={`p-4 ${theme.border} bg-gradient-to-r from-[#FF8B94] to-[#FFD3B6] shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity`}>
                     <h3 className="text-xs font-black uppercase">Obras-Primas (Rank S)</h3>
                     <p className="text-4xl font-black">{dashboardStats.sRanks}</p>
                   </div>
@@ -714,22 +731,20 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Secao Grafico Descontos */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className={`md:col-span-2 p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className={`lg:col-span-2 p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
                     <h3 className="text-sm font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-2">Descontos por Jogo</h3>
                     <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-2">
-                      {games.filter(g => calculateDiscount(getVal(g, ['preco']), getVal(g, ['preco_original'])).has).sort((a,b) => calculateDiscount(getVal(b, ['preco']), getVal(b, ['preco_original'])).rawDiff - calculateDiscount(getVal(a, ['preco']), getVal(a, ['preco_original'])).rawDiff).map((g, i) => {
-                        let d = calculateDiscount(getVal(g, ['preco']), getVal(g, ['preco_original']));
+                      {games.filter(g => calculateDiscount(getVal(g, ['preco', 'preco pago']), getVal(g, ['preco_original', 'preco sem desconto', 'preço sem desconto'])).has)
+                            .sort((a,b) => calculateDiscount(getVal(b, ['preco', 'preco pago']), getVal(b, ['preco_original', 'preco sem desconto', 'preço sem desconto'])).rawDiff - calculateDiscount(getVal(a, ['preco', 'preco pago']), getVal(a, ['preco_original', 'preco sem desconto', 'preço sem desconto'])).rawDiff)
+                            .map((g, i) => {
+                        let d = calculateDiscount(getVal(g, ['preco', 'preco pago']), getVal(g, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
                         let pctPago = (d.pago / d.orig) * 100;
                         let pctDesc = (d.rawDiff / d.orig) * 100;
                         return (
-                          <div key={i} className="flex flex-col text-[10px] font-black uppercase">
-                             <div className="flex justify-between mb-1">
-                               <span>{getVal(g, ['titulo'])}</span>
-                               <span>R$ {d.orig.toFixed(2)}</span>
-                             </div>
-                             <div className="flex w-full h-4 border-[2px] border-slate-900 bg-slate-100">
+                          <div key={i} className="flex items-center gap-2 text-[10px] font-black uppercase w-full">
+                             <div className="w-1/3 truncate text-right pr-2">{getVal(g, ['titulo', 'nome'])}</div>
+                             <div className="flex w-2/3 h-4 border-[2px] border-slate-900 bg-slate-100">
                                <div className="bg-[#3B82F6] h-full" style={{width: `${pctPago}%`}}></div>
                                <div className="bg-[#EF4444] h-full relative group" style={{width: `${pctDesc}%`}}>
                                   <div className="absolute inset-0 flex items-center justify-center text-white text-[8px] opacity-0 group-hover:opacity-100 transition-opacity">-{d.pct}</div>
@@ -744,11 +759,9 @@ export default function App() {
                     <h3 className="text-sm font-black uppercase mb-4 w-full text-center border-b-[3px] border-slate-900 pb-2">Economia Geral</h3>
                     <div className="w-full flex-grow flex flex-col justify-end items-center mb-4 mt-2">
                        <div className="w-2/3 max-w-[120px] flex flex-col border-[3px] border-slate-900 h-[250px] bg-slate-100 relative">
-                          {/* Desconto (Vermelho) em cima */}
                           <div className="w-full bg-[#EF4444] flex items-center justify-center flex-col transition-all" style={{height: `${(dashboardStats.totalEconomia / (dashboardStats.totalGasto + dashboardStats.totalEconomia)) * 100}%`}}>
                              <span className="text-white font-black text-sm">{dashboardStats.totalEconomia.toFixed(2)}</span>
                           </div>
-                          {/* Pago (Azul) embaixo */}
                           <div className="w-full bg-[#3B82F6] flex items-center justify-center flex-col transition-all" style={{height: `${(dashboardStats.totalGasto / (dashboardStats.totalGasto + dashboardStats.totalEconomia)) * 100}%`}}>
                              <span className="text-white font-black text-sm">{dashboardStats.totalGasto.toFixed(2)}</span>
                           </div>
@@ -760,14 +773,12 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Rankings e Distribuicoes */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                   {/* Dificuldade */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Por Dificuldade</h3>
                      <div className="flex flex-col gap-2">
                        {['A', 'B', 'C', 'D', 'E'].map(d => (
-                         <div key={d} className="flex items-center gap-2 text-xs font-black">
+                         <div key={d} onClick={() => setViewModal({type:'diff', data: d})} className="flex items-center gap-2 text-xs font-black cursor-pointer hover:opacity-70 transition-opacity">
                            <span className="inline-block w-6 text-center border-[2px] border-slate-900 py-0.5" style={{backgroundColor: getDifficultyBadge(d).bg}}>{d}</span>
                            <div className="flex-grow bg-slate-100 h-4 border-[2px] border-slate-900">
                              <div className="h-full bg-slate-900" style={{width: `${(dashboardStats.dif[d] / dashboardStats.totalJogos) * 100}%`}}></div>
@@ -777,12 +788,12 @@ export default function App() {
                        ))}
                      </div>
                    </div>
-                   {/* Notas */}
+                   
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Por Nota</h3>
                      <div className="flex flex-col gap-2">
                        {['S', '10', '9.5', '9', '8.5', '8', 'Outras'].map(n => (
-                         <div key={n} className="flex items-center gap-2 text-xs font-black">
+                         <div key={n} onClick={() => setViewModal({type:'note', data: n})} className="flex items-center gap-2 text-xs font-black cursor-pointer hover:opacity-70 transition-opacity">
                            <span className="inline-block w-12 text-center border-[2px] border-slate-900 py-0.5">{n}</span>
                            <div className="flex-grow bg-slate-100 h-4 border-[2px] border-slate-900">
                              <div className="h-full bg-slate-900" style={{width: `${(dashboardStats.notas[n] / dashboardStats.totalJogos) * 100}%`}}></div>
@@ -792,20 +803,78 @@ export default function App() {
                        ))}
                      </div>
                    </div>
-                   {/* Top Consoles */}
-                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] col-span-1 lg:col-span-2 overflow-x-auto`}>
-                     <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Ranking de Consoles</h3>
+                </div>
+                
+                {/* Rankings */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto`}>
+                     <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Consoles (Nota Média)</h3>
                      <table className="w-full text-left text-xs font-black uppercase">
-                       <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Console</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Nota Média</th><th className="pb-1 text-center">Tempo Total</th></tr></thead>
+                       <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Console</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Nota</th></tr></thead>
                        <tbody>
-                         {Object.keys(dashboardStats.consoles).sort((a,b) => dashboardStats.consoles[b].count - dashboardStats.consoles[a].count).slice(0, 5).map(c => {
+                         {Object.keys(dashboardStats.consoles).sort((a,b) => dashboardStats.consoles[b].avgNota - dashboardStats.consoles[a].avgNota).slice(0, 5).map(c => {
                            let stat = dashboardStats.consoles[c];
-                           let avg = stat.notaCount > 0 ? (stat.totalNota / stat.notaCount).toFixed(1) : '-';
                            return (
                              <tr key={c} className="border-b border-slate-200">
-                               <td className="py-2"><span className="inline-flex items-center gap-1.5 px-2 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]" style={{ backgroundColor: getConsoleStyle(c).bg, color: getConsoleStyle(c).text }}><ConsoleIcon consoleName={c} /> {c}</span></td>
+                               <td className="py-2"><span onClick={()=>setViewModal({type:'console', data: c})} className="inline-flex cursor-pointer items-center gap-1.5 px-2 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]" style={{ backgroundColor: getConsoleStyle(c).bg, color: getConsoleStyle(c).text }}><ConsoleIcon consoleName={c} /> {c}</span></td>
                                <td className="py-2 text-center">{stat.count}</td>
-                               <td className="py-2 text-center">{avg}</td>
+                               <td className="py-2 text-center">{stat.avgNota}</td>
+                             </tr>
+                           )
+                         })}
+                       </tbody>
+                     </table>
+                   </div>
+                   
+                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto`}>
+                     <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Consoles (Tempo Jogado)</h3>
+                     <table className="w-full text-left text-xs font-black uppercase">
+                       <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Console</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Tempo Total</th></tr></thead>
+                       <tbody>
+                         {Object.keys(dashboardStats.consoles).sort((a,b) => dashboardStats.consoles[b].totalTempo - dashboardStats.consoles[a].totalTempo).slice(0, 5).map(c => {
+                           let stat = dashboardStats.consoles[c];
+                           return (
+                             <tr key={c} className="border-b border-slate-200">
+                               <td className="py-2"><span onClick={()=>setViewModal({type:'console', data: c})} className="inline-flex cursor-pointer items-center gap-1.5 px-2 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]" style={{ backgroundColor: getConsoleStyle(c).bg, color: getConsoleStyle(c).text }}><ConsoleIcon consoleName={c} /> {c}</span></td>
+                               <td className="py-2 text-center">{stat.count}</td>
+                               <td className="py-2 text-center text-blue-600">{stat.totalTempo > 0 ? `${stat.totalTempo}h` : '-'}</td>
+                             </tr>
+                           )
+                         })}
+                       </tbody>
+                     </table>
+                   </div>
+
+                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto`}>
+                     <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Gêneros (Nota Média)</h3>
+                     <table className="w-full text-left text-xs font-black uppercase">
+                       <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Gênero</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Nota</th></tr></thead>
+                       <tbody>
+                         {Object.keys(dashboardStats.generos).sort((a,b) => dashboardStats.generos[b].avgNota - dashboardStats.generos[a].avgNota).slice(0, 5).map(c => {
+                           let stat = dashboardStats.generos[c];
+                           return (
+                             <tr key={c} className="border-b border-slate-200">
+                               <td className="py-2"><span onClick={()=>setViewModal({type:'genre', data: c})} className="inline-block cursor-pointer px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)]" style={{backgroundColor: getGenreColor(c)}}>{c}</span></td>
+                               <td className="py-2 text-center">{stat.count}</td>
+                               <td className="py-2 text-center">{stat.avgNota}</td>
+                             </tr>
+                           )
+                         })}
+                       </tbody>
+                     </table>
+                   </div>
+
+                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto`}>
+                     <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Gêneros (Tempo Jogado)</h3>
+                     <table className="w-full text-left text-xs font-black uppercase">
+                       <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Gênero</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Tempo Total</th></tr></thead>
+                       <tbody>
+                         {Object.keys(dashboardStats.generos).sort((a,b) => dashboardStats.generos[b].totalTempo - dashboardStats.generos[a].totalTempo).slice(0, 5).map(c => {
+                           let stat = dashboardStats.generos[c];
+                           return (
+                             <tr key={c} className="border-b border-slate-200">
+                               <td className="py-2"><span onClick={()=>setViewModal({type:'genre', data: c})} className="inline-block cursor-pointer px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)]" style={{backgroundColor: getGenreColor(c)}}>{c}</span></td>
+                               <td className="py-2 text-center">{stat.count}</td>
                                <td className="py-2 text-center text-blue-600">{stat.totalTempo > 0 ? `${stat.totalTempo}h` : '-'}</td>
                              </tr>
                            )
@@ -814,6 +883,7 @@ export default function App() {
                      </table>
                    </div>
                 </div>
+
              </div>
           )}
 
@@ -838,7 +908,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* Datalists para Autocomplete */}
               <datalist id="consoles-list">{uniqueOptions.console.map(o => <option key={o} value={o} />)}</datalist>
               <datalist id="generos-list">{uniqueOptions.genero.map(o => <option key={o} value={o} />)}</datalist>
               <datalist id="suportes-list">{uniqueOptions.suporte.map(o => <option key={o} value={o} />)}</datalist>
@@ -887,20 +956,22 @@ export default function App() {
       {}
       {viewModal && (
         <div className="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-          <div className={`w-full max-w-[1200px] bg-white ${theme.border} ${theme.card} flex flex-col my-auto shadow-2xl`}>
+          <div className={`w-full max-w-[1400px] bg-white ${theme.border} ${theme.card} flex flex-col my-auto shadow-2xl`}>
             
             <div className={`p-4 border-b-[3px] border-slate-900 flex justify-between items-center ${viewModal.type === 'game' && isEditingFicha ? theme.pink : theme.cyan}`}>
               <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tighter truncate pr-4">
                 {viewModal.type === 'game' && (isEditingFicha ? 'Editar Ficha' : viewModal.data.titulo)}
                 {viewModal.type === 'console' && `Ficha do Console: ${viewModal.data}`}
                 {viewModal.type === 'genre' && `Ficha do Gênero: ${viewModal.data}`}
+                {viewModal.type === 'note' && `Jogos com Nota: ${viewModal.data}`}
+                {viewModal.type === 'diff' && `Jogos com Dificuldade: ${viewModal.data}`}
               </h2>
               <button onClick={() => setViewModal(null)} className="p-1 hover:bg-white/50 rounded-full transition-colors border-2 border-transparent hover:border-slate-900"><Icons.Close /></button>
             </div>
 
             <div className="p-4 sm:p-6 bg-slate-50 overflow-y-auto max-h-[75vh]">
               
-              {/* === FICHA DO JOGO === */}
+              {/* FICHA DO JOGO */}
               {viewModal.type === 'game' && (
                 <>
                   {fichaStatus.type !== 'idle' && (
@@ -998,7 +1069,6 @@ export default function App() {
                         </div>
                       </div>
 
-                      {/* YOUTUBE PLAYER EMBUTIDO */}
                       {(() => {
                          let linkUrl = getVal(viewModal.data, ['midia', 'link']);
                          let ytb = getYoutubeId(linkUrl) || getYoutubeId(viewModal.data.suporte);
@@ -1038,17 +1108,35 @@ export default function App() {
                 </>
               )}
 
-              {/* === FICHA DE CONSOLE OU GÊNERO === */}
-              {(viewModal.type === 'console' || viewModal.type === 'genre') && (() => {
+              {/* FICHA DE LISTAGENS FILTRADAS */}
+              {viewModal.type !== 'game' && (() => {
                  let filteredList = games.filter(g => {
+                    if(g.status !== 'Finalizado') return false;
                     let vPlat = getVal(g, ['plataforma', 'console']);
                     let vGen = getVal(g, ['franquia', 'genero', 'gênero']);
-                    return viewModal.type === 'console' ? vPlat === viewModal.data : vGen === viewModal.data;
+                    let vNota = String(getVal(g, ['nota'])).toUpperCase().trim();
+                    let vDiff = String(getVal(g, ['dificuldade'])).toUpperCase().trim();
+
+                    if (viewModal.type === 'console') return vPlat === viewModal.data;
+                    if (viewModal.type === 'genre') return vGen === viewModal.data;
+                    if (viewModal.type === 'diff') return vDiff === viewModal.data;
+                    if (viewModal.type === 'note') {
+                       if (viewModal.data === 'S' || viewModal.data === 'Outras') {
+                          if (viewModal.data === 'S') return vNota === 'S';
+                          if (viewModal.data === 'Outras') {
+                             let nm = parseFloat(vNota.replace(',', '.'));
+                             return !isNaN(nm) && ![10, 9.5, 9, 8.5, 8].includes(nm);
+                          }
+                       } else {
+                          let nm = parseFloat(vNota.replace(',', '.'));
+                          return nm === parseFloat(viewModal.data);
+                       }
+                    }
+                    return false;
                  });
-                 let finList = filteredList.filter(g => g.status === 'Finalizado');
                  
-                 let totalTimeHrs = finList.reduce((acc, g) => acc + (parseFloat(formatTempoStr(getVal(g, ['tempo'])).replace('h','')) || 0), 0);
-                 let notasVal = finList.map(g => parseFloat(String(getVal(g, ['nota'])).replace(',','.'))).filter(n => !isNaN(n));
+                 let totalTimeHrs = filteredList.reduce((acc, g) => acc + getNumericTempo(getVal(g, ['tempo'])), 0);
+                 let notasVal = filteredList.map(g => parseFloat(String(getVal(g, ['nota'])).replace(',','.'))).filter(n => !isNaN(n));
                  let avg = notasVal.length > 0 ? (notasVal.reduce((a,b)=>a+b,0) / notasVal.length).toFixed(1) : '-';
 
                  return (
@@ -1059,8 +1147,8 @@ export default function App() {
                           <p className="text-2xl font-black">{filteredList.length} <span className="text-xs">jogos</span></p>
                         </div>
                         <div className={`p-4 ${theme.border} bg-white shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
-                          <h3 className="text-[10px] font-black uppercase text-slate-500 mb-1">Tempo Gasto (Finalizados)</h3>
-                          <p className="text-2xl font-black text-blue-700">{totalTimeHrs}h</p>
+                          <h3 className="text-[10px] font-black uppercase text-slate-500 mb-1">Tempo Gasto</h3>
+                          <p className="text-2xl font-black text-blue-700">{totalTimeHrs > 0 ? `${totalTimeHrs.toFixed(1)}h` : '-'}</p>
                         </div>
                         <div className={`p-4 ${theme.border} bg-white shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
                           <h3 className="text-[10px] font-black uppercase text-slate-500 mb-1">Nota Média</h3>
@@ -1068,8 +1156,8 @@ export default function App() {
                         </div>
                      </div>
                      <div>
-                       <h3 className="text-sm font-black uppercase border-b-[3px] border-slate-900 pb-2 mb-4">Jogos ({viewModal.data})</h3>
-                       {renderGameTable(filteredList, true)}
+                       <h3 className="text-sm font-black uppercase border-b-[3px] border-slate-900 pb-2 mb-4">Jogos na Categoria: {viewModal.data}</h3>
+                       {renderGameTable(filteredList)}
                      </div>
                    </div>
                  );
@@ -1077,15 +1165,11 @@ export default function App() {
 
             </div>
 
-            {/* RODAPÉ DO MODAL (Botão Remover Discreto) */}
             {viewModal.type === 'game' && (
               <div className="p-4 border-t-[3px] border-slate-900 bg-white flex justify-between items-center gap-4">
-                
                 <button 
                   onClick={() => {
-                     if(window.confirm('Tem certeza que deseja excluir este jogo da planilha?')) {
-                        handleDelete(viewModal.data.id);
-                     }
+                     if(window.confirm('Tem certeza que deseja excluir este jogo da planilha?')) handleDelete(viewModal.data.id);
                   }} 
                   className="text-rose-600 hover:text-rose-800 text-[10px] font-black uppercase underline transition-colors"
                 >
@@ -1102,7 +1186,6 @@ export default function App() {
                     </>
                   )}
                 </div>
-
               </div>
             )}
             
