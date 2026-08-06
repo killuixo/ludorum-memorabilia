@@ -6,6 +6,7 @@ const theme = {
   cyan: 'bg-[#A8E6CF]',
   gold: 'bg-[#FFD3B6]',
   pink: 'bg-[#FF8B94]',
+  blue: 'bg-[#3B82F6]', // Para os gráficos de preço
   input: 'w-full p-2 border-[3px] border-slate-900 bg-white font-bold outline-none focus:bg-slate-50 transition-colors text-sm',
   btnBase: 'px-4 py-2 border-[3px] border-slate-900 font-black uppercase active:translate-y-1 active:translate-x-1 active:shadow-none transition-all shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer',
 };
@@ -79,10 +80,10 @@ const formatTempoStr = (tempoVal) => {
   return str;
 };
 
-const calculateTimeSpan = (inicio, fim) => {
+const parseDuracaoDays = (inicio, fim) => {
   let inStr = formatDateStr(inicio);
   let fimStr = formatDateStr(fim);
-  if (!inStr || !fimStr) return '';
+  if (!inStr || !fimStr) return 0;
   try {
     const parseDate = (s) => {
       let p = s.split('/');
@@ -91,17 +92,30 @@ const calculateTimeSpan = (inicio, fim) => {
     };
     let d1 = parseDate(inStr);
     let d2 = parseDate(fimStr);
-    if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return '';
-    let diffDays = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return '1 dia';
-    if (diffDays < 14) return `${diffDays} dias`;
-    if (diffDays < 60) {
-      let w = Math.round(diffDays / 7);
-      return `${w} ${w === 1 ? 'semana' : 'semanas'}`;
-    }
+    if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return 0;
+    return Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24));
+  } catch (e) { return 0; }
+};
+
+const calculateTimeSpan = (inicio, fim) => {
+  let diffDays = parseDuracaoDays(inicio, fim);
+  if (diffDays === 0) return '';
+  if (diffDays === 1) return '1 dia';
+  if (diffDays < 14) return `${diffDays} dias`;
+  if (diffDays < 60) {
+    let w = Math.round(diffDays / 7);
+    return `${w} ${w === 1 ? 'semana' : 'semanas'}`;
+  }
+  if (diffDays < 365) {
     let m = Math.round(diffDays / 30);
     return `${m} ${m === 1 ? 'mês' : 'meses'}`;
-  } catch (e) { return ''; }
+  }
+  let y = Math.floor(diffDays / 365);
+  let remDays = diffDays % 365;
+  let m = Math.round(remDays / 30);
+  if (m === 0) return `${y} ${y === 1 ? 'ano' : 'anos'}`;
+  if (m === 12) return `${y + 1} anos`;
+  return `${y} ${y === 1 ? 'ano' : 'anos'} e ${m} ${m === 1 ? 'mês' : 'meses'}`;
 };
 
 const calculateDiscount = (pPago, pOrig) => {
@@ -115,9 +129,9 @@ const calculateDiscount = (pPago, pOrig) => {
   if (orig > pago && orig > 0) {
     let diff = orig - pago;
     let pct = Math.round((diff / orig) * 100);
-    return { val: `R$ ${diff.toFixed(2).replace('.', ',')}`, pct: `${pct}%`, has: true, rawDiff: diff };
+    return { val: `R$ ${diff.toFixed(2).replace('.', ',')}`, pct: `${pct}%`, has: true, rawDiff: diff, pago: pago, orig: orig };
   }
-  return { has: false, rawDiff: 0 };
+  return { has: false, rawDiff: 0, pago: pago, orig: orig };
 };
 
 const getYoutubeId = (url) => {
@@ -148,7 +162,7 @@ const ConsoleIcon = ({ consoleName }) => {
   if (!consoleName) return null;
   const c = String(consoleName).toLowerCase();
   if (c.includes('ps4') || c.includes('ps5') || c.includes('playstation') || c.includes('ps3') || c.includes('ps2') || c.includes('ps1')) return (
-    <svg className="w-4 h-4 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M8.322 3.123v13.911l3.528 1.139V3.123zM0 16.518l6.398 2.052v-2.736L2.33 14.526l4.068-.788v-2.036L0 13.064zm13.882.261l9.118 2.923-2.905 1.054-6.213-1.996v-1.981zm.001-4.717l9.117 2.924-2.905 1.053-6.212-1.996v-1.981zM11.85 0C5.305 0 0 5.305 0 11.85s5.305 11.85 11.85 11.85 11.85-5.305 11.85-11.85S18.395 0 11.85 0z" fill="none"/><path d="M8.5 4.5 3 6.8v9.7l5.5 2V4.5zm12.5 12-5.5-2v2.5l5.5 1.8v-2.3zM14 13.8l5.5 1.8v-2.3L14 11.5v2.3z"/></svg>
+    <svg className="w-4 h-4 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M8.322 3.123v13.911l3.528 1.139V3.123zM0 16.518l6.398 2.052v-2.736L2.33 14.526l4.068-.788v-2.036L0 13.064zm13.882.261l9.118 2.923-2.905 1.054-6.213-1.996v-1.981zm.001-4.717l9.117 2.924-2.905 1.053-6.212-1.996v-1.981zM11.85 0C5.305 0 0 5.305 0 11.85s5.305 11.85 11.85 11.85-5.305 11.85-11.85S18.395 0 11.85 0z" fill="none"/><path d="M8.5 4.5 3 6.8v9.7l5.5 2V4.5zm12.5 12-5.5-2v2.5l5.5 1.8v-2.3zM14 13.8l5.5 1.8v-2.3L14 11.5v2.3z"/></svg>
   );
   if (c.includes('switch') || c.includes('wii') || c.includes('nintendo') || c.includes('snes') || c.includes('ds') || c.includes('gba') || c.includes('gamecube')) return (
     <svg className="w-4 h-4 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M8 2H4C2.9 2 2 2.9 2 4v16c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm14-7h-4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 13a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>
@@ -228,6 +242,7 @@ export default function App() {
   const [configUrl, setConfigUrl] = useState('');
   const [games, setGames] = useState([]);
   const [syncStatus, setSyncStatus] = useState({ type: 'idle', message: '' });
+  const [addStatus, setAddStatus] = useState({ type: 'idle', message: '' });
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'ordem', direction: 'desc' });
 
@@ -316,17 +331,8 @@ export default function App() {
         const p = x => parseFloat(formatTempoStr(x).replace('h','')) || 0;
         valA = p(getVal(a, ['tempo'])); valB = p(getVal(b, ['tempo']));
       } else if (sortConfig.key === 'duracao') {
-        const parseDur = (str) => {
-           if (!str) return 0;
-           let s = str.toLowerCase();
-           let val = parseInt(s) || 0;
-           if (s.includes('semana')) return val * 7;
-           if (s.includes('mês') || s.includes('meses')) return val * 30;
-           if (s.includes('ano')) return val * 365;
-           return val;
-        };
-        valA = parseDur(calculateTimeSpan(getVal(a, ['inicio', 'iniciado']), getVal(a, ['fim', 'termino'])));
-        valB = parseDur(calculateTimeSpan(getVal(b, ['inicio', 'iniciado']), getVal(b, ['fim', 'termino'])));
+        valA = parseDuracaoDays(getVal(a, ['inicio', 'iniciado']), getVal(a, ['fim', 'termino']));
+        valB = parseDuracaoDays(getVal(b, ['inicio', 'iniciado']), getVal(b, ['fim', 'termino']));
       } else if (sortConfig.key === 'preco') {
         const p = x => parseFloat(String(x).replace('R$', '').trim().replace(',', '.')) || 0;
         valA = p(getVal(a, ['preco', 'preco pago'])); valB = p(getVal(b, ['preco', 'preco pago']));
@@ -334,14 +340,17 @@ export default function App() {
         const p = x => parseFloat(String(x).replace('R$', '').trim().replace(',', '.')) || 0;
         valA = p(getVal(a, ['preco_original', 'preco sem desconto', 'preço sem desconto'])); valB = p(getVal(b, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
       } else if (sortConfig.key === 'desconto') {
-        const getDesc = x => calculateDiscount(getVal(x, ['preco', 'preco pago']), getVal(x, ['preco_original', 'preco sem desconto', 'preço sem desconto'])).rawDiff;
+        const getDesc = x => {
+          let d = calculateDiscount(getVal(x, ['preco', 'preco pago']), getVal(x, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
+          return d.has ? d.rawDiff : 0;
+        };
         valA = getDesc(a); valB = getDesc(b);
       } else {
         valA = String(getVal(a, [sortConfig.key])).toLowerCase();
         valB = String(getVal(b, [sortConfig.key])).toLowerCase();
       }
 
-      let isBlank = (val) => val === '' || val === null || val === undefined || val === '-' || (typeof val === 'number' && isNaN(val)) || (typeof val === 'number' && val === 0 && sortConfig.key !== 'nota' && sortConfig.key !== 'desconto');
+      let isBlank = (val) => val === '' || val === null || val === undefined || val === '-' || (typeof val === 'number' && isNaN(val)) || (typeof val === 'number' && val === 0 && sortConfig.key !== 'nota');
       let blankA = isBlank(valA);
       let blankB = isBlank(valB);
 
@@ -360,14 +369,84 @@ export default function App() {
   const dashboardStats = useMemo(() => {
     let fin = games.filter(g => g.status === 'Finalizado');
     let totalJogos = fin.length;
+    
     let sRanks = fin.filter(g => String(getVal(g, ['nota'])).toUpperCase().trim() === 'S').length;
+    
     let notasValidas = fin.map(g => parseFloat(String(getVal(g, ['nota'])).replace(',','.'))).filter(n => !isNaN(n));
     let avgNota = notasValidas.length > 0 ? (notasValidas.reduce((a,b)=>a+b,0) / notasValidas.length).toFixed(1) : 0;
-    let totalGasto = fin.reduce((acc, g) => {
-      let p = parseFloat(String(getVal(g, ['preco', 'preco pago'])).replace('R$', '').trim().replace(',', '.'));
-      return acc + (isNaN(p) ? 0 : p);
-    }, 0);
-    return { totalJogos, sRanks, avgNota, totalGasto: `R$ ${totalGasto.toFixed(2).replace('.',',')}` };
+    
+    let stats = { 
+      totalJogos, sRanks, avgNota, 
+      totalGasto: 0, totalEconomia: 0,
+      notas: { S: sRanks, '10': 0, '9.5': 0, '9': 0, '8.5': 0, '8': 0, 'Outras': 0 },
+      dif: { A: 0, B: 0, C: 0, D: 0, E: 0 },
+      consoles: {},
+      generos: {}
+    };
+
+    fin.forEach(g => {
+      // Finanças
+      let pPago = parseFloat(String(getVal(g, ['preco', 'preco pago'])).replace('R$', '').trim().replace(',', '.'));
+      let pOrig = parseFloat(String(getVal(g, ['preco_original', 'preco sem desconto', 'preço sem desconto'])).replace('R$', '').trim().replace(',', '.'));
+      pPago = isNaN(pPago) ? 0 : pPago; pOrig = isNaN(pOrig) ? 0 : pOrig;
+      stats.totalGasto += pPago;
+      if(pOrig > pPago && pOrig > 0) stats.totalEconomia += (pOrig - pPago);
+
+      // Notas Distribution
+      let n = parseFloat(String(getVal(g, ['nota'])).replace(',','.'));
+      if(!isNaN(n)) {
+        if(n === 10) stats.notas['10']++;
+        else if(n === 9.5) stats.notas['9.5']++;
+        else if(n === 9) stats.notas['9']++;
+        else if(n === 8.5) stats.notas['8.5']++;
+        else if(n === 8) stats.notas['8']++;
+        else stats.notas['Outras']++;
+      }
+
+      // Diff
+      let d = String(getVal(g, ['dificuldade'])).toUpperCase().trim();
+      if(stats.dif[d] !== undefined) stats.dif[d]++;
+
+      // Top Consoles / Generos Aggregations
+      let consoleName = getVal(g, ['plataforma', 'console']) || 'Desconhecido';
+      let genreName = getVal(g, ['franquia', 'genero', 'gênero']) || 'Desconhecido';
+      let tHrs = parseFloat(formatTempoStr(getVal(g, ['tempo'])).replace('h','')) || 0;
+
+      if(consoleName && consoleName !== '-') {
+        if(!stats.consoles[consoleName]) stats.consoles[consoleName] = { count: 0, totalNota: 0, notaCount: 0, totalTempo: 0 };
+        stats.consoles[consoleName].count++;
+        stats.consoles[consoleName].totalTempo += tHrs;
+        if(!isNaN(n)) { stats.consoles[consoleName].totalNota += n; stats.consoles[consoleName].notaCount++; }
+      }
+
+      if(genreName && genreName !== '-') {
+        if(!stats.generos[genreName]) stats.generos[genreName] = { count: 0, totalNota: 0, notaCount: 0, totalTempo: 0 };
+        stats.generos[genreName].count++;
+        stats.generos[genreName].totalTempo += tHrs;
+        if(!isNaN(n)) { stats.generos[genreName].totalNota += n; stats.generos[genreName].notaCount++; }
+      }
+    });
+
+    stats.totalGastoStr = `R$ ${stats.totalGasto.toFixed(2).replace('.',',')}`;
+    stats.totalEconomiaStr = `R$ ${stats.totalEconomia.toFixed(2).replace('.',',')}`;
+
+    return stats;
+  }, [games]);
+
+  const uniqueOptions = useMemo(() => {
+    let opts = { console: new Set(), genero: new Set(), suporte: new Set(), condicao: new Set() };
+    games.forEach(g => {
+      let c = getVal(g, ['plataforma', 'console']); if (c && c !== '-') opts.console.add(c);
+      let gen = getVal(g, ['franquia', 'genero', 'gênero']); if (gen && gen !== '-') opts.genero.add(gen);
+      let s = getVal(g, ['suporte']); if (s && s !== '-') opts.suporte.add(s);
+      let con = getVal(g, ['conquistas', 'condicao', 'condição']); if (con && con !== '-') opts.condicao.add(con);
+    });
+    return {
+      console: Array.from(opts.console).sort(),
+      genero: Array.from(opts.genero).sort(),
+      suporte: Array.from(opts.suporte).sort(),
+      condicao: Array.from(opts.condicao).sort()
+    };
   }, [games]);
 
   const executeApiCall = async (action, data, statusUpdateFn) => {
@@ -382,7 +461,7 @@ export default function App() {
       if(result.error) throw new Error(result.error);
       await fetchGames(configUrl);
       statusUpdateFn({ type: 'success', message: 'Salvo com sucesso!' });
-      setTimeout(() => statusUpdateFn({ type: 'idle', message: '' }), 2000);
+      setTimeout(() => statusUpdateFn({ type: 'idle', message: '' }), 3000);
       return true;
     } catch(err) {
       statusUpdateFn({ type: 'error', message: 'Erro ao salvar.' });
@@ -392,9 +471,8 @@ export default function App() {
 
   const handleCreateNew = async (e) => {
     e.preventDefault();
-    const success = await executeApiCall('ADD', { ...formData, id: 'temp_id' }, setSyncStatus);
+    const success = await executeApiCall('ADD', { ...formData, id: 'temp_id' }, setAddStatus);
     if (success) {
-      setActiveTab(formData.status === 'Finalizado' ? 'finished' : 'backlog');
       setFormData(blankForm);
     }
   };
@@ -412,6 +490,7 @@ export default function App() {
     try {
       await fetch(configUrl, { method: 'POST', body: JSON.stringify({ action: 'DELETE', id }) });
       await fetchGames(configUrl);
+      setViewModal(null);
     } catch(e) {}
   };
 
@@ -422,6 +501,130 @@ export default function App() {
         {sortConfig.key === sortKey && <Icons.SortArrow asc={sortConfig.direction === 'asc'} />}
       </div>
     </th>
+  );
+
+  const renderGameTable = (list, isModal = false) => (
+    <div className={`overflow-x-auto ${isModal ? '' : 'border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)]'} bg-white pb-2 max-w-full`}>
+      <table className="w-full text-left border-collapse text-[10px] sm:text-[11px] font-bold">
+        <thead>
+          <tr className={`${activeTab === 'finished' || isModal ? theme.gold : theme.cyan} border-b-[3px] border-slate-900 uppercase font-black text-slate-900`}>
+            {!isModal && <Th label="#" sortKey="ordem" className="text-center w-10" />}
+            <Th label="NOME DO JOGO" sortKey="titulo" />
+            <Th label="CONSOLE" sortKey="plataforma" />
+            <Th label="GÊNERO" sortKey="franquia" />
+            <Th label="INÍCIO" sortKey="inicio" className="text-center" />
+            <Th label="FIM" sortKey="fim" className="text-center" />
+            <Th label="TEMPO TOTAL" sortKey="tempo" className="text-center" />
+            <Th label="DURAÇÃO" sortKey="duracao" className="text-center" />
+            <Th label="NOTA" sortKey="nota" className="text-center" />
+            <Th label="DIF" sortKey="dificuldade" className="text-center" />
+            <Th label="CONDIÇÃO" sortKey="conquistas" />
+            <Th label="PREÇO PAGO" sortKey="preco" className="text-center" />
+            <Th label="PREÇO S/ DESC." sortKey="preco_original" className="text-center" />
+            <Th label="DESCONTO" sortKey="desconto" className="text-center" />
+            <Th label="SUPORTE" sortKey="suporte" className="text-center border-r-0" />
+          </tr>
+        </thead>
+        <tbody>
+          {list.map((game, i) => {
+            let visualId = getVal(game, ['#', 'ordem', 'numero']) || game._fallbackId; 
+            let titulo = getVal(game, ['titulo', 'nome']);
+            let plataforma = getVal(game, ['plataforma', 'console']);
+            let genero = getVal(game, ['franquia', 'genero', 'gênero']);
+            let inicio = getVal(game, ['inicio', 'iniciado']);
+            let fim = getVal(game, ['fim', 'termino']);
+            let tempo = getVal(game, ['tempo']);
+            let nota = getVal(game, ['nota']);
+            let dif = getVal(game, ['dificuldade']);
+            let cond = getVal(game, ['conquistas', 'condicao', 'condição']);
+            let pricePago = getVal(game, ['preco', 'preco pago']);
+            let priceSemDesc = getVal(game, ['preco_original', 'preco sem desconto', 'preço sem desconto']);
+            let sup = getVal(game, ['suporte']);
+            
+            let discount = calculateDiscount(pricePago, priceSemDesc);
+            const consoleStyle = getConsoleStyle(plataforma);
+            const displayClean = (val) => (val && val !== '-' ? val : '');
+            
+            return (
+              <tr key={game.id || i} className="border-b-[2px] border-slate-900 hover:bg-slate-50 transition-colors">
+                {!isModal && (
+                  <td className="p-2 border-r-[3px] border-slate-900 text-center font-black bg-slate-100 whitespace-nowrap">
+                    {visualId}
+                  </td>
+                )}
+                <td onClick={() => { 
+                      setFichaData({...game, '#': visualId, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc}); 
+                      setViewModal({type:'game', data: {...game, '#': visualId, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc, inicio, fim, tempo, nota, dificuldade: dif, conquistas: cond, suporte: sup}}); 
+                      setIsEditingFicha(false); 
+                    }} 
+                    className="p-2 border-r-[3px] border-slate-900 font-black text-xs cursor-pointer hover:text-blue-600 transition-colors underline decoration-slate-300 underline-offset-4 whitespace-normal break-words min-w-[150px]">
+                  {displayClean(titulo)}
+                </td>
+                
+                <td onClick={() => { if(displayClean(plataforma)) setViewModal({type:'console', data: plataforma}) }} className="p-2 border-r-[3px] border-slate-900 cursor-pointer whitespace-nowrap">
+                  {displayClean(plataforma) && (
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform font-black uppercase" style={{ backgroundColor: consoleStyle.bg, color: consoleStyle.text }}>
+                      <ConsoleIcon consoleName={plataforma} /> {plataforma}
+                    </span>
+                  )}
+                </td>
+                
+                <td onClick={() => { if(displayClean(genero)) setViewModal({type:'genre', data: genero}) }} className="p-2 border-r-[3px] border-slate-900 cursor-pointer whitespace-nowrap">
+                  {displayClean(genero) && (
+                     <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 uppercase font-black shadow-[1px_1px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform" style={{backgroundColor: getGenreColor(genero)}}>
+                       {genero}
+                     </span>
+                  )}
+                </td>
+
+                <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(inicio)}</td>
+                <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(fim)}</td>
+                <td className="p-2 border-r-[3px] border-slate-900 text-center font-black whitespace-nowrap">{formatTempoStr(tempo)}</td>
+                <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap font-bold text-slate-600">{calculateTimeSpan(inicio, fim)}</td>
+                <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{getRatingBadge(nota)}</td>
+                
+                <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
+                  {displayClean(dif) && (
+                    <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] uppercase font-black" style={{backgroundColor: getDifficultyBadge(dif).bg}}>
+                      {getDifficultyBadge(dif).text}
+                    </span>
+                  )}
+                </td>
+                
+                <td className="p-2 border-r-[3px] border-slate-900 max-w-[150px] whitespace-normal break-words">{displayClean(cond)}</td>
+                
+                <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
+                  {displayClean(pricePago) && (
+                    <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(pricePago)}}>
+                      {formatCurrency(pricePago)}
+                    </span>
+                  )}
+                </td>
+                
+                <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
+                  {displayClean(priceSemDesc) && (
+                    <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(priceSemDesc)}}>
+                      {formatCurrency(priceSemDesc)}
+                    </span>
+                  )}
+                </td>
+                
+                <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
+                  {discount.has && (
+                    <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(discount.rawDiff)}}>
+                      {discount.val} ({discount.pct})
+                    </span>
+                  )}
+                </td>
+                
+                <td className="p-2 border-slate-900 text-center whitespace-nowrap">{displayClean(sup)}</td>
+              </tr>
+            );
+          })}
+          {list.length === 0 && <tr><td colSpan="15" className="p-8 text-center text-slate-500 font-black uppercase tracking-widest text-lg">Nenhum jogo nesta lista.</td></tr>}
+        </tbody>
+      </table>
+    </div>
   );
 
   if (appState === 'booting' || (appState === 'loading' && games.length === 0)) {
@@ -459,8 +662,8 @@ export default function App() {
         </div>
         
         {(activeTab === 'finished' || activeTab === 'backlog') && (
-          <div className="flex-grow min-w-[200px] sm:ml-4">
-            <input type="text" placeholder="🔍 Buscar por título, console ou gênero..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={theme.input} />
+          <div className="flex-grow min-w-[200px] sm:ml-4 flex items-center">
+            <input type="text" placeholder="🔍 Buscar por título, console ou gênero..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`${theme.input} shadow-[4px_4px_0_0_rgba(15,23,42,1)]`} />
           </div>
         )}
       </div>
@@ -489,24 +692,127 @@ export default function App() {
 
         <main className="p-4 sm:p-6 overflow-x-auto">
           
-          {/* TAB: DASHBOARD */}
+          {}
           {activeTab === 'dashboard' && (
-             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                <div className={`p-4 ${theme.border} bg-[#A8E6CF] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
-                  <h3 className="text-xs font-black uppercase">Total Finalizados</h3>
-                  <p className="text-4xl font-black">{dashboardStats.totalJogos}</p>
+             <div className="flex flex-col gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className={`p-4 ${theme.border} bg-[#A8E6CF] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
+                    <h3 className="text-xs font-black uppercase">Total Finalizados</h3>
+                    <p className="text-4xl font-black">{dashboardStats.totalJogos}</p>
+                  </div>
+                  <div className={`p-4 ${theme.border} bg-gradient-to-r from-[#FF8B94] to-[#FFD3B6] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
+                    <h3 className="text-xs font-black uppercase">Obras-Primas (Rank S)</h3>
+                    <p className="text-4xl font-black">{dashboardStats.sRanks}</p>
+                  </div>
+                  <div className={`p-4 ${theme.border} bg-[#93C5FD] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
+                    <h3 className="text-xs font-black uppercase">Nota Média (Sem as 'S')</h3>
+                    <p className="text-4xl font-black">{dashboardStats.avgNota}</p>
+                  </div>
+                  <div className={`p-4 ${theme.border} bg-[#FDE047] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
+                    <h3 className="text-xs font-black uppercase">Total Investido</h3>
+                    <p className="text-2xl font-black mt-2">{dashboardStats.totalGastoStr}</p>
+                  </div>
                 </div>
-                <div className={`p-4 ${theme.border} bg-gradient-to-r from-[#FF8B94] to-[#FFD3B6] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
-                  <h3 className="text-xs font-black uppercase">Obras-Primas (Rank S)</h3>
-                  <p className="text-4xl font-black">{dashboardStats.sRanks}</p>
+
+                {/* Secao Grafico Descontos */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className={`md:col-span-2 p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
+                    <h3 className="text-sm font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-2">Descontos por Jogo</h3>
+                    <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-2">
+                      {games.filter(g => calculateDiscount(getVal(g, ['preco']), getVal(g, ['preco_original'])).has).sort((a,b) => calculateDiscount(getVal(b, ['preco']), getVal(b, ['preco_original'])).rawDiff - calculateDiscount(getVal(a, ['preco']), getVal(a, ['preco_original'])).rawDiff).map((g, i) => {
+                        let d = calculateDiscount(getVal(g, ['preco']), getVal(g, ['preco_original']));
+                        let pctPago = (d.pago / d.orig) * 100;
+                        let pctDesc = (d.rawDiff / d.orig) * 100;
+                        return (
+                          <div key={i} className="flex flex-col text-[10px] font-black uppercase">
+                             <div className="flex justify-between mb-1">
+                               <span>{getVal(g, ['titulo'])}</span>
+                               <span>R$ {d.orig.toFixed(2)}</span>
+                             </div>
+                             <div className="flex w-full h-4 border-[2px] border-slate-900 bg-slate-100">
+                               <div className="bg-[#3B82F6] h-full" style={{width: `${pctPago}%`}}></div>
+                               <div className="bg-[#EF4444] h-full relative group" style={{width: `${pctDesc}%`}}>
+                                  <div className="absolute inset-0 flex items-center justify-center text-white text-[8px] opacity-0 group-hover:opacity-100 transition-opacity">-{d.pct}</div>
+                               </div>
+                             </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] flex flex-col justify-between items-center`}>
+                    <h3 className="text-sm font-black uppercase mb-4 w-full text-center border-b-[3px] border-slate-900 pb-2">Economia Geral</h3>
+                    <div className="w-full flex-grow flex flex-col justify-end items-center mb-4 mt-2">
+                       <div className="w-2/3 max-w-[120px] flex flex-col border-[3px] border-slate-900 h-[250px] bg-slate-100 relative">
+                          {/* Desconto (Vermelho) em cima */}
+                          <div className="w-full bg-[#EF4444] flex items-center justify-center flex-col transition-all" style={{height: `${(dashboardStats.totalEconomia / (dashboardStats.totalGasto + dashboardStats.totalEconomia)) * 100}%`}}>
+                             <span className="text-white font-black text-sm">{dashboardStats.totalEconomia.toFixed(2)}</span>
+                          </div>
+                          {/* Pago (Azul) embaixo */}
+                          <div className="w-full bg-[#3B82F6] flex items-center justify-center flex-col transition-all" style={{height: `${(dashboardStats.totalGasto / (dashboardStats.totalGasto + dashboardStats.totalEconomia)) * 100}%`}}>
+                             <span className="text-white font-black text-sm">{dashboardStats.totalGasto.toFixed(2)}</span>
+                          </div>
+                       </div>
+                    </div>
+                    <div className="w-full bg-[#991B1B] text-white p-2 border-[3px] border-slate-900 text-center font-black uppercase text-xl shadow-[4px_4px_0_0_rgba(15,23,42,1)]">
+                       Economia {dashboardStats.totalEconomia.toFixed(2).replace('.', ',')}
+                    </div>
+                  </div>
                 </div>
-                <div className={`p-4 ${theme.border} bg-[#93C5FD] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
-                  <h3 className="text-xs font-black uppercase">Nota Média (Sem as 'S')</h3>
-                  <p className="text-4xl font-black">{dashboardStats.avgNota}</p>
-                </div>
-                <div className={`p-4 ${theme.border} bg-[#FDE047] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
-                  <h3 className="text-xs font-black uppercase">Total Investido</h3>
-                  <p className="text-2xl font-black mt-2">{dashboardStats.totalGasto}</p>
+
+                {/* Rankings e Distribuicoes */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                   {/* Dificuldade */}
+                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
+                     <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Por Dificuldade</h3>
+                     <div className="flex flex-col gap-2">
+                       {['A', 'B', 'C', 'D', 'E'].map(d => (
+                         <div key={d} className="flex items-center gap-2 text-xs font-black">
+                           <span className="inline-block w-6 text-center border-[2px] border-slate-900 py-0.5" style={{backgroundColor: getDifficultyBadge(d).bg}}>{d}</span>
+                           <div className="flex-grow bg-slate-100 h-4 border-[2px] border-slate-900">
+                             <div className="h-full bg-slate-900" style={{width: `${(dashboardStats.dif[d] / dashboardStats.totalJogos) * 100}%`}}></div>
+                           </div>
+                           <span className="w-6 text-right">{dashboardStats.dif[d]}</span>
+                         </div>
+                       ))}
+                     </div>
+                   </div>
+                   {/* Notas */}
+                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
+                     <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Por Nota</h3>
+                     <div className="flex flex-col gap-2">
+                       {['S', '10', '9.5', '9', '8.5', '8', 'Outras'].map(n => (
+                         <div key={n} className="flex items-center gap-2 text-xs font-black">
+                           <span className="inline-block w-12 text-center border-[2px] border-slate-900 py-0.5">{n}</span>
+                           <div className="flex-grow bg-slate-100 h-4 border-[2px] border-slate-900">
+                             <div className="h-full bg-slate-900" style={{width: `${(dashboardStats.notas[n] / dashboardStats.totalJogos) * 100}%`}}></div>
+                           </div>
+                           <span className="w-6 text-right">{dashboardStats.notas[n]}</span>
+                         </div>
+                       ))}
+                     </div>
+                   </div>
+                   {/* Top Consoles */}
+                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] col-span-1 lg:col-span-2 overflow-x-auto`}>
+                     <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Ranking de Consoles</h3>
+                     <table className="w-full text-left text-xs font-black uppercase">
+                       <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Console</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Nota Média</th><th className="pb-1 text-center">Tempo Total</th></tr></thead>
+                       <tbody>
+                         {Object.keys(dashboardStats.consoles).sort((a,b) => dashboardStats.consoles[b].count - dashboardStats.consoles[a].count).slice(0, 5).map(c => {
+                           let stat = dashboardStats.consoles[c];
+                           let avg = stat.notaCount > 0 ? (stat.totalNota / stat.notaCount).toFixed(1) : '-';
+                           return (
+                             <tr key={c} className="border-b border-slate-200">
+                               <td className="py-2"><span className="inline-flex items-center gap-1.5 px-2 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]" style={{ backgroundColor: getConsoleStyle(c).bg, color: getConsoleStyle(c).text }}><ConsoleIcon consoleName={c} /> {c}</span></td>
+                               <td className="py-2 text-center">{stat.count}</td>
+                               <td className="py-2 text-center">{avg}</td>
+                               <td className="py-2 text-center text-blue-600">{stat.totalTempo > 0 ? `${stat.totalTempo}h` : '-'}</td>
+                             </tr>
+                           )
+                         })}
+                       </tbody>
+                     </table>
+                   </div>
                 </div>
              </div>
           )}
@@ -517,154 +823,33 @@ export default function App() {
               <div className="flex justify-end">
                 <div className="text-xs font-black uppercase text-slate-500">Exibindo {sortedAndFilteredGames.length} jogos</div>
               </div>
-
-              <div className="overflow-x-auto border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)] bg-white pb-2 max-w-full">
-                <table className="w-full text-left border-collapse text-[10px] sm:text-[11px] font-bold">
-                  <thead>
-                    <tr className={`${activeTab === 'finished' ? theme.gold : theme.cyan} border-b-[3px] border-slate-900 uppercase font-black text-slate-900`}>
-                      <Th label="#" sortKey="ordem" className="text-center w-10" />
-                      <Th label="NOME DO JOGO" sortKey="titulo" />
-                      <Th label="CONSOLE" sortKey="plataforma" />
-                      <Th label="GÊNERO" sortKey="franquia" />
-                      
-                      {activeTab === 'finished' && (
-                        <>
-                          <Th label="INÍCIO" sortKey="inicio" className="text-center" />
-                          <Th label="FIM" sortKey="fim" className="text-center" />
-                          <Th label="TEMPO TOTAL" sortKey="tempo" className="text-center" />
-                          <Th label="DURAÇÃO" sortKey="duracao" className="text-center" />
-                          <Th label="NOTA" sortKey="nota" className="text-center" />
-                          <Th label="DIF" sortKey="dificuldade" className="text-center" />
-                          <Th label="CONDIÇÃO" sortKey="conquistas" />
-                          <Th label="PREÇO PAGO" sortKey="preco" className="text-center" />
-                          <Th label="PREÇO S/ DESC." sortKey="preco_original" className="text-center" />
-                          <Th label="DESCONTO" sortKey="desconto" className="text-center" />
-                          <Th label="SUPORTE" sortKey="suporte" className="text-center border-r-0" />
-                        </>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedAndFilteredGames.map((game, i) => {
-                      
-                      let rawVisualId = game['#'] || game['ordem'] || getVal(game, ['#', 'ordem', 'numero']) || game._fallbackId; 
-                      let visualId = rawVisualId && rawVisualId !== '-' ? rawVisualId : ''; 
-                      
-                      let titulo = getVal(game, ['titulo', 'nome']);
-                      let plataforma = getVal(game, ['plataforma', 'console']);
-                      let genero = getVal(game, ['franquia', 'genero', 'gênero']);
-                      let inicio = getVal(game, ['inicio', 'iniciado']);
-                      let fim = getVal(game, ['fim', 'termino']);
-                      let tempo = getVal(game, ['tempo']);
-                      let nota = getVal(game, ['nota']);
-                      let dif = getVal(game, ['dificuldade']);
-                      let cond = getVal(game, ['conquistas', 'condicao', 'condição']);
-                      let pricePago = getVal(game, ['preco', 'preco pago']);
-                      let priceSemDesc = getVal(game, ['preco_original', 'preco sem desconto', 'preço sem desconto']);
-                      let sup = getVal(game, ['suporte']);
-                      
-                      let discount = calculateDiscount(pricePago, priceSemDesc);
-                      const consoleStyle = getConsoleStyle(plataforma);
-                      
-                      const displayClean = (val) => (val && val !== '-' ? val : '');
-                      
-                      return (
-                        <tr key={game.id || i} className="border-b-[2px] border-slate-900 hover:bg-slate-50 transition-colors">
-                          
-                          <td className="p-2 border-r-[3px] border-slate-900 text-center font-black bg-slate-100 whitespace-nowrap">
-                            {visualId}
-                          </td>
-                          
-                          <td onClick={() => { 
-                                setFichaData({...game, '#': visualId, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc}); 
-                                setViewModal({type:'game', data: {...game, '#': visualId, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc, inicio, fim, tempo, nota, dificuldade: dif, conquistas: cond, suporte: sup}}); 
-                                setIsEditingFicha(false); 
-                              }} 
-                              className="p-2 border-r-[3px] border-slate-900 font-black text-xs cursor-pointer hover:text-blue-600 transition-colors underline decoration-slate-300 underline-offset-4 whitespace-normal break-words min-w-[150px]">
-                            {displayClean(titulo)}
-                          </td>
-                          
-                          <td onClick={() => { if(displayClean(plataforma)) setViewModal({type:'console', data: plataforma}) }} className="p-2 border-r-[3px] border-slate-900 cursor-pointer whitespace-nowrap">
-                            {displayClean(plataforma) ? (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform font-black uppercase" style={{ backgroundColor: consoleStyle.bg, color: consoleStyle.text }}>
-                                <ConsoleIcon consoleName={plataforma} /> {plataforma}
-                              </span>
-                            ) : null}
-                          </td>
-                          
-                          <td onClick={() => { if(displayClean(genero)) setViewModal({type:'genre', data: genero}) }} className="p-2 border-r-[3px] border-slate-900 cursor-pointer whitespace-nowrap">
-                            {displayClean(genero) ? (
-                               <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 uppercase font-black shadow-[1px_1px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform" style={{backgroundColor: getGenreColor(genero)}}>
-                                 {genero}
-                               </span>
-                            ) : null}
-                          </td>
-
-                          {activeTab === 'finished' && (
-                            <>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(inicio)}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(fim)}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center font-black whitespace-nowrap">{formatTempoStr(tempo)}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap font-bold text-slate-600">{calculateTimeSpan(inicio, fim)}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{getRatingBadge(nota)}</td>
-                              
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
-                                {displayClean(dif) ? (
-                                  <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] uppercase font-black" style={{backgroundColor: getDifficultyBadge(dif).bg}}>
-                                    {getDifficultyBadge(dif).text}
-                                  </span>
-                                ) : null}
-                              </td>
-                              
-                              <td className="p-2 border-r-[3px] border-slate-900 max-w-[150px] whitespace-normal break-words">{displayClean(cond)}</td>
-                              
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
-                                {displayClean(pricePago) ? (
-                                  <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(pricePago)}}>
-                                    {formatCurrency(pricePago)}
-                                  </span>
-                                ) : null}
-                              </td>
-                              
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
-                                {displayClean(priceSemDesc) ? (
-                                  <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(priceSemDesc)}}>
-                                    {formatCurrency(priceSemDesc)}
-                                  </span>
-                                ) : null}
-                              </td>
-                              
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
-                                {discount.has ? (
-                                  <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(discount.rawDiff)}}>
-                                    {discount.val} ({discount.pct})
-                                  </span>
-                                ) : null}
-                              </td>
-                              
-                              <td className="p-2 border-slate-900 text-center whitespace-nowrap">{displayClean(sup)}</td>
-                            </>
-                          )}
-                        </tr>
-                      );
-                    })}
-                    {sortedAndFilteredGames.length === 0 && <tr><td colSpan="15" className="p-8 text-center text-slate-500 font-black uppercase tracking-widest text-lg">Nenhum jogo nesta lista.</td></tr>}
-                  </tbody>
-                </table>
-              </div>
+              {renderGameTable(sortedAndFilteredGames)}
             </div>
           )}
 
           {}
           {activeTab === 'add' && (
             <div className={`p-6 bg-white ${theme.border} ${theme.card} max-w-4xl mx-auto`}>
-              <h2 className="text-xl font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-2">Adicionar Novo (Insere no topo sem quebrar fórmulas)</h2>
+              <h2 className="text-xl font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-2">Adicionar Novo (Insere no topo da Planilha)</h2>
+              
+              {addStatus.type !== 'idle' && (
+                <div className={`p-3 mb-4 font-bold text-sm text-center uppercase border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] ${addStatus.type === 'loading' ? 'bg-amber-200' : addStatus.type === 'success' ? 'bg-[#86EFAC]' : theme.pink}`}>
+                  {addStatus.message}
+                </div>
+              )}
+
+              {/* Datalists para Autocomplete */}
+              <datalist id="consoles-list">{uniqueOptions.console.map(o => <option key={o} value={o} />)}</datalist>
+              <datalist id="generos-list">{uniqueOptions.genero.map(o => <option key={o} value={o} />)}</datalist>
+              <datalist id="suportes-list">{uniqueOptions.suporte.map(o => <option key={o} value={o} />)}</datalist>
+              <datalist id="condicoes-list">{uniqueOptions.condicao.map(o => <option key={o} value={o} />)}</datalist>
+
               <form onSubmit={handleCreateNew} className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Status *</label><select value={formData.status} onChange={e=>setFormData({...formData, status: e.target.value})} className={theme.input}><option>Finalizado</option><option>Backlog</option></select></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Nome *</label><input required value={formData.titulo} onChange={e=>setFormData({...formData, titulo: e.target.value})} className={theme.input} /></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Console</label><input value={formData.plataforma} onChange={e=>setFormData({...formData, plataforma: e.target.value})} className={theme.input} /></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Gênero</label><input value={formData.franquia} onChange={e=>setFormData({...formData, franquia: e.target.value})} className={theme.input} /></div>
+                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Console</label><input list="consoles-list" value={formData.plataforma} onChange={e=>setFormData({...formData, plataforma: e.target.value})} className={theme.input} /></div>
+                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Gênero</label><input list="generos-list" value={formData.franquia} onChange={e=>setFormData({...formData, franquia: e.target.value})} className={theme.input} /></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Início</label><input type="date" value={formData.inicio} onChange={e=>setFormData({...formData, inicio: e.target.value})} className={theme.input} /></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Fim</label><input type="date" value={formData.fim} onChange={e=>setFormData({...formData, fim: e.target.value})} className={theme.input} /></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Tempo</label><input placeholder="Ex: 12h ou 120:00:00" value={formData.tempo} onChange={e=>setFormData({...formData, tempo: e.target.value})} className={theme.input} /></div>
@@ -672,9 +857,9 @@ export default function App() {
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Dificuldade</label><select value={formData.dificuldade} onChange={e=>setFormData({...formData, dificuldade: e.target.value})} className={theme.input}><option value=""></option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input placeholder="69,90" value={formData.preco} onChange={e=>setFormData({...formData, preco: e.target.value})} className={theme.input} /></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço S/ Desconto</label><input placeholder="132,90" value={formData.preco_original} onChange={e=>setFormData({...formData, preco_original: e.target.value})} className={theme.input} /></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input value={formData.suporte} onChange={e=>setFormData({...formData, suporte: e.target.value})} className={theme.input} /></div>
+                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input list="suportes-list" value={formData.suporte} onChange={e=>setFormData({...formData, suporte: e.target.value})} className={theme.input} /></div>
                   <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Link (YouTube)</label><input value={formData.midia} onChange={e=>setFormData({...formData, midia: e.target.value})} className={theme.input} /></div>
-                  <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Condição</label><textarea value={formData.conquistas} onChange={e=>setFormData({...formData, conquistas: e.target.value})} className={theme.input} rows="2" /></div>
+                  <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Condição</label><input list="condicoes-list" value={formData.conquistas} onChange={e=>setFormData({...formData, conquistas: e.target.value})} className={theme.input} /></div>
                   <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Observações</label><textarea value={formData.comentarios} onChange={e=>setFormData({...formData, comentarios: e.target.value})} className={theme.input} rows="2" /></div>
                 </div>
                 <button type="submit" className={`${theme.btnBase} ${theme.cyan} mt-4`}>Salvar na Planilha</button>
@@ -702,7 +887,7 @@ export default function App() {
       {}
       {viewModal && (
         <div className="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-          <div className={`w-full max-w-4xl bg-white ${theme.border} ${theme.card} flex flex-col my-auto shadow-2xl`}>
+          <div className={`w-full max-w-[1200px] bg-white ${theme.border} ${theme.card} flex flex-col my-auto shadow-2xl`}>
             
             <div className={`p-4 border-b-[3px] border-slate-900 flex justify-between items-center ${viewModal.type === 'game' && isEditingFicha ? theme.pink : theme.cyan}`}>
               <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tighter truncate pr-4">
@@ -834,8 +1019,8 @@ export default function App() {
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Nome *</label><input value={fichaData.titulo} onChange={e=>setFichaData({...fichaData, titulo: e.target.value})} className={theme.input} /></div>
-                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Console</label><input value={fichaData.plataforma} onChange={e=>setFichaData({...fichaData, plataforma: e.target.value})} className={theme.input} /></div>
-                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Gênero</label><input value={fichaData.franquia} onChange={e=>setFichaData({...fichaData, franquia: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Console</label><input list="consoles-list" value={fichaData.plataforma} onChange={e=>setFichaData({...fichaData, plataforma: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Gênero</label><input list="generos-list" value={fichaData.franquia} onChange={e=>setFichaData({...fichaData, franquia: e.target.value})} className={theme.input} /></div>
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Início</label><input value={fichaData.inicio} onChange={e=>setFichaData({...fichaData, inicio: e.target.value})} className={theme.input} /></div>
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Fim</label><input value={fichaData.fim} onChange={e=>setFichaData({...fichaData, fim: e.target.value})} className={theme.input} /></div>
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Tempo</label><input value={fichaData.tempo} onChange={e=>setFichaData({...fichaData, tempo: e.target.value})} className={theme.input} /></div>
@@ -843,10 +1028,10 @@ export default function App() {
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Dificuldade</label><input value={fichaData.dificuldade} onChange={e=>setFichaData({...fichaData, dificuldade: e.target.value})} className={theme.input} /></div>
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input value={fichaData.preco} onChange={e=>setFichaData({...fichaData, preco: e.target.value})} className={theme.input} /></div>
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço s/ Desconto</label><input value={fichaData.preco_original} onChange={e=>setFichaData({...fichaData, preco_original: e.target.value})} className={theme.input} /></div>
-                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input value={fichaData.suporte} onChange={e=>setFichaData({...fichaData, suporte: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input list="suportes-list" value={fichaData.suporte} onChange={e=>setFichaData({...fichaData, suporte: e.target.value})} className={theme.input} /></div>
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Link (YouTube)</label><input value={getVal(fichaData, ['midia', 'link'])} onChange={e=>setFichaData({...fichaData, midia: e.target.value, link: e.target.value})} className={theme.input} /></div>
                       
-                      <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Condição</label><textarea value={fichaData.conquistas} onChange={e=>setFichaData({...fichaData, conquistas: e.target.value})} className={theme.input} rows="2" /></div>
+                      <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Condição</label><input list="condicoes-list" value={fichaData.conquistas} onChange={e=>setFichaData({...fichaData, conquistas: e.target.value})} className={theme.input} /></div>
                       <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Observações</label><textarea value={getVal(fichaData, ['comentarios', 'observacao', 'observação'])} onChange={e=>setFichaData({...fichaData, comentarios: e.target.value, observacao: e.target.value})} className={theme.input} rows="2" /></div>
                     </div>
                   )}
@@ -884,14 +1069,7 @@ export default function App() {
                      </div>
                      <div>
                        <h3 className="text-sm font-black uppercase border-b-[3px] border-slate-900 pb-2 mb-4">Jogos ({viewModal.data})</h3>
-                       <div className="flex flex-col gap-2">
-                         {filteredList.map((g, i) => (
-                           <div key={i} className="flex justify-between items-center bg-white p-2 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]">
-                             <span className="font-black text-sm">{getVal(g, ['titulo', 'nome'])}</span>
-                             <span className="text-xs font-bold px-2 py-0.5 border border-slate-900 bg-slate-100 uppercase">{g.status}</span>
-                           </div>
-                         ))}
-                       </div>
+                       {renderGameTable(filteredList, true)}
                      </div>
                    </div>
                  );
@@ -907,7 +1085,6 @@ export default function App() {
                   onClick={() => {
                      if(window.confirm('Tem certeza que deseja excluir este jogo da planilha?')) {
                         handleDelete(viewModal.data.id);
-                        setViewModal(null);
                      }
                   }} 
                   className="text-rose-600 hover:text-rose-800 text-[10px] font-black uppercase underline transition-colors"
