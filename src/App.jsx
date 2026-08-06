@@ -12,6 +12,9 @@ const theme = {
 
 const getVal = (game, possibleKeys) => {
   if (!game) return '';
+  for (let pk of possibleKeys) {
+     if (game[pk] !== undefined) return game[pk];
+  }
   const keys = Object.keys(game);
   for (let k of keys) {
      const cleanK = String(k).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[\n\r]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -128,7 +131,6 @@ const getConsoleStyle = (name) => {
   let n = String(name).toUpperCase().trim();
   if (n === 'PS1' || n === 'PLAYSTATION 1') return { bg: '#D9D9D9', text: '#222222' };
   if (n === 'PS2' || n === 'PLAYSTATION 2') return { bg: '#0B1E5B', text: '#79B8FF' };
-  if (n === 'PS3' || n === 'PLAYSTATION 3') return { bg: '#000000', text: '#FFFFFF' };
   if (n === 'PS4' || n === 'PS5' || n.includes('PLAYSTATION')) return { bg: '#003791', text: '#FFFFFF' };
   if (n === 'SNES' || n === 'SUPER NINTENDO') return { bg: '#6B4BAE', text: '#FFFFFF' };
   if (n === 'NES' || n === 'NINTENDINHO') return { bg: '#5B5B5B', text: '#E60012' };
@@ -299,9 +301,8 @@ export default function App() {
       let valA, valB;
       
       if (sortConfig.key === 'ordem') {
-        // Removemos o 'id' desta busca para garantir que leia APENAS a coluna visual da planilha
-        valA = parseInt(getVal(a, ['#', 'ordem'])) || 0;
-        valB = parseInt(getVal(b, ['#', 'ordem'])) || 0;
+        valA = parseInt(a['#'] || a['ordem'] || getVal(a, ['#', 'ordem', 'numero'])) || 0;
+        valB = parseInt(b['#'] || b['ordem'] || getVal(b, ['#', 'ordem', 'numero'])) || 0;
       } else if (sortConfig.key === 'nota') {
         const p = x => {
           let s = String(x).toUpperCase().trim();
@@ -312,6 +313,18 @@ export default function App() {
       } else if (sortConfig.key === 'tempo') {
         const p = x => parseFloat(formatTempoStr(x).replace('h','')) || 0;
         valA = p(getVal(a, ['tempo'])); valB = p(getVal(b, ['tempo']));
+      } else if (sortConfig.key === 'duracao') {
+        const parseDur = (str) => {
+           if (!str) return 0;
+           let s = str.toLowerCase();
+           let val = parseInt(s) || 0;
+           if (s.includes('semana')) return val * 7;
+           if (s.includes('mês') || s.includes('meses')) return val * 30;
+           if (s.includes('ano')) return val * 365;
+           return val;
+        };
+        valA = parseDur(calculateTimeSpan(getVal(a, ['inicio', 'iniciado']), getVal(a, ['fim', 'termino'])));
+        valB = parseDur(calculateTimeSpan(getVal(b, ['inicio', 'iniciado']), getVal(b, ['fim', 'termino'])));
       } else if (sortConfig.key === 'preco') {
         const p = x => parseFloat(String(x).replace('R$', '').trim().replace(',', '.')) || 0;
         valA = p(getVal(a, ['preco', 'preco pago'])); valB = p(getVal(b, ['preco', 'preco pago']));
@@ -326,8 +339,8 @@ export default function App() {
         valB = String(getVal(b, [sortConfig.key])).toLowerCase();
       }
 
-      // Células vazias SEMPRE no final, independente de ser Ascendente ou Decrescente
-      let isBlank = (val) => val === '' || val === null || val === undefined || val === '-' || (typeof val === 'number' && isNaN(val)) || (typeof val === 'number' && val === 0 && sortConfig.key !== 'nota');
+      // Itens vazios vão sempre para o fim, em qualquer ordenação (asc ou desc)
+      let isBlank = (val) => val === '' || val === null || val === undefined || val === '-' || (typeof val === 'number' && isNaN(val)) || (typeof val === 'number' && val === 0 && sortConfig.key !== 'nota' && sortConfig.key !== 'desconto');
       let blankA = isBlank(valA);
       let blankB = isBlank(valB);
 
@@ -432,9 +445,9 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans p-2 sm:p-4 selection:bg-pink-200 relative">
       
-      {/* Header com Busca */}
+      {/* Header com Busca Integrada */}
       <div className="max-w-[1600px] mx-auto mb-6 flex flex-wrap items-center gap-4 sm:gap-6">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 shrink-0">
           <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Logo" className="w-12 h-12 sm:w-14 sm:h-14" />
           <div className={`p-1.5 sm:p-2 ${theme.cyan} ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] transform -rotate-1`}>
             <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tighter">Ludorum</h1>
@@ -445,13 +458,14 @@ export default function App() {
         </div>
         
         {(activeTab === 'finished' || activeTab === 'backlog') && (
-          <div className="flex-grow max-w-sm sm:ml-4">
+          <div className="flex-grow min-w-[200px] sm:ml-4">
             <input type="text" placeholder="🔍 Buscar por título, console ou gênero..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={theme.input} />
           </div>
         )}
       </div>
 
       <div className={`max-w-[1600px] mx-auto ${theme.border} ${theme.card} flex flex-col bg-white overflow-hidden`}>
+        {/* Navegação de Abas */}
         <nav className="flex flex-row overflow-x-auto sm:grid sm:grid-cols-5 border-b-[3px] border-slate-900 bg-slate-100">
           {[
             { id: 'dashboard', label: 'Dashboard', icon: Icons.Home },
@@ -497,7 +511,6 @@ export default function App() {
           )}
 
           {}
-          {/* TAB: LISTAS (Tabela Principal) */}
           {(activeTab === 'finished' || activeTab === 'backlog') && (
             <div className="flex flex-col gap-4">
               <div className="flex justify-end">
@@ -532,9 +545,8 @@ export default function App() {
                   </thead>
                   <tbody>
                     {sortedAndFilteredGames.map((game, i) => {
-                      
-                      // Extração sem usar o game.id como fallback para evitar que exiba "Games Finalizados|2"
-                      let rawVisualId = getVal(game, ['#', 'ordem']); 
+                      // O aplicativo extrai a ordem bruta perfeitamente a partir do JSON (exatamente como vier da planilha A2 em diante).
+                      let rawVisualId = game['#'] || game['ordem'] || getVal(game, ['#', 'ordem', 'numero']); 
                       let visualId = rawVisualId && rawVisualId !== '-' ? rawVisualId : ''; 
                       
                       let titulo = getVal(game, ['titulo', 'nome']);
@@ -592,7 +604,7 @@ export default function App() {
                               <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(inicio)}</td>
                               <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(fim)}</td>
                               <td className="p-2 border-r-[3px] border-slate-900 text-center font-black whitespace-nowrap">{formatTempoStr(tempo)}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{calculateTimeSpan(inicio, fim)}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap font-bold text-slate-600">{calculateTimeSpan(inicio, fim)}</td>
                               <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{getRatingBadge(nota)}</td>
                               
                               <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
@@ -623,7 +635,7 @@ export default function App() {
                               
                               <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
                                 {discount.has ? (
-                                  <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-[#047857] bg-[#D1FAE5]">
+                                  <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(discount.rawDiff)}}>
                                     {discount.val} ({discount.pct})
                                   </span>
                                 ) : null}
@@ -642,7 +654,7 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB: ADICIONAR NOVO (Inserção na Linha 2) */}
+          {}
           {activeTab === 'add' && (
             <div className={`p-6 bg-white ${theme.border} ${theme.card} max-w-4xl mx-auto`}>
               <h2 className="text-xl font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-2">Adicionar Novo (Insere no topo sem quebrar fórmulas)</h2>
@@ -669,7 +681,7 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB: CONFIGURAÇÕES */}
+          {}
           {activeTab === 'config' && (
              <div className={`max-w-xl mx-auto bg-white p-8 ${theme.border} ${theme.card}`}>
                 <h2 className="text-2xl font-black mb-4 uppercase text-center">Alterar Conexão</h2>
@@ -687,7 +699,6 @@ export default function App() {
       </div>
 
       {}
-      {/* MODAL DE FICHAS */}
       {viewModal && (
         <div className="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
           <div className={`w-full max-w-4xl bg-white ${theme.border} ${theme.card} flex flex-col my-auto shadow-2xl`}>
@@ -717,7 +728,7 @@ export default function App() {
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         <div className="flex flex-col">
                           <span className="text-[10px] font-black uppercase text-slate-500 mb-1">Console</span>
-                          {viewModal.data.plataforma ? (
+                          {viewModal.data.plataforma && viewModal.data.plataforma !== '-' ? (
                             <div>
                                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] font-black uppercase" style={{ backgroundColor: getConsoleStyle(viewModal.data.plataforma).bg, color: getConsoleStyle(viewModal.data.plataforma).text }}>
                                  <ConsoleIcon consoleName={viewModal.data.plataforma} /> {viewModal.data.plataforma}
@@ -727,7 +738,7 @@ export default function App() {
                         </div>
                         <div className="flex flex-col">
                           <span className="text-[10px] font-black uppercase text-slate-500 mb-1">Gênero</span>
-                          {viewModal.data.franquia ? (
+                          {viewModal.data.franquia && viewModal.data.franquia !== '-' ? (
                             <div>
                               <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 uppercase font-black shadow-[1px_1px_0_0_rgba(15,23,42,1)]" style={{backgroundColor: getGenreColor(viewModal.data.franquia)}}>
                                 {viewModal.data.franquia}
@@ -738,7 +749,7 @@ export default function App() {
                         <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500 mb-1">Nota</span><div>{getRatingBadge(viewModal.data.nota)}</div></div>
                         <div className="flex flex-col">
                           <span className="text-[10px] font-black uppercase text-slate-500 mb-1">Dificuldade</span>
-                          {viewModal.data.dificuldade ? (
+                          {viewModal.data.dificuldade && viewModal.data.dificuldade !== '-' ? (
                             <div>
                               <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] uppercase font-black" style={{backgroundColor: getDifficultyBadge(viewModal.data.dificuldade).bg}}>
                                 {getDifficultyBadge(viewModal.data.dificuldade).text}
@@ -772,7 +783,22 @@ export default function App() {
                              </div>
                           ) : null}
                         </div>
-                        <div className="flex flex-col col-span-2"><span className="text-[10px] font-black uppercase text-slate-500">Suporte</span><span className="font-bold">{viewModal.data.suporte && viewModal.data.suporte !== '-' ? viewModal.data.suporte : ''}</span></div>
+                        
+                        {(() => {
+                           let discount = calculateDiscount(viewModal.data.preco, viewModal.data.preco_original);
+                           return discount.has ? (
+                             <div className="flex flex-col">
+                               <span className="text-[10px] font-black uppercase text-slate-500 mb-1">Desconto</span>
+                               <div>
+                                 <span className="inline-block px-2 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(discount.rawDiff)}}>
+                                   {discount.val} ({discount.pct})
+                                 </span>
+                               </div>
+                             </div>
+                           ) : <div className="flex flex-col"></div>;
+                        })()}
+
+                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Suporte</span><span className="font-bold">{viewModal.data.suporte && viewModal.data.suporte !== '-' ? viewModal.data.suporte : ''}</span></div>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -872,7 +898,7 @@ export default function App() {
 
             </div>
 
-            {/* RODAPÉ DO MODAL (Com botão discreto de Remover) */}
+            {/* RODAPÉ DO MODAL (Botão Remover Discreto) */}
             {viewModal.type === 'game' && (
               <div className="p-4 border-t-[3px] border-slate-900 bg-white flex justify-between items-center gap-4">
                 
