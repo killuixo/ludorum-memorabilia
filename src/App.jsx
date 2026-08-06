@@ -10,9 +10,23 @@ const theme = {
   btnBase: 'px-4 py-2 border-[3px] border-slate-900 font-black uppercase active:translate-y-1 active:translate-x-1 active:shadow-none transition-all shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer',
 };
 
+// EXTRATOR INTELIGENTE: Lê os dados ignorando espaços em branco e quebras de linha vindos da planilha
+const getVal = (game, possibleKeys) => {
+  if (!game) return '';
+  const keys = Object.keys(game);
+  for (let k of keys) {
+     const cleanK = String(k).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[\n\r]/g, ' ').replace(/\s+/g, ' ').trim();
+     for (let pk of possibleKeys) {
+        const cleanPk = String(pk).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[\n\r]/g, ' ').replace(/\s+/g, ' ').trim();
+        if (cleanK === cleanPk) return game[k];
+     }
+  }
+  return '';
+};
+
 const formatCurrency = (val) => {
   if (val === undefined || val === null || val === '') return '';
-  let strVal = String(val).replace('R$', '').trim().replace(',', '.');
+  let strVal = String(val).replace('R$', '').trim().replace(/\s/g, '').replace(',', '.');
   let num = parseFloat(strVal);
   if (isNaN(num)) return String(val);
   return `R$ ${num.toFixed(2).replace('.', ',')}`;
@@ -115,7 +129,7 @@ const getConsoleStyle = (name) => {
   let n = String(name).toUpperCase();
   if (n === 'PS1') return { bg: '#D9D9D9', text: '#222222' };
   if (n === 'PS2') return { bg: '#0B1E5B', text: '#79B8FF' };
-  if (n === 'PS4') return { bg: '#003791', text: '#FFFFFF' };
+  if (n === 'PS4' || n === 'PS5') return { bg: '#003791', text: '#FFFFFF' };
   if (n === 'SNES') return { bg: '#6B4BAE', text: '#FFFFFF' };
   if (n === 'NES') return { bg: '#5B5B5B', text: '#E60012' };
   if (n === 'WII') return { bg: '#FFFFFF', text: '#00AEEF' };
@@ -123,10 +137,9 @@ const getConsoleStyle = (name) => {
   if (n === 'GB') return { bg: '#5B6D4A', text: '#DFF5C0' };
   if (n === 'MEGA DRIVE') return { bg: '#111111', text: '#D4AF37' };
   if (n === 'MASTER SYSTEM') return { bg: '#111111', text: '#E53935' };
-  if (n === 'DS') return { bg: '#F5F5F5', text: '#444444' };
-  if (n === 'PC') return { bg: '#111111', text: '#76B900' };
-  
-  return { bg: '#FFD3B6', text: '#000000' }; // Default Dourado
+  if (n === 'DS' || n === '3DS') return { bg: '#F5F5F5', text: '#444444' };
+  if (n === 'PC' || n === 'STEAM') return { bg: '#111111', text: '#76B900' };
+  return { bg: '#FFD3B6', text: '#000000' }; 
 };
 
 const ConsoleIcon = ({ consoleName }) => {
@@ -162,11 +175,11 @@ const getGenreColor = (name) => {
 const getDifficultyBadge = (dif) => {
   let d = String(dif || '').toUpperCase().trim();
   if (!d) return { text: '', bg: 'transparent' };
-  if (d === 'A') return { text: 'A', bg: '#FF8B94' }; // Pink
+  if (d === 'A') return { text: 'A', bg: '#FF8B94' };
   if (d === 'B') return { text: 'B', bg: '#FFB3BA' };
-  if (d === 'C') return { text: 'C', bg: '#A8E6CF' }; // Ciano
+  if (d === 'C') return { text: 'C', bg: '#A8E6CF' };
   if (d === 'D') return { text: 'D', bg: '#FFE5B4' };
-  if (d === 'E') return { text: 'E', bg: '#FFD3B6' }; // Dourado
+  if (d === 'E') return { text: 'E', bg: '#FFD3B6' };
   return { text: d, bg: '#E2E8F0' };
 };
 
@@ -221,7 +234,7 @@ export default function App() {
   const [fichaData, setFichaData] = useState({});
   const [fichaStatus, setFichaStatus] = useState({ type: 'idle', message: '' });
 
-  const blankForm = { id: '', titulo: '', status: 'Finalizado', plataforma: '', franquia: '', nota: '', dificuldade: '', tempo: '', preco: '', preco_original: '', suporte: '', midia: '', inicio: '', fim: '', conquistas: '', comentarios: '' };
+  const blankForm = { status: 'Finalizado', titulo: '', plataforma: '', franquia: '', inicio: '', fim: '', tempo: '', nota: '', dificuldade: '', conquistas: '', preco: '', preco_original: '', suporte: '', midia: '', comentarios: '' };
   const [formData, setFormData] = useState(blankForm);
 
   useEffect(() => {
@@ -271,35 +284,39 @@ export default function App() {
   const sortedAndFilteredGames = useMemo(() => {
     let list = games.filter(g => g.status === (activeTab === 'finished' ? 'Finalizado' : 'Backlog'));
     if (searchTerm) {
-      list = list.filter(g => 
-        String(g.titulo).toLowerCase().includes(searchTerm.toLowerCase()) ||
-        String(g.plataforma).toLowerCase().includes(searchTerm.toLowerCase()) ||
-        String(g.franquia).toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      list = list.filter(g => {
+        let t = getVal(g, ['titulo', 'nome']);
+        let p = getVal(g, ['plataforma', 'console']);
+        let f = getVal(g, ['franquia', 'genero', 'gênero']);
+        return String(t).toLowerCase().includes(searchTerm.toLowerCase()) ||
+               String(p).toLowerCase().includes(searchTerm.toLowerCase()) ||
+               String(f).toLowerCase().includes(searchTerm.toLowerCase());
+      });
     }
     list.sort((a, b) => {
-      let valA = a[sortConfig.key] || a['#'] || ''; 
-      let valB = b[sortConfig.key] || b['#'] || '';
-
+      let valA, valB;
       if (sortConfig.key === 'ordem') {
-        valA = parseInt(a.ordem || a['#']) || 99999;
-        valB = parseInt(b.ordem || b['#']) || 99999;
+        valA = parseInt(getVal(a, ['ordem', '#', 'id'])) || 99999;
+        valB = parseInt(getVal(b, ['ordem', '#', 'id'])) || 99999;
       } else if (sortConfig.key === 'nota') {
         const p = x => {
           let s = String(x).toUpperCase().trim();
           if (s === 'S' || s === 'RANK S') return 999;
           return parseFloat(s.replace(',','.')) || 0;
         };
-        valA = p(valA); valB = p(valB);
+        valA = p(getVal(a, ['nota'])); valB = p(getVal(b, ['nota']));
       } else if (sortConfig.key === 'tempo') {
         const p = x => parseFloat(formatTempoStr(x).replace('h','')) || 0;
-        valA = p(valA); valB = p(valB);
-      } else if (sortConfig.key === 'preco' || sortConfig.key === 'preco_original') {
+        valA = p(getVal(a, ['tempo'])); valB = p(getVal(b, ['tempo']));
+      } else if (sortConfig.key === 'preco') {
         const p = x => parseFloat(String(x).replace('R$', '').trim().replace(',', '.')) || 0;
-        valA = p(valA); valB = p(valB);
+        valA = p(getVal(a, ['preco', 'preco pago'])); valB = p(getVal(b, ['preco', 'preco pago']));
+      } else if (sortConfig.key === 'preco_original') {
+        const p = x => parseFloat(String(x).replace('R$', '').trim().replace(',', '.')) || 0;
+        valA = p(getVal(a, ['preco_original', 'preco sem desconto'])); valB = p(getVal(b, ['preco_original', 'preco sem desconto']));
       } else {
-        valA = String(valA).toLowerCase();
-        valB = String(valB).toLowerCase();
+        valA = String(getVal(a, [sortConfig.key])).toLowerCase();
+        valB = String(getVal(b, [sortConfig.key])).toLowerCase();
       }
 
       if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
@@ -312,11 +329,11 @@ export default function App() {
   const dashboardStats = useMemo(() => {
     let fin = games.filter(g => g.status === 'Finalizado');
     let totalJogos = fin.length;
-    let sRanks = fin.filter(g => String(g.nota).toUpperCase().trim() === 'S').length;
-    let notasValidas = fin.map(g => parseFloat(String(g.nota).replace(',','.'))).filter(n => !isNaN(n));
+    let sRanks = fin.filter(g => String(getVal(g, ['nota'])).toUpperCase().trim() === 'S').length;
+    let notasValidas = fin.map(g => parseFloat(String(getVal(g, ['nota'])).replace(',','.'))).filter(n => !isNaN(n));
     let avgNota = notasValidas.length > 0 ? (notasValidas.reduce((a,b)=>a+b,0) / notasValidas.length).toFixed(1) : 0;
     let totalGasto = fin.reduce((acc, g) => {
-      let p = parseFloat(String(g.preco).replace('R$', '').trim().replace(',', '.'));
+      let p = parseFloat(String(getVal(g, ['preco', 'preco pago'])).replace('R$', '').trim().replace(',', '.'));
       return acc + (isNaN(p) ? 0 : p);
     }, 0);
     return { totalJogos, sRanks, avgNota, totalGasto: `R$ ${totalGasto.toFixed(2).replace('.',',')}` };
@@ -360,7 +377,6 @@ export default function App() {
   };
 
   const handleDelete = async (id) => {
-    if(!window.confirm('Tem certeza que deseja excluir?')) return;
     setAppState('loading');
     try {
       await fetch(configUrl, { method: 'POST', body: JSON.stringify({ action: 'DELETE', id }) });
@@ -399,8 +415,8 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans p-2 sm:p-4 selection:bg-pink-200 relative">
       
-      {/* HEADER MONDRIAN COM BUSCA EMBUTIDA */}
-      <div className="max-w-[1600px] mx-auto mb-6 flex flex-wrap items-center justify-between gap-4">
+      {/* HEADER MONDRIAN COM BUSCA AO LADO */}
+      <div className="max-w-[1600px] mx-auto mb-6 flex flex-wrap items-center gap-6">
         <div className="flex items-center gap-4">
           <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Logo" className="w-12 h-12 sm:w-14 sm:h-14" />
           <div className={`p-1.5 sm:p-2 ${theme.cyan} ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] transform -rotate-1`}>
@@ -413,7 +429,7 @@ export default function App() {
         
         {/* CAIXA DE BUSCA */}
         {(activeTab === 'finished' || activeTab === 'backlog') && (
-          <div className="flex-grow max-w-sm">
+          <div className="flex-grow max-w-sm ml-auto sm:ml-0">
             <input type="text" placeholder="🔍 Buscar Título, Console ou Gênero..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={theme.input} />
           </div>
         )}
@@ -464,6 +480,7 @@ export default function App() {
              </div>
           )}
 
+          {}
           {(activeTab === 'finished' || activeTab === 'backlog') && (
             <div className="flex flex-col gap-4">
               <div className="flex justify-end">
@@ -471,10 +488,10 @@ export default function App() {
               </div>
 
               <div className="overflow-x-auto border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)] bg-white pb-2 max-w-full">
-                <table className="w-full text-left border-collapse text-[10px] sm:text-xs font-bold">
+                <table className="w-full text-left border-collapse text-[10px] sm:text-[11px] font-bold">
                   <thead>
                     <tr className={`${activeTab === 'finished' ? theme.gold : theme.cyan} border-b-[3px] border-slate-900 uppercase font-black text-slate-900`}>
-                      <Th label="#" sortKey="ordem" className="text-center" />
+                      <Th label="#" sortKey="ordem" className="text-center w-10" />
                       <Th label="Nome do Jogo" sortKey="titulo" />
                       <Th label="Console" sortKey="plataforma" />
                       <Th label="Gênero" sortKey="franquia" />
@@ -491,98 +508,109 @@ export default function App() {
                           <Th label="Preço Pago" sortKey="preco" className="text-center" />
                           <Th label="Preço S/ Desc." sortKey="preco_original" className="text-center" />
                           <Th label="Desconto" sortKey="desconto" className="text-center" />
-                          <Th label="Suporte" sortKey="suporte" className="text-center" />
+                          <Th label="Suporte" sortKey="suporte" className="text-center border-r-0" />
                         </>
                       )}
-                      <th className="p-2 text-center whitespace-nowrap">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
                     {sortedAndFilteredGames.map((game, i) => {
-                      // O React tenta puxar a informação independente de como o Script mandou (por segurança)
-                      let pricePago = game.preco || game['Preço pago'] || game['preço pago'] || '';
-                      let priceSemDesc = game.preco_original || game['Preço sem desconto'] || game['preço sem desconto'] || '';
-                      let ordemId = game.ordem || game['#'] || '';
+                      // Usando o Extrator Inteligente
+                      let visualId = getVal(game, ['#', 'ordem']);
+                      let titulo = getVal(game, ['titulo', 'nome']);
+                      let plataforma = getVal(game, ['plataforma', 'console']);
+                      let genero = getVal(game, ['franquia', 'genero', 'gênero']);
+                      let inicio = getVal(game, ['inicio', 'iniciado']);
+                      let fim = getVal(game, ['fim', 'termino']);
+                      let tempo = getVal(game, ['tempo']);
+                      let nota = getVal(game, ['nota']);
+                      let dif = getVal(game, ['dificuldade']);
+                      let cond = getVal(game, ['conquistas', 'condicao', 'condição']);
+                      let pricePago = getVal(game, ['preco', 'preco pago']);
+                      let priceSemDesc = getVal(game, ['preco_original', 'preco sem desconto', 'preco original']);
+                      let sup = getVal(game, ['suporte']);
                       
                       let discount = calculateDiscount(pricePago, priceSemDesc);
-                      const consoleStyle = getConsoleStyle(game.plataforma);
+                      const consoleStyle = getConsoleStyle(plataforma);
                       
                       return (
                         <tr key={game.id || i} className="border-b-[2px] border-slate-900 hover:bg-slate-50 transition-colors">
                           
                           <td className="p-2 border-r-[3px] border-slate-900 text-center font-black bg-slate-100 whitespace-nowrap">
-                            {ordemId}
+                            {visualId}
                           </td>
                           
-                          {/* Nome do Jogo com Quebra de Linha Liberada */}
-                          <td onClick={() => { setFichaData({...game, preco: pricePago, preco_original: priceSemDesc}); setViewModal({type:'game', data: {...game, preco: pricePago, preco_original: priceSemDesc}}); setIsEditingFicha(false); }} 
-                              className="p-2 border-r-[3px] border-slate-900 font-black text-[11px] sm:text-sm cursor-pointer hover:text-blue-600 transition-colors underline decoration-slate-300 underline-offset-4 whitespace-normal min-w-[200px] break-words">
-                            {game.titulo || ''}
+                          {/* Nome do Jogo: Permite quebra de linha elegante */}
+                          <td onClick={() => { 
+                                // Garante que a ficha receba os valores exatos que localizamos
+                                setFichaData({...game, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc}); 
+                                setViewModal({type:'game', data: {...game, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc, inicio, fim, tempo, nota, dificuldade: dif, conquistas: cond, suporte: sup}}); 
+                                setIsEditingFicha(false); 
+                              }} 
+                              className="p-2 border-r-[3px] border-slate-900 font-black text-xs cursor-pointer hover:text-blue-600 transition-colors underline decoration-slate-300 underline-offset-4 whitespace-normal break-words min-w-[150px]">
+                            {titulo || ''}
                           </td>
                           
-                          <td onClick={() => setViewModal({type:'console', data: game.plataforma})} className="p-2 border-r-[3px] border-slate-900 cursor-pointer whitespace-nowrap">
-                            {game.plataforma ? (
+                          <td onClick={() => setViewModal({type:'console', data: plataforma})} className="p-2 border-r-[3px] border-slate-900 cursor-pointer whitespace-nowrap">
+                            {plataforma ? (
                               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform font-black uppercase" style={{ backgroundColor: consoleStyle.bg, color: consoleStyle.text }}>
-                                <ConsoleIcon consoleName={game.plataforma} /> {game.plataforma}
+                                <ConsoleIcon consoleName={plataforma} /> {plataforma}
                               </span>
-                            ) : ''}
+                            ) : null}
                           </td>
                           
-                          <td onClick={() => setViewModal({type:'genre', data: game.franquia})} className="p-2 border-r-[3px] border-slate-900 cursor-pointer whitespace-nowrap">
-                            {game.franquia ? (
-                               <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 uppercase font-black shadow-[1px_1px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform" style={{backgroundColor: getGenreColor(game.franquia)}}>
-                                 {game.franquia}
+                          <td onClick={() => setViewModal({type:'genre', data: genero})} className="p-2 border-r-[3px] border-slate-900 cursor-pointer whitespace-nowrap">
+                            {genero ? (
+                               <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 uppercase font-black shadow-[1px_1px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform" style={{backgroundColor: getGenreColor(genero)}}>
+                                 {genero}
                                </span>
-                            ) : ''}
+                            ) : null}
                           </td>
 
                           {activeTab === 'finished' && (
                             <>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(game.inicio) || ''}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(game.fim) || ''}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center font-black whitespace-nowrap">{formatTempoStr(game.tempo) || ''}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{calculateTimeSpan(game.inicio, game.fim) || ''}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{getRatingBadge(game.nota) || ''}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(inicio) || ''}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(fim) || ''}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center font-black whitespace-nowrap">{formatTempoStr(tempo) || ''}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{calculateTimeSpan(inicio, fim) || ''}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{getRatingBadge(nota) || null}</td>
                               
                               <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
-                                {game.dificuldade ? (
-                                  <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] uppercase font-black" style={{backgroundColor: getDifficultyBadge(game.dificuldade).bg}}>
-                                    {getDifficultyBadge(game.dificuldade).text}
+                                {dif ? (
+                                  <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] uppercase font-black" style={{backgroundColor: getDifficultyBadge(dif).bg}}>
+                                    {getDifficultyBadge(dif).text}
                                   </span>
-                                ) : ''}
+                                ) : null}
                               </td>
                               
-                              <td className="p-2 border-r-[3px] border-slate-900 max-w-[200px] truncate whitespace-nowrap" title={game.conquistas}>{game.conquistas || ''}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 max-w-[150px] truncate whitespace-nowrap" title={cond}>{cond || ''}</td>
                               
-                              {/* Valores Formatados para R$ */}
                               <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
                                 {pricePago ? (
                                   <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(pricePago)}}>
                                     {formatCurrency(pricePago)}
                                   </span>
-                                ) : ''}
+                                ) : null}
                               </td>
                               
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center text-slate-600 whitespace-nowrap">{formatCurrency(priceSemDesc) || ''}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center text-slate-600 font-bold whitespace-nowrap">{formatCurrency(priceSemDesc) || ''}</td>
                               
                               <td className="p-2 border-r-[3px] border-slate-900 text-center text-green-700 font-black whitespace-nowrap">{discount.has ? `${discount.val} (${discount.pct})` : ''}</td>
                               
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{game.suporte || ''}</td>
+                              <td className="p-2 border-slate-900 text-center whitespace-nowrap">{sup || ''}</td>
                             </>
                           )}
-                          <td className="p-2 text-center align-middle whitespace-nowrap">
-                            <button onClick={() => handleDelete(game.id)} title="Excluir" className="p-1 border-[2px] border-slate-900 bg-white hover:bg-rose-200 transition-colors shadow-[2px_2px_0_0_rgba(15,23,42,1)] active:translate-y-0.5"><Icons.Close /></button>
-                          </td>
                         </tr>
                       );
                     })}
-                    {sortedAndFilteredGames.length === 0 && <tr><td colSpan="17" className="p-8 text-center text-slate-500 font-black">Nenhum jogo encontrado.</td></tr>}
+                    {sortedAndFilteredGames.length === 0 && <tr><td colSpan="15" className="p-8 text-center text-slate-500 font-black">Nenhum jogo encontrado.</td></tr>}
                   </tbody>
                 </table>
               </div>
             </div>
           )}
 
+          {}
           {activeTab === 'add' && (
             <div className={`p-6 bg-white ${theme.border} ${theme.card} max-w-4xl mx-auto`}>
               <h2 className="text-xl font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-2">Adicionar Novo (Inserido na Linha 2)</h2>
@@ -597,8 +625,8 @@ export default function App() {
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Tempo</label><input placeholder="Ex: 12h ou 120:00:00" value={formData.tempo} onChange={e=>setFormData({...formData, tempo: e.target.value})} className={theme.input} /></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Nota (0 a 10 ou S)</label><input value={formData.nota} onChange={e=>setFormData({...formData, nota: e.target.value})} className={theme.input} /></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Dificuldade</label><select value={formData.dificuldade} onChange={e=>setFormData({...formData, dificuldade: e.target.value})} className={theme.input}><option value=""></option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input placeholder="69.90" value={formData.preco} onChange={e=>setFormData({...formData, preco: e.target.value})} className={theme.input} /></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço S/ Desconto</label><input placeholder="132.90" value={formData.preco_original} onChange={e=>setFormData({...formData, preco_original: e.target.value})} className={theme.input} /></div>
+                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input placeholder="69,90" value={formData.preco} onChange={e=>setFormData({...formData, preco: e.target.value})} className={theme.input} /></div>
+                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço S/ Desconto</label><input placeholder="132,90" value={formData.preco_original} onChange={e=>setFormData({...formData, preco_original: e.target.value})} className={theme.input} /></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input value={formData.suporte} onChange={e=>setFormData({...formData, suporte: e.target.value})} className={theme.input} /></div>
                   <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Link (YouTube)</label><input value={formData.midia} onChange={e=>setFormData({...formData, midia: e.target.value})} className={theme.input} /></div>
                   <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Condição</label><textarea value={formData.conquistas} onChange={e=>setFormData({...formData, conquistas: e.target.value})} className={theme.input} rows="2" /></div>
@@ -625,6 +653,7 @@ export default function App() {
         </main>
       </div>
 
+      {}
       {viewModal && (
         <div className="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
           <div className={`w-full max-w-4xl bg-white ${theme.border} ${theme.card} flex flex-col my-auto shadow-2xl`}>
@@ -656,32 +685,32 @@ export default function App() {
                           <span className="text-[10px] font-black uppercase text-slate-500 mb-1">Console</span>
                           {viewModal.data.plataforma ? (
                             <div>
-                               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border-[2px] border-slate-900 font-black uppercase" style={{ backgroundColor: getConsoleStyle(viewModal.data.plataforma).bg, color: getConsoleStyle(viewModal.data.plataforma).text }}>
+                               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] font-black uppercase" style={{ backgroundColor: getConsoleStyle(viewModal.data.plataforma).bg, color: getConsoleStyle(viewModal.data.plataforma).text }}>
                                  <ConsoleIcon consoleName={viewModal.data.plataforma} /> {viewModal.data.plataforma}
                                </span>
                             </div>
-                          ) : ''}
+                          ) : null}
                         </div>
                         <div className="flex flex-col">
                           <span className="text-[10px] font-black uppercase text-slate-500 mb-1">Gênero</span>
                           {viewModal.data.franquia ? (
                             <div>
-                              <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 uppercase font-black" style={{backgroundColor: getGenreColor(viewModal.data.franquia)}}>
+                              <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 uppercase font-black shadow-[1px_1px_0_0_rgba(15,23,42,1)]" style={{backgroundColor: getGenreColor(viewModal.data.franquia)}}>
                                 {viewModal.data.franquia}
                               </span>
                             </div>
-                          ) : ''}
+                          ) : null}
                         </div>
                         <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500 mb-1">Nota</span><div>{getRatingBadge(viewModal.data.nota)}</div></div>
                         <div className="flex flex-col">
                           <span className="text-[10px] font-black uppercase text-slate-500 mb-1">Dificuldade</span>
                           {viewModal.data.dificuldade ? (
                             <div>
-                              <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 uppercase font-black" style={{backgroundColor: getDifficultyBadge(viewModal.data.dificuldade).bg}}>
+                              <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] uppercase font-black" style={{backgroundColor: getDifficultyBadge(viewModal.data.dificuldade).bg}}>
                                 {getDifficultyBadge(viewModal.data.dificuldade).text}
                               </span>
                             </div>
-                          ) : ''}
+                          ) : null}
                         </div>
                         
                         <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Início</span><span className="font-bold">{formatDateStr(viewModal.data.inicio) || ''}</span></div>
@@ -693,11 +722,11 @@ export default function App() {
                           <span className="text-[10px] font-black uppercase text-slate-500 mb-1">Preço Pago</span>
                           {viewModal.data.preco ? (
                              <div>
-                               <span className="inline-block px-2 py-0.5 font-black border-[2px] border-slate-900" style={{backgroundColor: getPriceColor(viewModal.data.preco)}}>
+                               <span className="inline-block px-2 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(viewModal.data.preco)}}>
                                  {formatCurrency(viewModal.data.preco)}
                                </span>
                              </div>
-                          ) : ''}
+                          ) : null}
                         </div>
                         <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Preço s/ Desconto</span><span className="font-bold text-slate-600">{formatCurrency(viewModal.data.preco_original) || ''}</span></div>
                         <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Suporte</span><span className="font-bold">{viewModal.data.suporte || ''}</span></div>
@@ -710,21 +739,27 @@ export default function App() {
                         </div>
                         <div className="p-4 bg-white border-[2px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)]">
                           <span className="text-[10px] font-black uppercase text-slate-500 block mb-2">Observações</span>
-                          <p className="font-bold text-sm whitespace-pre-wrap">{viewModal.data.comentarios || ''}</p>
+                          <p className="font-bold text-sm whitespace-pre-wrap">{getVal(viewModal.data, ['comentarios', 'observacao', 'observação']) || ''}</p>
                         </div>
                       </div>
 
                       {/* YOUTUBE PLAYER EMBUTIDO */}
-                      {(getYoutubeId(viewModal.data.midia) || getYoutubeId(viewModal.data.suporte)) ? (
-                        <div className="w-full aspect-video border-[3px] border-slate-900 shadow-[6px_6px_0_0_rgba(15,23,42,1)]">
-                          <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${getYoutubeId(viewModal.data.midia) || getYoutubeId(viewModal.data.suporte)}`} title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-                        </div>
-                      ) : (viewModal.data.midia) ? (
-                        <div className="flex flex-col gap-2">
-                          <span className="text-[10px] font-black uppercase text-slate-500">Link</span>
-                          <a href={viewModal.data.midia} target="_blank" rel="noreferrer" className="text-blue-600 font-bold hover:underline break-all">{viewModal.data.midia}</a>
-                        </div>
-                      ) : null}
+                      {(() => {
+                         let linkUrl = getVal(viewModal.data, ['midia', 'link']);
+                         let ytb = getYoutubeId(linkUrl) || getYoutubeId(viewModal.data.suporte);
+                         if (ytb) return (
+                           <div className="w-full aspect-video border-[3px] border-slate-900 shadow-[6px_6px_0_0_rgba(15,23,42,1)]">
+                             <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${ytb}`} title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+                           </div>
+                         );
+                         if (linkUrl) return (
+                           <div className="flex flex-col gap-2">
+                             <span className="text-[10px] font-black uppercase text-slate-500">Link</span>
+                             <a href={linkUrl} target="_blank" rel="noreferrer" className="text-blue-600 font-bold hover:underline break-all">{linkUrl}</a>
+                           </div>
+                         );
+                         return null;
+                      })()}
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -739,10 +774,10 @@ export default function App() {
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input value={fichaData.preco} onChange={e=>setFichaData({...fichaData, preco: e.target.value})} className={theme.input} /></div>
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço s/ Desconto</label><input value={fichaData.preco_original} onChange={e=>setFichaData({...fichaData, preco_original: e.target.value})} className={theme.input} /></div>
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input value={fichaData.suporte} onChange={e=>setFichaData({...fichaData, suporte: e.target.value})} className={theme.input} /></div>
-                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Link (YouTube)</label><input value={fichaData.midia} onChange={e=>setFichaData({...fichaData, midia: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Link (YouTube)</label><input value={getVal(fichaData, ['midia', 'link'])} onChange={e=>setFichaData({...fichaData, midia: e.target.value, link: e.target.value})} className={theme.input} /></div>
                       
                       <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Condição</label><textarea value={fichaData.conquistas} onChange={e=>setFichaData({...fichaData, conquistas: e.target.value})} className={theme.input} rows="2" /></div>
-                      <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Observações</label><textarea value={fichaData.comentarios} onChange={e=>setFichaData({...fichaData, comentarios: e.target.value})} className={theme.input} rows="2" /></div>
+                      <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Observações</label><textarea value={getVal(fichaData, ['comentarios', 'observacao', 'observação'])} onChange={e=>setFichaData({...fichaData, comentarios: e.target.value, observacao: e.target.value})} className={theme.input} rows="2" /></div>
                     </div>
                   )}
                 </>
@@ -750,13 +785,15 @@ export default function App() {
 
               {/* FICHA DE CONSOLE OU GÊNERO */}
               {(viewModal.type === 'console' || viewModal.type === 'genre') && (() => {
-                 let filteredList = games.filter(g => 
-                    viewModal.type === 'console' ? g.plataforma === viewModal.data : g.franquia === viewModal.data
-                 );
+                 let filteredList = games.filter(g => {
+                    let vPlat = getVal(g, ['plataforma', 'console']);
+                    let vGen = getVal(g, ['franquia', 'genero', 'gênero']);
+                    return viewModal.type === 'console' ? vPlat === viewModal.data : vGen === viewModal.data;
+                 });
                  let finList = filteredList.filter(g => g.status === 'Finalizado');
                  
-                 let totalTimeHrs = finList.reduce((acc, g) => acc + (parseFloat(formatTempoStr(g.tempo).replace('h','')) || 0), 0);
-                 let notasVal = finList.map(g => parseFloat(String(g.nota).replace(',','.'))).filter(n => !isNaN(n));
+                 let totalTimeHrs = finList.reduce((acc, g) => acc + (parseFloat(formatTempoStr(getVal(g, ['tempo'])).replace('h','')) || 0), 0);
+                 let notasVal = finList.map(g => parseFloat(String(getVal(g, ['nota'])).replace(',','.'))).filter(n => !isNaN(n));
                  let avg = notasVal.length > 0 ? (notasVal.reduce((a,b)=>a+b,0) / notasVal.length).toFixed(1) : '-';
 
                  return (
@@ -780,7 +817,7 @@ export default function App() {
                        <div className="flex flex-col gap-2">
                          {filteredList.map((g, i) => (
                            <div key={i} className="flex justify-between items-center bg-white p-2 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]">
-                             <span className="font-black text-sm">{g.titulo}</span>
+                             <span className="font-black text-sm">{getVal(g, ['titulo', 'nome'])}</span>
                              <span className="text-xs font-bold px-2 py-0.5 border border-slate-900 bg-slate-100 uppercase">{g.status}</span>
                            </div>
                          ))}
@@ -792,16 +829,34 @@ export default function App() {
 
             </div>
 
+            {/* RODAPÉ DO MODAL DO JOGO COM O BOTÃO DE REMOVER DISCRETO */}
             {viewModal.type === 'game' && (
-              <div className="p-4 border-t-[3px] border-slate-900 bg-white flex justify-end gap-4">
-                {!isEditingFicha ? (
-                  <button onClick={() => setIsEditingFicha(true)} className={`${theme.btnBase} ${theme.gold}`}>Habilitar Edição</button>
-                ) : (
-                  <>
-                    <button onClick={() => { setIsEditingFicha(false); setFichaData(viewModal.data); }} className="px-4 py-2 font-black uppercase text-slate-500 hover:text-slate-900 transition-colors">Cancelar</button>
-                    <button onClick={handleUpdateFicha} className={`${theme.btnBase} ${theme.cyan}`}>Salvar Alterações</button>
-                  </>
-                )}
+              <div className="p-4 border-t-[3px] border-slate-900 bg-white flex justify-between items-center gap-4">
+                
+                {/* BOTÃO DISCRETO PARA REMOVER ITEM */}
+                <button 
+                  onClick={() => {
+                     if(window.confirm('Tem certeza que deseja excluir este jogo?')) {
+                        handleDelete(viewModal.data.id);
+                        setViewModal(null);
+                     }
+                  }} 
+                  className="text-rose-600 hover:text-rose-800 text-[10px] font-black uppercase underline transition-colors"
+                >
+                  Remover este item
+                </button>
+
+                <div className="flex gap-4">
+                  {!isEditingFicha ? (
+                    <button onClick={() => setIsEditingFicha(true)} className={`${theme.btnBase} ${theme.gold}`}>Habilitar Edição</button>
+                  ) : (
+                    <>
+                      <button onClick={() => { setIsEditingFicha(false); setFichaData(viewModal.data); }} className="px-4 py-2 font-black uppercase text-slate-500 hover:text-slate-900 transition-colors">Cancelar</button>
+                      <button onClick={handleUpdateFicha} className={`${theme.btnBase} ${theme.cyan}`}>Salvar Alterações</button>
+                    </>
+                  )}
+                </div>
+
               </div>
             )}
             
