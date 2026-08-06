@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 
-// --- ESTILOS MONDRIAN ---
 const theme = {
   border: 'border-[3px] border-slate-900',
   card: 'bg-white shadow-[6px_6px_0_0_rgba(15,23,42,1)]',
@@ -11,9 +10,8 @@ const theme = {
   btnBase: 'px-4 py-2 border-[3px] border-slate-900 font-black uppercase active:translate-y-1 active:translate-x-1 active:shadow-none transition-all shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer',
 };
 
-// --- FUNÇÕES DE LIMPEZA E FORMATAÇÃO ---
 const formatDateStr = (str) => {
-  if (!str) return '-';
+  if (!str) return '';
   let s = String(str).trim();
   if (s.includes('T') && s.includes('Z')) {
     try {
@@ -28,18 +26,14 @@ const formatDateStr = (str) => {
 };
 
 const formatTempoStr = (tempoVal) => {
-  if (!tempoVal) return '-';
+  if (!tempoVal) return '';
   let str = String(tempoVal).trim();
-  
-  // Se for o formato de Planilha HH:MM:SS (Ex: "120:00:00" ou "74:47:48")
   if (/^\d+:\d+(:\d+)?$/.test(str)) {
     let parts = str.split(':');
     let hrs = parseInt(parts[0], 10) || 0;
     let mins = parseInt(parts[1], 10) || 0;
     return `${hrs}h${mins > 0 ? ` ${mins}m` : ''}`;
   }
-
-  // Se for o formato Date bugado (1899-12-30T...)
   if (str.includes('T') || str.includes('1899') || str.includes('1900')) {
     try {
       let d = new Date(str);
@@ -50,12 +44,11 @@ const formatTempoStr = (tempoVal) => {
         let totalMins = Math.floor(diffMs / (1000 * 60));
         let hrs = Math.floor(totalMins / 60);
         let mins = totalMins % 60;
-        if (hrs === 0 && mins === 0) return '-';
+        if (hrs === 0 && mins === 0) return '';
         return `${hrs}h${mins > 0 ? ` ${mins}m` : ''}`;
       }
     } catch (e) {}
   }
-
   let num = parseFloat(str.replace(',', '.'));
   if (!isNaN(num)) return `${num}h`;
   return str;
@@ -64,7 +57,7 @@ const formatTempoStr = (tempoVal) => {
 const calculateTimeSpan = (inicio, fim) => {
   let inStr = formatDateStr(inicio);
   let fimStr = formatDateStr(fim);
-  if (inStr === '-' || fimStr === '-') return '-';
+  if (!inStr || !fimStr) return '';
   try {
     const parseDate = (s) => {
       let p = s.split('/');
@@ -73,7 +66,7 @@ const calculateTimeSpan = (inicio, fim) => {
     };
     let d1 = parseDate(inStr);
     let d2 = parseDate(fimStr);
-    if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return '-';
+    if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return '';
     let diffDays = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24));
     if (diffDays === 0) return '1 dia';
     if (diffDays < 14) return `${diffDays} dias`;
@@ -83,7 +76,7 @@ const calculateTimeSpan = (inicio, fim) => {
     }
     let m = Math.round(diffDays / 30);
     return `${m} ${m === 1 ? 'mês' : 'meses'}`;
-  } catch (e) { return '-'; }
+  } catch (e) { return ''; }
 };
 
 const calculateDiscount = (pPago, pOrig) => {
@@ -108,15 +101,30 @@ const getYoutubeId = (url) => {
   return match ? match[1] : null;
 };
 
-// --- COMPONENTES VISUAIS (SVG, CORES e BADGES) ---
+const getConsoleStyle = (name) => {
+  if (!name) return { bg: 'transparent', text: 'inherit' };
+  let n = String(name).toUpperCase();
+  if (n === 'PS1' || n === 'PLAYSTATION') return { bg: '#D9D9D9', text: '#222222' };
+  if (n === 'PS2') return { bg: '#0B1E5B', text: '#79B8FF' };
+  if (n === 'PS4' || n === 'PS5' || n === 'PS3') return { bg: '#003791', text: '#FFFFFF' };
+  if (n.includes('SNES') || n.includes('SUPER NINTENDO')) return { bg: '#6B4BAE', text: '#FFFFFF' };
+  if (n.includes('NES') || n === 'NINTENDINHO') return { bg: '#5B5B5B', text: '#E60012' };
+  if (n.includes('WII')) return { bg: '#FFFFFF', text: '#00AEEF' };
+  if (n.includes('GBA') || n.includes('ADVANCE')) return { bg: '#4B4B9F', text: '#FFFFFF' };
+  if (n === 'GB' || n.includes('GAME BOY')) return { bg: '#5B6D4A', text: '#DFF5C0' };
+  if (n.includes('MEGA') || n.includes('GENESIS')) return { bg: '#111111', text: '#D4AF37' };
+  if (n.includes('MASTER')) return { bg: '#111111', text: '#E53935' };
+  if (n.includes('DS') && !n.includes('3DS')) return { bg: '#F5F5F5', text: '#444444' };
+  if (n.includes('PC') || n.includes('STEAM')) return { bg: '#111111', text: '#76B900' };
+  
+  return { bg: '#FFD3B6', text: '#000000' }; // Default Dourado
+};
+
 const ConsoleIcon = ({ consoleName }) => {
   if (!consoleName) return null;
   const c = String(consoleName).toLowerCase();
   if (c.includes('ps4') || c.includes('ps5') || c.includes('playstation') || c.includes('ps3') || c.includes('ps2') || c.includes('ps1')) return (
     <svg className="w-4 h-4 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M8.322 3.123v13.911l3.528 1.139V3.123zM0 16.518l6.398 2.052v-2.736L2.33 14.526l4.068-.788v-2.036L0 13.064zm13.882.261l9.118 2.923-2.905 1.054-6.213-1.996v-1.981zm.001-4.717l9.117 2.924-2.905 1.053-6.212-1.996v-1.981zM11.85 0C5.305 0 0 5.305 0 11.85s5.305 11.85 11.85 11.85 11.85-5.305 11.85-11.85S18.395 0 11.85 0z" fill="none"/><path d="M8.5 4.5 3 6.8v9.7l5.5 2V4.5zm12.5 12-5.5-2v2.5l5.5 1.8v-2.3zM14 13.8l5.5 1.8v-2.3L14 11.5v2.3z"/></svg>
-  );
-  if (c.includes('xbox')) return (
-    <svg className="w-4 h-4 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.12 18.23c-1.57.87-3.23 1.3-5.12 1.3-1.89 0-3.55-.43-5.12-1.3l2.88-5.33c.69.39 1.45.58 2.24.58.79 0 1.55-.19 2.24-.58l2.88 5.33zM4.32 6.88c1.36-1.55 3.25-2.58 5.4-2.82L7.3 9.49C6.22 8.7 5.2 7.82 4.32 6.88zm15.36 0c-.88.94-1.9 1.82-2.98 2.61l-2.42-5.43c2.15.24 4.04 1.27 5.4 2.82z"/></svg>
   );
   if (c.includes('switch') || c.includes('wii') || c.includes('nintendo') || c.includes('snes') || c.includes('ds') || c.includes('gba') || c.includes('gamecube')) return (
     <svg className="w-4 h-4 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M8 2H4C2.9 2 2 2.9 2 4v16c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm14-7h-4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 13a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>
@@ -127,44 +135,32 @@ const ConsoleIcon = ({ consoleName }) => {
   return <svg className="w-4 h-4 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H9v2H7v-2H5v-2h2V9h2v2h2v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>;
 };
 
-const Colors = {
-  getConsole: (name) => {
-    let n = String(name || '').toLowerCase();
-    if (n.includes('ps4') || n.includes('ps5')) return '#93C5FD';
-    if (n.includes('ps1') || n.includes('ps2') || n.includes('ps3')) return '#BFDBFE';
-    if (n.includes('xbox')) return '#86EFAC';
-    if (n.includes('switch') || n.includes('wii') || n.includes('snes') || n.includes('gba') || n.includes('ds') || n.includes('gamecube')) return '#FCA5A5';
-    if (n.includes('pc')) return '#E2E8F0';
-    if (n.includes('mega') || n.includes('master')) return '#FDE047';
-    return '#FFD3B6';
-  },
-  getGenre: (name) => {
-    let g = String(name || '').toLowerCase();
-    if (g.includes('rpg')) return '#C4B5FD'; 
-    if (g.includes('ação') || g.includes('acao')) return '#FF8B94'; 
-    if (g.includes('plataforma')) return '#A8E6CF'; 
-    if (g.includes('luta')) return '#FCA5A5'; 
-    if (g.includes('quebra') || g.includes('puzzle')) return '#FFD3B6'; 
-    if (g.includes('estratégia')) return '#93C5FD'; 
-    if (g.includes('sobrevivência')) return '#86EFAC'; 
-    if (g.includes('corrida')) return '#FDE047'; 
-    return '#E2E8F0';
-  }
+const getGenreColor = (name) => {
+  let g = String(name || '').toLowerCase();
+  if (g.includes('rpg')) return '#C4B5FD'; 
+  if (g.includes('ação') || g.includes('acao')) return '#FF8B94'; 
+  if (g.includes('plataforma')) return '#A8E6CF'; 
+  if (g.includes('luta')) return '#FCA5A5'; 
+  if (g.includes('quebra') || g.includes('puzzle')) return '#FFD3B6'; 
+  if (g.includes('estratégia')) return '#93C5FD'; 
+  if (g.includes('sobrevivência')) return '#86EFAC'; 
+  if (g.includes('corrida')) return '#FDE047'; 
+  return '#E2E8F0';
 };
 
 const getDifficultyBadge = (dif) => {
   let d = String(dif || '').toUpperCase().trim();
-  // Pink = Dificil(A), Ciano = Médio(C), Dourado = Fácil(E)
-  if (d === 'A') return { text: 'A', bg: '#FF8B94' };
+  if (!d) return { text: '', bg: 'transparent' };
+  if (d === 'A') return { text: 'A', bg: '#FF8B94' }; // Pink
   if (d === 'B') return { text: 'B', bg: '#FFB3BA' };
-  if (d === 'C') return { text: 'C', bg: '#A8E6CF' };
+  if (d === 'C') return { text: 'C', bg: '#A8E6CF' }; // Ciano
   if (d === 'D') return { text: 'D', bg: '#FFE5B4' };
-  if (d === 'E') return { text: 'E', bg: '#FFD3B6' };
-  return { text: d || '-', bg: '#E2E8F0' };
+  if (d === 'E') return { text: 'E', bg: '#FFD3B6' }; // Dourado
+  return { text: d, bg: '#E2E8F0' };
 };
 
 const getRatingBadge = (notaVal) => {
-  if (!notaVal) return <span className="text-slate-400">-</span>;
+  if (!notaVal) return null;
   let s = String(notaVal).trim().toUpperCase();
   if (s === 'S' || s === 'RANK S') return (
     <span className="inline-block px-3 py-1 font-black text-xs uppercase border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] bg-gradient-to-r from-[#FF8B94] via-[#A8E6CF] to-[#FFD3B6] animate-pulse text-slate-900">
@@ -173,7 +169,6 @@ const getRatingBadge = (notaVal) => {
   );
   let num = parseFloat(s.replace(',', '.'));
   if (isNaN(num)) return <span>{s}</span>;
-  // Escala: 10 = Ciano(#A8E6CF), 0 = Dourado(#FFD3B6)
   let bg = num >= 9.0 ? '#A8E6CF' : num >= 7.5 ? '#C7F0DB' : num >= 6.0 ? '#FFE5B4' : '#FFD3B6';
   return (
     <span className="inline-block px-2.5 py-1 font-black text-xs border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]" style={{ backgroundColor: bg }}>
@@ -186,7 +181,6 @@ const getPriceColor = (priceVal) => {
   if (!priceVal) return 'transparent';
   let p = parseFloat(String(priceVal).replace('R$', '').trim().replace(',', '.'));
   if (isNaN(p)) return 'transparent';
-  // Pink(Caro), Ciano(Médio), Dourado(Barato)
   if (p >= 100) return '#FF8B94'; 
   if (p >= 40) return '#A8E6CF';
   return '#FFD3B6'; 
@@ -209,11 +203,11 @@ export default function App() {
   const [syncStatus, setSyncStatus] = useState({ type: 'idle', message: '' });
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Ordenação
   const [sortConfig, setSortConfig] = useState({ key: 'ordem', direction: 'asc' });
 
-  // Ficha Completa
-  const [selectedGame, setSelectedGame] = useState(null);
+  // Estados dos Modais Específicos
+  // viewModal pode ser null, { type: 'game', data: gameObj }, { type: 'console', data: 'PS4' }, { type: 'genre', data: 'RPG' }
+  const [viewModal, setViewModal] = useState(null);
   const [isEditingFicha, setIsEditingFicha] = useState(false);
   const [fichaData, setFichaData] = useState({});
   const [fichaStatus, setFichaStatus] = useState({ type: 'idle', message: '' });
@@ -306,25 +300,21 @@ export default function App() {
     return list;
   }, [games, activeTab, searchTerm, sortConfig]);
 
-  // DashBoard Calc
   const dashboardStats = useMemo(() => {
     let fin = games.filter(g => g.status === 'Finalizado');
     let totalJogos = fin.length;
     let sRanks = fin.filter(g => String(g.nota).toUpperCase().trim() === 'S').length;
-    
     let notasValidas = fin.map(g => parseFloat(String(g.nota).replace(',','.'))).filter(n => !isNaN(n));
     let avgNota = notasValidas.length > 0 ? (notasValidas.reduce((a,b)=>a+b,0) / notasValidas.length).toFixed(1) : 0;
-    
     let totalGasto = fin.reduce((acc, g) => {
       let p = parseFloat(String(g.preco).replace('R$', '').trim().replace(',', '.'));
       return acc + (isNaN(p) ? 0 : p);
     }, 0);
-
     return { totalJogos, sRanks, avgNota, totalGasto: `R$ ${totalGasto.toFixed(2).replace('.',',')}` };
   }, [games]);
 
   const executeApiCall = async (action, data, statusUpdateFn) => {
-    statusUpdateFn({ type: 'loading', message: 'Salvando...' });
+    statusUpdateFn({ type: 'loading', message: 'Salvando na planilha...' });
     try {
       const res = await fetch(configUrl, {
         method: 'POST',
@@ -356,7 +346,7 @@ export default function App() {
     const success = await executeApiCall('UPDATE', fichaData, setFichaStatus);
     if (success) {
       setIsEditingFicha(false);
-      setSelectedGame(fichaData); 
+      setViewModal({ type: 'game', data: fichaData }); 
     }
   };
 
@@ -367,13 +357,6 @@ export default function App() {
       await fetch(configUrl, { method: 'POST', body: JSON.stringify({ action: 'DELETE', id }) });
       await fetchGames(configUrl);
     } catch(e) {}
-  };
-
-  const openFicha = (game) => {
-    setSelectedGame(game);
-    setFichaData(game);
-    setIsEditingFicha(false);
-    setFichaStatus({ type: 'idle', message: '' });
   };
 
   const Th = ({ label, sortKey, className = "" }) => (
@@ -419,7 +402,6 @@ export default function App() {
       </div>
 
       <div className={`max-w-[1600px] mx-auto ${theme.border} ${theme.card} flex flex-col bg-white overflow-hidden`}>
-        {/* NAVEGAÇÃO */}
         <nav className="flex flex-row overflow-x-auto sm:grid sm:grid-cols-5 border-b-[3px] border-slate-900 bg-slate-100">
           {[
             { id: 'dashboard', label: 'Dashboard', icon: Icons.Home },
@@ -440,7 +422,7 @@ export default function App() {
           </div>
         )}
 
-        <main className="p-4 sm:p-6">
+        <main className="p-4 sm:p-6 overflow-x-auto">
           
           {/* TAB: DASHBOARD */}
           {activeTab === 'dashboard' && (
@@ -454,7 +436,7 @@ export default function App() {
                   <p className="text-4xl font-black">{dashboardStats.sRanks}</p>
                 </div>
                 <div className={`p-4 ${theme.border} bg-[#93C5FD] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
-                  <h3 className="text-xs font-black uppercase">Nota Média</h3>
+                  <h3 className="text-xs font-black uppercase">Nota Média (Sem as 'S')</h3>
                   <p className="text-4xl font-black">{dashboardStats.avgNota}</p>
                 </div>
                 <div className={`p-4 ${theme.border} bg-[#FDE047] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
@@ -464,7 +446,7 @@ export default function App() {
              </div>
           )}
 
-          {/* TAB: TABELAS COMPLETAS (FINALIZADOS & BACKLOG) */}
+          {/* TAB: TABELAS COMPLETAS */}
           {(activeTab === 'finished' || activeTab === 'backlog') && (
             <div className="flex flex-col gap-4">
               <div className="flex justify-between items-center gap-4 flex-wrap">
@@ -491,7 +473,7 @@ export default function App() {
                           <Th label="Dif" sortKey="dificuldade" className="text-center" />
                           <Th label="Condição / Conquistas" sortKey="conquistas" />
                           <Th label="Preço Pago" sortKey="preco" className="text-center" />
-                          <Th label="Preço Sem Desconto" sortKey="preco_original" className="text-center" />
+                          <Th label="Preço s/ Desc." sortKey="preco_original" className="text-center" />
                           <Th label="Desconto" sortKey="desconto" className="text-center" />
                           <Th label="Suporte" sortKey="suporte" className="text-center" />
                         </>
@@ -502,22 +484,34 @@ export default function App() {
                   <tbody>
                     {sortedAndFilteredGames.map((game, i) => {
                       let discount = calculateDiscount(game.preco, game.preco_original);
+                      const consoleStyle = getConsoleStyle(game.plataforma);
+                      
                       return (
                         <tr key={game.id || i} className="border-b-[2px] border-slate-900 hover:bg-slate-50 transition-colors">
-                          <td className="p-2 border-r-[3px] border-slate-900 text-center font-black bg-slate-100">{game.ordem || '-'}</td>
+                          {/* ORDEM */}
+                          <td className="p-2 border-r-[3px] border-slate-900 text-center font-black bg-slate-100">{game.ordem || ''}</td>
                           
-                          <td onClick={() => openFicha(game)} className="p-2 border-r-[3px] border-slate-900 font-black text-[11px] sm:text-sm cursor-pointer hover:text-blue-600 transition-colors underline decoration-slate-300 underline-offset-4">
-                            {game.titulo || '-'}
+                          {/* TÍTULO -> FICHA DO JOGO */}
+                          <td onClick={() => { setFichaData(game); setViewModal({type:'game', data: game}); setIsEditingFicha(false); }} className="p-2 border-r-[3px] border-slate-900 font-black text-[11px] sm:text-sm cursor-pointer hover:text-blue-600 transition-colors underline decoration-slate-300 underline-offset-4">
+                            {game.titulo || ''}
                           </td>
                           
-                          <td onClick={() => openFicha(game)} className="p-2 border-r-[3px] border-slate-900 cursor-pointer">
-                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform" style={{backgroundColor: Colors.getConsole(game.plataforma)}}>
-                              <ConsoleIcon consoleName={game.plataforma} /> <span className="font-black uppercase">{game.plataforma || '-'}</span>
-                            </span>
+                          {/* CONSOLE -> FICHA DO CONSOLE */}
+                          <td onClick={() => setViewModal({type:'console', data: game.plataforma})} className="p-2 border-r-[3px] border-slate-900 cursor-pointer">
+                            {game.plataforma ? (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform font-black uppercase" style={{ backgroundColor: consoleStyle.bg, color: consoleStyle.text }}>
+                                <ConsoleIcon consoleName={game.plataforma} /> {game.plataforma}
+                              </span>
+                            ) : ''}
                           </td>
                           
-                          <td onClick={() => openFicha(game)} className="p-2 border-r-[3px] border-slate-900 cursor-pointer">
-                            <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 uppercase shadow-[1px_1px_0_0_rgba(15,23,42,1)]" style={{backgroundColor: Colors.getGenre(game.franquia)}}>{game.franquia || '-'}</span>
+                          {/* GÊNERO -> FICHA DO GÊNERO */}
+                          <td onClick={() => setViewModal({type:'genre', data: game.franquia})} className="p-2 border-r-[3px] border-slate-900 cursor-pointer">
+                            {game.franquia ? (
+                               <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 uppercase font-black shadow-[1px_1px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform" style={{backgroundColor: getGenreColor(game.franquia)}}>
+                                 {game.franquia}
+                               </span>
+                            ) : ''}
                           </td>
 
                           {activeTab === 'finished' && (
@@ -527,17 +521,28 @@ export default function App() {
                               <td className="p-2 border-r-[3px] border-slate-900 text-center font-black">{formatTempoStr(game.tempo)}</td>
                               <td className="p-2 border-r-[3px] border-slate-900 text-center">{calculateTimeSpan(game.inicio, game.fim)}</td>
                               <td className="p-2 border-r-[3px] border-slate-900 text-center">{getRatingBadge(game.nota)}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center">
-                                <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] uppercase font-black" style={{backgroundColor: getDifficultyBadge(game.dificuldade).bg}}>{getDifficultyBadge(game.dificuldade).text}</span>
-                              </td>
-                              <td className="p-2 border-r-[3px] border-slate-900 max-w-[200px] truncate" title={game.conquistas}>{game.conquistas || '-'}</td>
                               
                               <td className="p-2 border-r-[3px] border-slate-900 text-center">
-                                <span className="inline-block px-1 py-0.5 font-black border-[1px] border-slate-900 shadow-[1px_1px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(game.preco)}}>{game.preco || '-'}</span>
+                                {game.dificuldade ? (
+                                  <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] uppercase font-black" style={{backgroundColor: getDifficultyBadge(game.dificuldade).bg}}>
+                                    {getDifficultyBadge(game.dificuldade).text}
+                                  </span>
+                                ) : ''}
                               </td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center text-slate-500">{game.preco_original || '-'}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center text-green-700 font-black">{discount.has ? `${discount.val} (${discount.pct})` : '-'}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center">{game.suporte || '-'}</td>
+                              
+                              <td className="p-2 border-r-[3px] border-slate-900 max-w-[200px] truncate" title={game.conquistas}>{game.conquistas || ''}</td>
+                              
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center">
+                                {game.preco ? (
+                                  <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(game.preco)}}>
+                                    {game.preco}
+                                  </span>
+                                ) : ''}
+                              </td>
+                              
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center text-slate-500">{game.preco_original || ''}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center text-green-700 font-black">{discount.has ? `${discount.val} (${discount.pct})` : ''}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center">{game.suporte || ''}</td>
                             </>
                           )}
                           <td className="p-2 text-center align-middle">
@@ -584,107 +589,201 @@ export default function App() {
              <div className={`max-w-xl mx-auto bg-white p-8 ${theme.border} ${theme.card}`}>
                 <h2 className="text-2xl font-black mb-4 uppercase text-center">Alterar Conexão</h2>
                 {syncStatus.type !== 'idle' && (
-                  <div className={`p-3 mb-4 border-[2px] border-slate-900 font-bold text-xs text-center ${syncStatus.type === 'success' ? 'bg-[#86EFAC]' : syncStatus.type === 'error' ? theme.pink : 'bg-amber-200'}`}>
+                  <div className={`p-3 mb-4 border-[2px] border-slate-900 font-bold text-xs text-center shadow-[4px_4px_0_0_rgba(15,23,42,1)] ${syncStatus.type === 'success' ? 'bg-[#86EFAC]' : syncStatus.type === 'error' ? theme.pink : 'bg-amber-200'}`}>
                     {syncStatus.message}
                   </div>
                 )}
                 <input type="url" value={configUrl} onChange={(e) => setConfigUrl(e.target.value)} placeholder="Cole a URL do Apps Script" className={`${theme.input} mb-4`} />
-                <button onClick={saveConfig} className={`${theme.btnBase} ${theme.gold} w-full`}>Reconectar</button>
+                <button onClick={saveConfig} className={`${theme.btnBase} ${theme.gold} w-full`}>Reconectar e Sincronizar</button>
              </div>
           )}
 
         </main>
       </div>
 
-      {/* MODAL FICHA COMPLETA */}
-      {selectedGame && (
+      {viewModal && (
         <div className="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
           <div className={`w-full max-w-4xl bg-white ${theme.border} ${theme.card} flex flex-col my-auto shadow-2xl`}>
             
-            <div className={`p-4 border-b-[3px] border-slate-900 flex justify-between items-center ${isEditingFicha ? theme.pink : theme.cyan}`}>
+            {/* CABEÇALHO DO MODAL */}
+            <div className={`p-4 border-b-[3px] border-slate-900 flex justify-between items-center ${viewModal.type === 'game' && isEditingFicha ? theme.pink : theme.cyan}`}>
               <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tighter truncate pr-4">
-                {isEditingFicha ? 'Editar Ficha' : selectedGame.titulo}
+                {viewModal.type === 'game' && (isEditingFicha ? 'Editar Ficha' : viewModal.data.titulo)}
+                {viewModal.type === 'console' && `Ficha do Console: ${viewModal.data}`}
+                {viewModal.type === 'genre' && `Ficha do Gênero: ${viewModal.data}`}
               </h2>
-              <button onClick={() => setSelectedGame(null)} className="p-1 hover:bg-white/50 rounded-full transition-colors border-2 border-transparent hover:border-slate-900"><Icons.Close /></button>
+              <button onClick={() => setViewModal(null)} className="p-1 hover:bg-white/50 rounded-full transition-colors border-2 border-transparent hover:border-slate-900"><Icons.Close /></button>
             </div>
 
             <div className="p-4 sm:p-6 bg-slate-50 overflow-y-auto max-h-[75vh]">
-              {fichaStatus.type !== 'idle' && (
-                <div className={`p-3 mb-4 font-bold text-sm text-center border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] ${fichaStatus.type === 'loading' ? 'bg-amber-200' : fichaStatus.type === 'success' ? 'bg-[#86EFAC]' : theme.pink}`}>
-                  {fichaStatus.message}
-                </div>
-              )}
-
-              {!isEditingFicha ? (
-                /* --- VISUALIZAÇÃO DA FICHA --- */
-                <div className="flex flex-col gap-6">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Console</span><span className="font-bold">{selectedGame.plataforma || '-'}</span></div>
-                    <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Gênero</span><span className="font-bold">{selectedGame.franquia || '-'}</span></div>
-                    <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Nota</span><div className="mt-1">{getRatingBadge(selectedGame.nota)}</div></div>
-                    <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Dificuldade</span><span className="font-bold">{selectedGame.dificuldade || '-'}</span></div>
-                    
-                    <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Início</span><span className="font-bold">{formatDateStr(selectedGame.inicio)}</span></div>
-                    <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Fim</span><span className="font-bold">{formatDateStr(selectedGame.fim)}</span></div>
-                    <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Tempo de Jogo</span><span className="font-black text-blue-700">{formatTempoStr(selectedGame.tempo)}</span></div>
-                    <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Duração Span</span><span className="font-bold">{calculateTimeSpan(selectedGame.inicio, selectedGame.fim)}</span></div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="p-4 bg-white border-[2px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)]">
-                      <span className="text-[10px] font-black uppercase text-slate-500 block mb-2">Condição / Conquistas</span>
-                      <p className="font-bold text-sm whitespace-pre-wrap">{selectedGame.conquistas || '-'}</p>
-                    </div>
-                    <div className="p-4 bg-white border-[2px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)]">
-                      <span className="text-[10px] font-black uppercase text-slate-500 block mb-2">Observações</span>
-                      <p className="font-bold text-sm whitespace-pre-wrap">{selectedGame.comentarios || '-'}</p>
-                    </div>
-                  </div>
-
-                  {/* YOUTUBE PLAYER EMBUTIDO */}
-                  {getYoutubeId(selectedGame.midia) || getYoutubeId(selectedGame.suporte) ? (
-                    <div className="w-full aspect-video border-[3px] border-slate-900 shadow-[6px_6px_0_0_rgba(15,23,42,1)]">
-                      <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${getYoutubeId(selectedGame.midia) || getYoutubeId(selectedGame.suporte)}`} title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-                    </div>
-                  ) : (selectedGame.midia) && (
-                    <div className="flex flex-col gap-2">
-                      <span className="text-[10px] font-black uppercase text-slate-500">Link</span>
-                      <a href={selectedGame.midia} target="_blank" rel="noreferrer" className="text-blue-600 font-bold hover:underline break-all">{selectedGame.midia}</a>
+              
+              {/* FICHA DO JOGO */}
+              {viewModal.type === 'game' && (
+                <>
+                  {fichaStatus.type !== 'idle' && (
+                    <div className={`p-3 mb-4 font-bold text-sm text-center border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] ${fichaStatus.type === 'loading' ? 'bg-amber-200' : fichaStatus.type === 'success' ? 'bg-[#86EFAC]' : theme.pink}`}>
+                      {fichaStatus.message}
                     </div>
                   )}
-                </div>
-              ) : (
-                /* --- EDIÇÃO DA FICHA --- */
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Nome *</label><input value={fichaData.titulo} onChange={e=>setFichaData({...fichaData, titulo: e.target.value})} className={theme.input} /></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Console</label><input value={fichaData.plataforma} onChange={e=>setFichaData({...fichaData, plataforma: e.target.value})} className={theme.input} /></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Gênero</label><input value={fichaData.franquia} onChange={e=>setFichaData({...fichaData, franquia: e.target.value})} className={theme.input} /></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Início</label><input value={fichaData.inicio} onChange={e=>setFichaData({...fichaData, inicio: e.target.value})} className={theme.input} /></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Fim</label><input value={fichaData.fim} onChange={e=>setFichaData({...fichaData, fim: e.target.value})} className={theme.input} /></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Tempo</label><input value={fichaData.tempo} onChange={e=>setFichaData({...fichaData, tempo: e.target.value})} className={theme.input} /></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Nota (0 a 10 ou S)</label><input value={fichaData.nota} onChange={e=>setFichaData({...fichaData, nota: e.target.value})} className={theme.input} /></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Dificuldade</label><input value={fichaData.dificuldade} onChange={e=>setFichaData({...fichaData, dificuldade: e.target.value})} className={theme.input} /></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input value={fichaData.preco} onChange={e=>setFichaData({...fichaData, preco: e.target.value})} className={theme.input} /></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço S/ Desconto</label><input value={fichaData.preco_original} onChange={e=>setFichaData({...fichaData, preco_original: e.target.value})} className={theme.input} /></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input value={fichaData.suporte} onChange={e=>setFichaData({...fichaData, suporte: e.target.value})} className={theme.input} /></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Link (YouTube)</label><input value={fichaData.midia} onChange={e=>setFichaData({...fichaData, midia: e.target.value})} className={theme.input} /></div>
-                  
-                  <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Condição</label><textarea value={fichaData.conquistas} onChange={e=>setFichaData({...fichaData, conquistas: e.target.value})} className={theme.input} rows="2" /></div>
-                  <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Observações</label><textarea value={fichaData.comentarios} onChange={e=>setFichaData({...fichaData, comentarios: e.target.value})} className={theme.input} rows="2" /></div>
-                </div>
-              )}
-            </div>
 
-            <div className="p-4 border-t-[3px] border-slate-900 bg-white flex justify-end gap-4">
-              {!isEditingFicha ? (
-                <button onClick={() => setIsEditingFicha(true)} className={`${theme.btnBase} ${theme.gold}`}>Habilitar Edição</button>
-              ) : (
-                <>
-                  <button onClick={() => { setIsEditingFicha(false); setFichaData(selectedGame); }} className="px-4 py-2 font-black uppercase text-slate-500 hover:text-slate-900 transition-colors">Cancelar</button>
-                  <button onClick={handleUpdateFicha} className={`${theme.btnBase} ${theme.cyan}`}>Salvar Alterações</button>
+                  {!isEditingFicha ? (
+                    <div className="flex flex-col gap-6">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-black uppercase text-slate-500 mb-1">Console</span>
+                          {viewModal.data.plataforma ? (
+                            <div>
+                               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border-[2px] border-slate-900 font-black uppercase" style={{ backgroundColor: getConsoleStyle(viewModal.data.plataforma).bg, color: getConsoleStyle(viewModal.data.plataforma).text }}>
+                                 <ConsoleIcon consoleName={viewModal.data.plataforma} /> {viewModal.data.plataforma}
+                               </span>
+                            </div>
+                          ) : ''}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-black uppercase text-slate-500 mb-1">Gênero</span>
+                          {viewModal.data.franquia ? (
+                            <div>
+                              <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 uppercase font-black" style={{backgroundColor: getGenreColor(viewModal.data.franquia)}}>
+                                {viewModal.data.franquia}
+                              </span>
+                            </div>
+                          ) : ''}
+                        </div>
+                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500 mb-1">Nota</span><div>{getRatingBadge(viewModal.data.nota)}</div></div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-black uppercase text-slate-500 mb-1">Dificuldade</span>
+                          {viewModal.data.dificuldade ? (
+                            <div>
+                              <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 uppercase font-black" style={{backgroundColor: getDifficultyBadge(viewModal.data.dificuldade).bg}}>
+                                {getDifficultyBadge(viewModal.data.dificuldade).text}
+                              </span>
+                            </div>
+                          ) : ''}
+                        </div>
+                        
+                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Início</span><span className="font-bold">{formatDateStr(viewModal.data.inicio)}</span></div>
+                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Fim</span><span className="font-bold">{formatDateStr(viewModal.data.fim)}</span></div>
+                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Tempo de Jogo</span><span className="font-black text-blue-700">{formatTempoStr(viewModal.data.tempo)}</span></div>
+                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Duração Span</span><span className="font-bold">{calculateTimeSpan(viewModal.data.inicio, viewModal.data.fim)}</span></div>
+                        
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-black uppercase text-slate-500 mb-1">Preço Pago</span>
+                          {viewModal.data.preco ? (
+                             <div>
+                               <span className="inline-block px-2 py-0.5 font-black border-[2px] border-slate-900" style={{backgroundColor: getPriceColor(viewModal.data.preco)}}>
+                                 {viewModal.data.preco}
+                               </span>
+                             </div>
+                          ) : ''}
+                        </div>
+                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Preço s/ Desconto</span><span className="font-bold">{viewModal.data.preco_original || ''}</span></div>
+                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Suporte</span><span className="font-bold">{viewModal.data.suporte || ''}</span></div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="p-4 bg-white border-[2px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)]">
+                          <span className="text-[10px] font-black uppercase text-slate-500 block mb-2">Condição / Conquistas</span>
+                          <p className="font-bold text-sm whitespace-pre-wrap">{viewModal.data.conquistas || ''}</p>
+                        </div>
+                        <div className="p-4 bg-white border-[2px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)]">
+                          <span className="text-[10px] font-black uppercase text-slate-500 block mb-2">Observações</span>
+                          <p className="font-bold text-sm whitespace-pre-wrap">{viewModal.data.comentarios || ''}</p>
+                        </div>
+                      </div>
+
+                      {/* YOUTUBE PLAYER */}
+                      {(getYoutubeId(viewModal.data.midia) || getYoutubeId(viewModal.data.suporte)) ? (
+                        <div className="w-full aspect-video border-[3px] border-slate-900 shadow-[6px_6px_0_0_rgba(15,23,42,1)]">
+                          <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${getYoutubeId(viewModal.data.midia) || getYoutubeId(viewModal.data.suporte)}`} title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+                        </div>
+                      ) : (viewModal.data.midia) ? (
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[10px] font-black uppercase text-slate-500">Link</span>
+                          <a href={viewModal.data.midia} target="_blank" rel="noreferrer" className="text-blue-600 font-bold hover:underline break-all">{viewModal.data.midia}</a>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : (
+                    /* MODO EDIÇÃO DO JOGO */
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Nome *</label><input value={fichaData.titulo} onChange={e=>setFichaData({...fichaData, titulo: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Console</label><input value={fichaData.plataforma} onChange={e=>setFichaData({...fichaData, plataforma: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Gênero</label><input value={fichaData.franquia} onChange={e=>setFichaData({...fichaData, franquia: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Início</label><input value={fichaData.inicio} onChange={e=>setFichaData({...fichaData, inicio: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Fim</label><input value={fichaData.fim} onChange={e=>setFichaData({...fichaData, fim: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Tempo</label><input value={fichaData.tempo} onChange={e=>setFichaData({...fichaData, tempo: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Nota (0 a 10 ou S)</label><input value={fichaData.nota} onChange={e=>setFichaData({...fichaData, nota: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Dificuldade</label><input value={fichaData.dificuldade} onChange={e=>setFichaData({...fichaData, dificuldade: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input value={fichaData.preco} onChange={e=>setFichaData({...fichaData, preco: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço s/ Desconto</label><input value={fichaData.preco_original} onChange={e=>setFichaData({...fichaData, preco_original: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input value={fichaData.suporte} onChange={e=>setFichaData({...fichaData, suporte: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Link (YouTube)</label><input value={fichaData.midia} onChange={e=>setFichaData({...fichaData, midia: e.target.value})} className={theme.input} /></div>
+                      
+                      <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Condição</label><textarea value={fichaData.conquistas} onChange={e=>setFichaData({...fichaData, conquistas: e.target.value})} className={theme.input} rows="2" /></div>
+                      <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Observações</label><textarea value={fichaData.comentarios} onChange={e=>setFichaData({...fichaData, comentarios: e.target.value})} className={theme.input} rows="2" /></div>
+                    </div>
+                  )}
                 </>
               )}
+
+              {/* FICHA DE CONSOLE OU GÊNERO */}
+              {(viewModal.type === 'console' || viewModal.type === 'genre') && (() => {
+                 let filteredList = games.filter(g => 
+                    viewModal.type === 'console' ? g.plataforma === viewModal.data : g.franquia === viewModal.data
+                 );
+                 let finList = filteredList.filter(g => g.status === 'Finalizado');
+                 
+                 let totalTimeHrs = finList.reduce((acc, g) => acc + (parseFloat(formatTempoStr(g.tempo).replace('h','')) || 0), 0);
+                 let notasVal = finList.map(g => parseFloat(String(g.nota).replace(',','.'))).filter(n => !isNaN(n));
+                 let avg = notasVal.length > 0 ? (notasVal.reduce((a,b)=>a+b,0) / notasVal.length).toFixed(1) : '-';
+
+                 return (
+                   <div className="flex flex-col gap-6">
+                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className={`p-4 ${theme.border} bg-white shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
+                          <h3 className="text-[10px] font-black uppercase text-slate-500 mb-1">Total na Lista</h3>
+                          <p className="text-2xl font-black">{filteredList.length} <span className="text-xs">jogos</span></p>
+                        </div>
+                        <div className={`p-4 ${theme.border} bg-white shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
+                          <h3 className="text-[10px] font-black uppercase text-slate-500 mb-1">Tempo Gasto (Finalizados)</h3>
+                          <p className="text-2xl font-black text-blue-700">{totalTimeHrs}h</p>
+                        </div>
+                        <div className={`p-4 ${theme.border} bg-white shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
+                          <h3 className="text-[10px] font-black uppercase text-slate-500 mb-1">Nota Média</h3>
+                          <p className="text-2xl font-black">{avg}</p>
+                        </div>
+                     </div>
+                     <div>
+                       <h3 className="text-sm font-black uppercase border-b-[3px] border-slate-900 pb-2 mb-4">Jogos ({viewModal.data})</h3>
+                       <div className="flex flex-col gap-2">
+                         {filteredList.map((g, i) => (
+                           <div key={i} className="flex justify-between items-center bg-white p-2 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]">
+                             <span className="font-black text-sm">{g.titulo}</span>
+                             <span className="text-xs font-bold px-2 py-0.5 border border-slate-900 bg-slate-100 uppercase">{g.status}</span>
+                           </div>
+                         ))}
+                       </div>
+                     </div>
+                   </div>
+                 );
+              })()}
+
             </div>
+
+            {/* FOOTER DO MODAL (BOTOES DE AÇÃO APENAS PARA JOGO) */}
+            {viewModal.type === 'game' && (
+              <div className="p-4 border-t-[3px] border-slate-900 bg-white flex justify-end gap-4">
+                {!isEditingFicha ? (
+                  <button onClick={() => setIsEditingFicha(true)} className={`${theme.btnBase} ${theme.gold}`}>Habilitar Edição</button>
+                ) : (
+                  <>
+                    <button onClick={() => { setIsEditingFicha(false); setFichaData(viewModal.data); }} className="px-4 py-2 font-black uppercase text-slate-500 hover:text-slate-900 transition-colors">Cancelar</button>
+                    <button onClick={handleUpdateFicha} className={`${theme.btnBase} ${theme.cyan}`}>Salvar Alterações</button>
+                  </>
+                )}
+              </div>
+            )}
+            
           </div>
         </div>
       )}
