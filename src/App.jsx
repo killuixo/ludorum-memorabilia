@@ -10,6 +10,14 @@ const theme = {
   btnBase: 'px-4 py-2 border-[3px] border-slate-900 font-black uppercase active:translate-y-1 active:translate-x-1 active:shadow-none transition-all shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer',
 };
 
+const formatCurrency = (val) => {
+  if (val === undefined || val === null || val === '') return '';
+  let strVal = String(val).replace('R$', '').trim().replace(',', '.');
+  let num = parseFloat(strVal);
+  if (isNaN(num)) return String(val);
+  return `R$ ${num.toFixed(2).replace('.', ',')}`;
+};
+
 const formatDateStr = (str) => {
   if (!str) return '';
   let s = String(str).trim();
@@ -32,6 +40,7 @@ const formatTempoStr = (tempoVal) => {
     let parts = str.split(':');
     let hrs = parseInt(parts[0], 10) || 0;
     let mins = parseInt(parts[1], 10) || 0;
+    if (hrs === 0 && mins === 0) return '';
     return `${hrs}h${mins > 0 ? ` ${mins}m` : ''}`;
   }
   if (str.includes('T') || str.includes('1899') || str.includes('1900')) {
@@ -104,18 +113,18 @@ const getYoutubeId = (url) => {
 const getConsoleStyle = (name) => {
   if (!name) return { bg: 'transparent', text: 'inherit' };
   let n = String(name).toUpperCase();
-  if (n === 'PS1' || n === 'PLAYSTATION') return { bg: '#D9D9D9', text: '#222222' };
+  if (n === 'PS1') return { bg: '#D9D9D9', text: '#222222' };
   if (n === 'PS2') return { bg: '#0B1E5B', text: '#79B8FF' };
-  if (n === 'PS4' || n === 'PS5' || n === 'PS3') return { bg: '#003791', text: '#FFFFFF' };
-  if (n.includes('SNES') || n.includes('SUPER NINTENDO')) return { bg: '#6B4BAE', text: '#FFFFFF' };
-  if (n.includes('NES') || n === 'NINTENDINHO') return { bg: '#5B5B5B', text: '#E60012' };
-  if (n.includes('WII')) return { bg: '#FFFFFF', text: '#00AEEF' };
-  if (n.includes('GBA') || n.includes('ADVANCE')) return { bg: '#4B4B9F', text: '#FFFFFF' };
-  if (n === 'GB' || n.includes('GAME BOY')) return { bg: '#5B6D4A', text: '#DFF5C0' };
-  if (n.includes('MEGA') || n.includes('GENESIS')) return { bg: '#111111', text: '#D4AF37' };
-  if (n.includes('MASTER')) return { bg: '#111111', text: '#E53935' };
-  if (n.includes('DS') && !n.includes('3DS')) return { bg: '#F5F5F5', text: '#444444' };
-  if (n.includes('PC') || n.includes('STEAM')) return { bg: '#111111', text: '#76B900' };
+  if (n === 'PS4') return { bg: '#003791', text: '#FFFFFF' };
+  if (n === 'SNES') return { bg: '#6B4BAE', text: '#FFFFFF' };
+  if (n === 'NES') return { bg: '#5B5B5B', text: '#E60012' };
+  if (n === 'WII') return { bg: '#FFFFFF', text: '#00AEEF' };
+  if (n === 'GBA') return { bg: '#4B4B9F', text: '#FFFFFF' };
+  if (n === 'GB') return { bg: '#5B6D4A', text: '#DFF5C0' };
+  if (n === 'MEGA DRIVE') return { bg: '#111111', text: '#D4AF37' };
+  if (n === 'MASTER SYSTEM') return { bg: '#111111', text: '#E53935' };
+  if (n === 'DS') return { bg: '#F5F5F5', text: '#444444' };
+  if (n === 'PC') return { bg: '#111111', text: '#76B900' };
   
   return { bg: '#FFD3B6', text: '#000000' }; // Default Dourado
 };
@@ -143,8 +152,10 @@ const getGenreColor = (name) => {
   if (g.includes('luta')) return '#FCA5A5'; 
   if (g.includes('quebra') || g.includes('puzzle')) return '#FFD3B6'; 
   if (g.includes('estratégia')) return '#93C5FD'; 
-  if (g.includes('sobrevivência')) return '#86EFAC'; 
+  if (g.includes('sobrevivência') || g.includes('survival')) return '#86EFAC'; 
   if (g.includes('corrida')) return '#FDE047'; 
+  if (g.includes('aventura')) return '#99F6E4';
+  if (g.includes('mundo aberto')) return '#FDA4AF';
   return '#E2E8F0';
 };
 
@@ -205,14 +216,12 @@ export default function App() {
   
   const [sortConfig, setSortConfig] = useState({ key: 'ordem', direction: 'asc' });
 
-  // Estados dos Modais Específicos
-  // viewModal pode ser null, { type: 'game', data: gameObj }, { type: 'console', data: 'PS4' }, { type: 'genre', data: 'RPG' }
   const [viewModal, setViewModal] = useState(null);
   const [isEditingFicha, setIsEditingFicha] = useState(false);
   const [fichaData, setFichaData] = useState({});
   const [fichaStatus, setFichaStatus] = useState({ type: 'idle', message: '' });
 
-  const blankForm = { id: '', titulo: '', status: 'Backlog', plataforma: '', franquia: '', nota: '', dificuldade: 'C', tempo: '', preco: '', preco_original: '', suporte: '', midia: '', inicio: '', fim: '', conquistas: '', comentarios: '' };
+  const blankForm = { id: '', titulo: '', status: 'Finalizado', plataforma: '', franquia: '', nota: '', dificuldade: '', tempo: '', preco: '', preco_original: '', suporte: '', midia: '', inicio: '', fim: '', conquistas: '', comentarios: '' };
   const [formData, setFormData] = useState(blankForm);
 
   useEffect(() => {
@@ -225,7 +234,7 @@ export default function App() {
       } else {
         setAppState('config');
       }
-    }, 1800);
+    }, 1500);
     return () => clearTimeout(bootTimer);
   }, []);
 
@@ -269,32 +278,32 @@ export default function App() {
       );
     }
     list.sort((a, b) => {
-      let vA = a[sortConfig.key] || '';
-      let vB = b[sortConfig.key] || '';
+      let valA = a[sortConfig.key] || a['#'] || ''; 
+      let valB = b[sortConfig.key] || b['#'] || '';
 
       if (sortConfig.key === 'ordem') {
-        vA = parseInt(vA) || 99999;
-        vB = parseInt(vB) || 99999;
+        valA = parseInt(a.ordem || a['#']) || 99999;
+        valB = parseInt(b.ordem || b['#']) || 99999;
       } else if (sortConfig.key === 'nota') {
         const p = x => {
           let s = String(x).toUpperCase().trim();
           if (s === 'S' || s === 'RANK S') return 999;
           return parseFloat(s.replace(',','.')) || 0;
         };
-        vA = p(vA); vB = p(vB);
+        valA = p(valA); valB = p(valB);
       } else if (sortConfig.key === 'tempo') {
         const p = x => parseFloat(formatTempoStr(x).replace('h','')) || 0;
-        vA = p(vA); vB = p(vB);
+        valA = p(valA); valB = p(valB);
       } else if (sortConfig.key === 'preco' || sortConfig.key === 'preco_original') {
         const p = x => parseFloat(String(x).replace('R$', '').trim().replace(',', '.')) || 0;
-        vA = p(vA); vB = p(vB);
+        valA = p(valA); valB = p(valB);
       } else {
-        vA = String(vA).toLowerCase();
-        vB = String(vB).toLowerCase();
+        valA = String(valA).toLowerCase();
+        valB = String(valB).toLowerCase();
       }
 
-      if (vA < vB) return sortConfig.direction === 'asc' ? -1 : 1;
-      if (vA > vB) return sortConfig.direction === 'asc' ? 1 : -1;
+      if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
     return list;
@@ -360,7 +369,7 @@ export default function App() {
   };
 
   const Th = ({ label, sortKey, className = "" }) => (
-    <th onClick={() => handleSort(sortKey)} className={`p-2 border-r-[3px] border-slate-900 cursor-pointer hover:bg-black/5 transition-colors ${className}`}>
+    <th onClick={() => handleSort(sortKey)} className={`p-2 border-r-[3px] border-slate-900 cursor-pointer hover:bg-black/5 transition-colors whitespace-nowrap ${className}`}>
       <div className="flex items-center justify-between gap-1">
         <span>{label}</span>
         {sortConfig.key === sortKey && <Icons.SortArrow asc={sortConfig.direction === 'asc'} />}
@@ -390,15 +399,24 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans p-2 sm:p-4 selection:bg-pink-200 relative">
       
-      {/* HEADER MONDRIAN */}
-      <div className="max-w-[1600px] mx-auto mb-6 flex items-center gap-4">
-        <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Logo" className="w-12 h-12 sm:w-14 sm:h-14" />
-        <div className={`p-1.5 sm:p-2 ${theme.cyan} ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] transform -rotate-1`}>
-          <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tighter">Ludorum</h1>
+      {/* HEADER MONDRIAN COM BUSCA EMBUTIDA */}
+      <div className="max-w-[1600px] mx-auto mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Logo" className="w-12 h-12 sm:w-14 sm:h-14" />
+          <div className={`p-1.5 sm:p-2 ${theme.cyan} ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] transform -rotate-1`}>
+            <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tighter">Ludorum</h1>
+          </div>
+          <div className={`p-1 sm:p-1.5 ${theme.pink} ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] transform rotate-1`}>
+            <h2 className="text-sm sm:text-lg font-bold uppercase tracking-widest">Memorabilia</h2>
+          </div>
         </div>
-        <div className={`p-1 sm:p-1.5 ${theme.pink} ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] transform rotate-1`}>
-          <h2 className="text-sm sm:text-lg font-bold uppercase tracking-widest">Memorabilia</h2>
-        </div>
+        
+        {/* CAIXA DE BUSCA */}
+        {(activeTab === 'finished' || activeTab === 'backlog') && (
+          <div className="flex-grow max-w-sm">
+            <input type="text" placeholder="🔍 Buscar Título, Console ou Gênero..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={theme.input} />
+          </div>
+        )}
       </div>
 
       <div className={`max-w-[1600px] mx-auto ${theme.border} ${theme.card} flex flex-col bg-white overflow-hidden`}>
@@ -446,16 +464,14 @@ export default function App() {
              </div>
           )}
 
-          {/* TAB: TABELAS COMPLETAS */}
           {(activeTab === 'finished' || activeTab === 'backlog') && (
             <div className="flex flex-col gap-4">
-              <div className="flex justify-between items-center gap-4 flex-wrap">
-                <input type="text" placeholder="🔍 Buscar por título, console ou gênero..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`${theme.input} max-w-sm`} />
+              <div className="flex justify-end">
                 <div className="text-xs font-black uppercase text-slate-500">Exibindo {sortedAndFilteredGames.length} jogos</div>
               </div>
 
               <div className="overflow-x-auto border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)] bg-white pb-2 max-w-full">
-                <table className="w-full text-left border-collapse whitespace-nowrap text-[10px] sm:text-xs font-bold">
+                <table className="w-full text-left border-collapse text-[10px] sm:text-xs font-bold">
                   <thead>
                     <tr className={`${activeTab === 'finished' ? theme.gold : theme.cyan} border-b-[3px] border-slate-900 uppercase font-black text-slate-900`}>
                       <Th label="#" sortKey="ordem" className="text-center" />
@@ -471,33 +487,40 @@ export default function App() {
                           <Th label="Duração" sortKey="duracao" className="text-center" />
                           <Th label="Nota" sortKey="nota" className="text-center" />
                           <Th label="Dif" sortKey="dificuldade" className="text-center" />
-                          <Th label="Condição / Conquistas" sortKey="conquistas" />
+                          <Th label="Condição" sortKey="conquistas" />
                           <Th label="Preço Pago" sortKey="preco" className="text-center" />
-                          <Th label="Preço s/ Desc." sortKey="preco_original" className="text-center" />
+                          <Th label="Preço S/ Desc." sortKey="preco_original" className="text-center" />
                           <Th label="Desconto" sortKey="desconto" className="text-center" />
                           <Th label="Suporte" sortKey="suporte" className="text-center" />
                         </>
                       )}
-                      <th className="p-2 text-center">Ações</th>
+                      <th className="p-2 text-center whitespace-nowrap">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
                     {sortedAndFilteredGames.map((game, i) => {
-                      let discount = calculateDiscount(game.preco, game.preco_original);
+                      // O React tenta puxar a informação independente de como o Script mandou (por segurança)
+                      let pricePago = game.preco || game['Preço pago'] || game['preço pago'] || '';
+                      let priceSemDesc = game.preco_original || game['Preço sem desconto'] || game['preço sem desconto'] || '';
+                      let ordemId = game.ordem || game['#'] || '';
+                      
+                      let discount = calculateDiscount(pricePago, priceSemDesc);
                       const consoleStyle = getConsoleStyle(game.plataforma);
                       
                       return (
                         <tr key={game.id || i} className="border-b-[2px] border-slate-900 hover:bg-slate-50 transition-colors">
-                          {/* ORDEM */}
-                          <td className="p-2 border-r-[3px] border-slate-900 text-center font-black bg-slate-100">{game.ordem || ''}</td>
                           
-                          {/* TÍTULO -> FICHA DO JOGO */}
-                          <td onClick={() => { setFichaData(game); setViewModal({type:'game', data: game}); setIsEditingFicha(false); }} className="p-2 border-r-[3px] border-slate-900 font-black text-[11px] sm:text-sm cursor-pointer hover:text-blue-600 transition-colors underline decoration-slate-300 underline-offset-4">
+                          <td className="p-2 border-r-[3px] border-slate-900 text-center font-black bg-slate-100 whitespace-nowrap">
+                            {ordemId}
+                          </td>
+                          
+                          {/* Nome do Jogo com Quebra de Linha Liberada */}
+                          <td onClick={() => { setFichaData({...game, preco: pricePago, preco_original: priceSemDesc}); setViewModal({type:'game', data: {...game, preco: pricePago, preco_original: priceSemDesc}}); setIsEditingFicha(false); }} 
+                              className="p-2 border-r-[3px] border-slate-900 font-black text-[11px] sm:text-sm cursor-pointer hover:text-blue-600 transition-colors underline decoration-slate-300 underline-offset-4 whitespace-normal min-w-[200px] break-words">
                             {game.titulo || ''}
                           </td>
                           
-                          {/* CONSOLE -> FICHA DO CONSOLE */}
-                          <td onClick={() => setViewModal({type:'console', data: game.plataforma})} className="p-2 border-r-[3px] border-slate-900 cursor-pointer">
+                          <td onClick={() => setViewModal({type:'console', data: game.plataforma})} className="p-2 border-r-[3px] border-slate-900 cursor-pointer whitespace-nowrap">
                             {game.plataforma ? (
                               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform font-black uppercase" style={{ backgroundColor: consoleStyle.bg, color: consoleStyle.text }}>
                                 <ConsoleIcon consoleName={game.plataforma} /> {game.plataforma}
@@ -505,8 +528,7 @@ export default function App() {
                             ) : ''}
                           </td>
                           
-                          {/* GÊNERO -> FICHA DO GÊNERO */}
-                          <td onClick={() => setViewModal({type:'genre', data: game.franquia})} className="p-2 border-r-[3px] border-slate-900 cursor-pointer">
+                          <td onClick={() => setViewModal({type:'genre', data: game.franquia})} className="p-2 border-r-[3px] border-slate-900 cursor-pointer whitespace-nowrap">
                             {game.franquia ? (
                                <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 uppercase font-black shadow-[1px_1px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform" style={{backgroundColor: getGenreColor(game.franquia)}}>
                                  {game.franquia}
@@ -516,13 +538,13 @@ export default function App() {
 
                           {activeTab === 'finished' && (
                             <>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center">{formatDateStr(game.inicio)}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center">{formatDateStr(game.fim)}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center font-black">{formatTempoStr(game.tempo)}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center">{calculateTimeSpan(game.inicio, game.fim)}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center">{getRatingBadge(game.nota)}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(game.inicio) || ''}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(game.fim) || ''}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center font-black whitespace-nowrap">{formatTempoStr(game.tempo) || ''}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{calculateTimeSpan(game.inicio, game.fim) || ''}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{getRatingBadge(game.nota) || ''}</td>
                               
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center">
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
                                 {game.dificuldade ? (
                                   <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] uppercase font-black" style={{backgroundColor: getDifficultyBadge(game.dificuldade).bg}}>
                                     {getDifficultyBadge(game.dificuldade).text}
@@ -530,22 +552,25 @@ export default function App() {
                                 ) : ''}
                               </td>
                               
-                              <td className="p-2 border-r-[3px] border-slate-900 max-w-[200px] truncate" title={game.conquistas}>{game.conquistas || ''}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 max-w-[200px] truncate whitespace-nowrap" title={game.conquistas}>{game.conquistas || ''}</td>
                               
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center">
-                                {game.preco ? (
-                                  <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(game.preco)}}>
-                                    {game.preco}
+                              {/* Valores Formatados para R$ */}
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
+                                {pricePago ? (
+                                  <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(pricePago)}}>
+                                    {formatCurrency(pricePago)}
                                   </span>
                                 ) : ''}
                               </td>
                               
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center text-slate-500">{game.preco_original || ''}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center text-green-700 font-black">{discount.has ? `${discount.val} (${discount.pct})` : ''}</td>
-                              <td className="p-2 border-r-[3px] border-slate-900 text-center">{game.suporte || ''}</td>
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center text-slate-600 whitespace-nowrap">{formatCurrency(priceSemDesc) || ''}</td>
+                              
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center text-green-700 font-black whitespace-nowrap">{discount.has ? `${discount.val} (${discount.pct})` : ''}</td>
+                              
+                              <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{game.suporte || ''}</td>
                             </>
                           )}
-                          <td className="p-2 text-center align-middle">
+                          <td className="p-2 text-center align-middle whitespace-nowrap">
                             <button onClick={() => handleDelete(game.id)} title="Excluir" className="p-1 border-[2px] border-slate-900 bg-white hover:bg-rose-200 transition-colors shadow-[2px_2px_0_0_rgba(15,23,42,1)] active:translate-y-0.5"><Icons.Close /></button>
                           </td>
                         </tr>
@@ -558,7 +583,6 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB: NOVO JOGO / CONFIG */}
           {activeTab === 'add' && (
             <div className={`p-6 bg-white ${theme.border} ${theme.card} max-w-4xl mx-auto`}>
               <h2 className="text-xl font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-2">Adicionar Novo (Inserido na Linha 2)</h2>
@@ -572,9 +596,9 @@ export default function App() {
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Fim</label><input type="date" value={formData.fim} onChange={e=>setFormData({...formData, fim: e.target.value})} className={theme.input} /></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Tempo</label><input placeholder="Ex: 12h ou 120:00:00" value={formData.tempo} onChange={e=>setFormData({...formData, tempo: e.target.value})} className={theme.input} /></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Nota (0 a 10 ou S)</label><input value={formData.nota} onChange={e=>setFormData({...formData, nota: e.target.value})} className={theme.input} /></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Dificuldade</label><select value={formData.dificuldade} onChange={e=>setFormData({...formData, dificuldade: e.target.value})} className={theme.input}><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input placeholder="R$ 0,00" value={formData.preco} onChange={e=>setFormData({...formData, preco: e.target.value})} className={theme.input} /></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço S/ Desconto</label><input placeholder="R$ 0,00" value={formData.preco_original} onChange={e=>setFormData({...formData, preco_original: e.target.value})} className={theme.input} /></div>
+                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Dificuldade</label><select value={formData.dificuldade} onChange={e=>setFormData({...formData, dificuldade: e.target.value})} className={theme.input}><option value=""></option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></div>
+                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input placeholder="69.90" value={formData.preco} onChange={e=>setFormData({...formData, preco: e.target.value})} className={theme.input} /></div>
+                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço S/ Desconto</label><input placeholder="132.90" value={formData.preco_original} onChange={e=>setFormData({...formData, preco_original: e.target.value})} className={theme.input} /></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input value={formData.suporte} onChange={e=>setFormData({...formData, suporte: e.target.value})} className={theme.input} /></div>
                   <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Link (YouTube)</label><input value={formData.midia} onChange={e=>setFormData({...formData, midia: e.target.value})} className={theme.input} /></div>
                   <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Condição</label><textarea value={formData.conquistas} onChange={e=>setFormData({...formData, conquistas: e.target.value})} className={theme.input} rows="2" /></div>
@@ -605,7 +629,6 @@ export default function App() {
         <div className="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
           <div className={`w-full max-w-4xl bg-white ${theme.border} ${theme.card} flex flex-col my-auto shadow-2xl`}>
             
-            {/* CABEÇALHO DO MODAL */}
             <div className={`p-4 border-b-[3px] border-slate-900 flex justify-between items-center ${viewModal.type === 'game' && isEditingFicha ? theme.pink : theme.cyan}`}>
               <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tighter truncate pr-4">
                 {viewModal.type === 'game' && (isEditingFicha ? 'Editar Ficha' : viewModal.data.titulo)}
@@ -661,28 +684,28 @@ export default function App() {
                           ) : ''}
                         </div>
                         
-                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Início</span><span className="font-bold">{formatDateStr(viewModal.data.inicio)}</span></div>
-                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Fim</span><span className="font-bold">{formatDateStr(viewModal.data.fim)}</span></div>
-                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Tempo de Jogo</span><span className="font-black text-blue-700">{formatTempoStr(viewModal.data.tempo)}</span></div>
-                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Duração Span</span><span className="font-bold">{calculateTimeSpan(viewModal.data.inicio, viewModal.data.fim)}</span></div>
+                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Início</span><span className="font-bold">{formatDateStr(viewModal.data.inicio) || ''}</span></div>
+                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Fim</span><span className="font-bold">{formatDateStr(viewModal.data.fim) || ''}</span></div>
+                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Tempo de Jogo</span><span className="font-black text-blue-700">{formatTempoStr(viewModal.data.tempo) || ''}</span></div>
+                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Duração Span</span><span className="font-bold">{calculateTimeSpan(viewModal.data.inicio, viewModal.data.fim) || ''}</span></div>
                         
                         <div className="flex flex-col">
                           <span className="text-[10px] font-black uppercase text-slate-500 mb-1">Preço Pago</span>
                           {viewModal.data.preco ? (
                              <div>
                                <span className="inline-block px-2 py-0.5 font-black border-[2px] border-slate-900" style={{backgroundColor: getPriceColor(viewModal.data.preco)}}>
-                                 {viewModal.data.preco}
+                                 {formatCurrency(viewModal.data.preco)}
                                </span>
                              </div>
                           ) : ''}
                         </div>
-                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Preço s/ Desconto</span><span className="font-bold">{viewModal.data.preco_original || ''}</span></div>
+                        <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Preço s/ Desconto</span><span className="font-bold text-slate-600">{formatCurrency(viewModal.data.preco_original) || ''}</span></div>
                         <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Suporte</span><span className="font-bold">{viewModal.data.suporte || ''}</span></div>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="p-4 bg-white border-[2px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)]">
-                          <span className="text-[10px] font-black uppercase text-slate-500 block mb-2">Condição / Conquistas</span>
+                          <span className="text-[10px] font-black uppercase text-slate-500 block mb-2">Condição</span>
                           <p className="font-bold text-sm whitespace-pre-wrap">{viewModal.data.conquistas || ''}</p>
                         </div>
                         <div className="p-4 bg-white border-[2px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)]">
@@ -691,7 +714,7 @@ export default function App() {
                         </div>
                       </div>
 
-                      {/* YOUTUBE PLAYER */}
+                      {/* YOUTUBE PLAYER EMBUTIDO */}
                       {(getYoutubeId(viewModal.data.midia) || getYoutubeId(viewModal.data.suporte)) ? (
                         <div className="w-full aspect-video border-[3px] border-slate-900 shadow-[6px_6px_0_0_rgba(15,23,42,1)]">
                           <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${getYoutubeId(viewModal.data.midia) || getYoutubeId(viewModal.data.suporte)}`} title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
@@ -704,7 +727,6 @@ export default function App() {
                       ) : null}
                     </div>
                   ) : (
-                    /* MODO EDIÇÃO DO JOGO */
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Nome *</label><input value={fichaData.titulo} onChange={e=>setFichaData({...fichaData, titulo: e.target.value})} className={theme.input} /></div>
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Console</label><input value={fichaData.plataforma} onChange={e=>setFichaData({...fichaData, plataforma: e.target.value})} className={theme.input} /></div>
@@ -770,7 +792,6 @@ export default function App() {
 
             </div>
 
-            {/* FOOTER DO MODAL (BOTOES DE AÇÃO APENAS PARA JOGO) */}
             {viewModal.type === 'game' && (
               <div className="p-4 border-t-[3px] border-slate-900 bg-white flex justify-end gap-4">
                 {!isEditingFicha ? (
