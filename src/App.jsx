@@ -138,7 +138,6 @@ const getNumericTempo = (tempoVal) => {
   return hrs + (mins / 60);
 };
 
-// Formata o número quebrado para horas legíveis (ex: 893.416... vira 893.4h ou 893h 25m)
 const formatTotalTempoHrs = (numHrs) => {
    if (!numHrs || isNaN(numHrs) || numHrs <= 0) return '-';
    if (Number.isInteger(numHrs)) return `${numHrs}h`;
@@ -178,6 +177,29 @@ const getConsoleStyle = (name) => {
   if (n === 'DS' || n === '3DS') return { bg: '#F5F5F5', text: '#444444' };
   if (n === 'PC' || n === 'STEAM') return { bg: '#111111', text: '#76B900' };
   return { bg: '#FFD3B6', text: '#000000' }; 
+};
+
+const getSuporteInfo = (name) => {
+  let n = String(name).toLowerCase();
+  let categoria = 'Digital';
+  if (n.includes('físico') || n.includes('fisico') || n.includes('dvd') || n.includes('bd') || n.includes('blu-ray') || n.includes('cd') || n.includes('cartucho') || n.includes('disco')) {
+     categoria = 'Físico';
+  }
+  
+  let subCategoria = name || '-';
+  if (n.includes('opl')) subCategoria = 'OPL (Open PS2 Loader)';
+  else if (n.includes('dvd')) subCategoria = 'DVD';
+  else if (n.includes('bd') || n.includes('blu') || n.includes('blu-ray') || n.includes('bluray')) subCategoria = 'Blu-Ray';
+  else if (n.includes('cartucho')) subCategoria = 'Cartucho';
+  else if (n.includes('cd')) subCategoria = 'CD';
+  else if (n.includes('steam')) subCategoria = 'Steam (PC)';
+  else if (n.includes('psn') || n.includes('ps store') || n.includes('playstation store')) subCategoria = 'PlayStation Network (Digital)';
+  else if (n.includes('eshop') || n.includes('nintendo eshop')) subCategoria = 'Nintendo eShop (Digital)';
+  else if (n.includes('xbox live') || n.includes('xbox store')) subCategoria = 'Xbox Store (Digital)';
+  else if (n.includes('epic')) subCategoria = 'Epic Games Store (Digital)';
+  else if (n.includes('gog')) subCategoria = 'GOG (Digital)';
+  
+  return { categoria, subCategoria };
 };
 
 const ConsoleIcon = ({ consoleName }) => {
@@ -266,7 +288,8 @@ export default function App() {
   const [syncStatus, setSyncStatus] = useState({ type: 'idle', message: '' });
   const [addStatus, setAddStatus] = useState({ type: 'idle', message: '' });
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState({ key: 'ordem', direction: 'asc' });
+  // Modificação: direction inicializado como 'desc' para que os mais novos carreguem primeiro.
+  const [sortConfig, setSortConfig] = useState({ key: 'ordem', direction: 'desc' });
 
   const [viewModal, setViewModal] = useState(null);
   const [isEditingFicha, setIsEditingFicha] = useState(false);
@@ -641,7 +664,10 @@ export default function App() {
                   )}
                 </td>
                 
-                <td className="p-2 border-slate-900 text-center whitespace-nowrap">{displayClean(sup)}</td>
+                {/* Modificação: Tornado clicável com setViewModal type 'suporte' */}
+                <td onClick={() => { if(displayClean(sup)) setViewModal({type:'suporte', data: sup}) }} className="p-2 border-slate-900 text-center whitespace-nowrap cursor-pointer hover:text-blue-600 transition-colors underline decoration-slate-300 underline-offset-4">
+                  {displayClean(sup)}
+                </td>
               </tr>
             );
           })}
@@ -980,6 +1006,8 @@ export default function App() {
                 {viewModal.type === 'genre' && `Ficha do Gênero: ${viewModal.data}`}
                 {viewModal.type === 'note' && `Jogos com Nota: ${viewModal.data}`}
                 {viewModal.type === 'diff' && `Jogos com Dificuldade: ${viewModal.data}`}
+                {/* Modificação: Adicionado Título para o Modal de Suporte */}
+                {viewModal.type === 'suporte' && `Ficha do Suporte: ${viewModal.data}`}
               </h2>
               <button onClick={() => setViewModal(null)} className="p-1 hover:bg-white/50 rounded-full transition-colors border-2 border-transparent hover:border-slate-900"><Icons.Close /></button>
             </div>
@@ -1131,10 +1159,14 @@ export default function App() {
                     let vGen = getVal(g, ['franquia', 'genero', 'gênero']);
                     let vNota = String(getVal(g, ['nota'])).toUpperCase().trim();
                     let vDiff = String(getVal(g, ['dificuldade'])).toUpperCase().trim();
+                    let vSup = getVal(g, ['suporte']);
 
                     if (viewModal.type === 'console') return vPlat === viewModal.data;
                     if (viewModal.type === 'genre') return vGen === viewModal.data;
                     if (viewModal.type === 'diff') return vDiff === viewModal.data;
+                    // Modificação: Adicionado lógica de filtro para suporte
+                    if (viewModal.type === 'suporte') return vSup === viewModal.data;
+                    
                     if (viewModal.type === 'note') {
                        if (viewModal.data === 'S') return vNota === 'S';
                        let nm = parseFloat(vNota.replace(',', '.'));
@@ -1151,6 +1183,21 @@ export default function App() {
 
                  return (
                    <div className="flex flex-col gap-6">
+                     
+                     {/* Modificação: Adicionado os Detalhes Específicos para Suporte */}
+                     {viewModal.type === 'suporte' && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                           <div className={`p-4 ${theme.border} bg-white shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
+                              <h3 className="text-[10px] font-black uppercase text-slate-500 mb-1">Categoria de Mídia</h3>
+                              <p className="text-xl font-black">{getSuporteInfo(viewModal.data).categoria}</p>
+                           </div>
+                           <div className={`p-4 ${theme.border} bg-white shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
+                              <h3 className="text-[10px] font-black uppercase text-slate-500 mb-1">Subcategoria</h3>
+                              <p className="text-xl font-black">{getSuporteInfo(viewModal.data).subCategoria}</p>
+                           </div>
+                        </div>
+                     )}
+
                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className={`p-4 ${theme.border} bg-white shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
                           <h3 className="text-[10px] font-black uppercase text-slate-500 mb-1">Total na Lista</h3>
@@ -1207,4 +1254,174 @@ export default function App() {
 
     </div>
   );
+}
+
+const SHEET_FINISHED = 'Games Finalizados';
+const SHEET_BACKLOG = 'Games que quero jogar';
+
+const HEADER_MAP = {
+  '#': 'ordem',
+  'ordem': 'ordem',
+  'nome': 'titulo', 
+  'titulo': 'titulo',
+  'console': 'plataforma', 
+  'plataforma': 'plataforma',
+  'genero': 'franquia', 
+  'franquia': 'franquia',
+  'inicio': 'inicio', 
+  'iniciado': 'inicio',
+  'fim': 'fim', 
+  'termino': 'fim',
+  'tempo': 'tempo',
+  'nota': 'nota',
+  'dificuldade': 'dificuldade',
+  'condicao': 'conquistas', 
+  'conquistas': 'conquistas',
+  'link': 'midia', 
+  'midia': 'midia',
+  'observacao': 'comentarios', 
+  'comentarios': 'comentarios',
+  'preco pago': 'preco', 
+  'preco': 'preco',
+  'preco sem desconto': 'preco_original', // O script agora lida com quebras de linha
+  'suporte': 'suporte'
+};
+
+function normalizeHeader(h) {
+  if (!h) return null;
+  // Remove acentos, transforma em minúsculas e substitui quebras de linha (\n) e múltiplos espaços por um espaço simples
+  let cleaned = String(h)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\n/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  return HEADER_MAP[cleaned] || cleaned;
+}
+
+function doGet(e) {
+  try {
+    let result = { finished: [], backlog: [] };
+    let ss = SpreadsheetApp.getActiveSpreadsheet();
+    
+    let sheetFin = ss.getSheetByName(SHEET_FINISHED);
+    if(sheetFin) result.finished = extractData(sheetFin, 'Finalizado');
+    
+    let sheetBack = ss.getSheetByName(SHEET_BACKLOG);
+    if(sheetBack) result.backlog = extractData(sheetBack, 'Backlog');
+    
+    return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({error: error.toString()})).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function extractData(sheet, statusStr) {
+  let range = sheet.getDataRange();
+  let values = range.getValues();
+  let displayValues = range.getDisplayValues(); 
+  
+  if(values.length < 2) return [];
+  
+  let headers = values[0].map(normalizeHeader);
+  let rows = [];
+  
+  for(let i = 1; i < values.length; i++) {
+    let rowVal = values[i];
+    let rowDisp = displayValues[i];
+    let obj = {};
+    let hasTitle = false;
+    
+    for(let j = 0; j < headers.length; j++) {
+      let key = headers[j];
+      if (key) {
+        let val = (rowDisp[j] !== undefined && rowDisp[j] !== "") ? rowDisp[j] : rowVal[j];
+        obj[key] = val;
+        if (key === 'titulo' && val) hasTitle = true;
+      }
+    }
+    
+    if(hasTitle) {
+      obj.id = sheet.getName() + '|' + (i + 1); 
+      obj.status = statusStr;
+      rows.push(obj);
+    }
+  }
+  return rows;
+}
+
+function doPost(e) {
+  try {
+    let payload = JSON.parse(e.postData.contents);
+    let action = payload.action;
+    let data = payload.data;
+    let ss = SpreadsheetApp.getActiveSpreadsheet();
+    
+    if (action === 'ADD') {
+      let targetSheetName = data.status === 'Finalizado' ? SHEET_FINISHED : SHEET_BACKLOG;
+      let targetSheet = ss.getSheetByName(targetSheetName);
+      if(!targetSheet) throw new Error("Aba " + targetSheetName + " não encontrada.");
+      addRowTopSafe(targetSheet, data);
+    } 
+    else if (action === 'UPDATE') {
+      let parts = String(data.id).split('|');
+      let sheetName = parts[0];
+      let rowNum = parseInt(parts[1]);
+      
+      let currentSheet = ss.getSheetByName(sheetName);
+      let targetSheetName = data.status === 'Finalizado' ? SHEET_FINISHED : SHEET_BACKLOG;
+      
+      if (sheetName !== targetSheetName) {
+        let targetSheet = ss.getSheetByName(targetSheetName);
+        addRowTopSafe(targetSheet, data);
+        currentSheet.deleteRow(rowNum);
+      } else {
+        updateRowSafe(currentSheet, rowNum, data);
+      }
+    }
+    else if (action === 'DELETE') {
+      let parts = String(payload.id).split('|');
+      let sheetName = parts[0];
+      let rowNum = parseInt(parts[1]);
+      let sheet = ss.getSheetByName(sheetName);
+      if(sheet) sheet.deleteRow(rowNum);
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({error: error.toString()})).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function addRowTopSafe(sheet, data) {
+  let headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  let mappedHeaders = headers.map(normalizeHeader);
+  
+  sheet.insertRowBefore(2);
+
+  for(let i=0; i<headers.length; i++) {
+    let key = mappedHeaders[i];
+    // Ignora índice 0 (coluna A / #) para não quebrar fórmulas
+    if (i === 0 || key === 'ordem' || key === '#') continue;
+
+    if (key && data[key] !== undefined && data[key] !== "") {
+       sheet.getRange(2, i + 1).setValue(data[key]);
+    }
+  }
+}
+
+function updateRowSafe(sheet, rowNum, data) {
+  let headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  let mappedHeaders = headers.map(normalizeHeader);
+  
+  for(let i=0; i<headers.length; i++) {
+    let key = mappedHeaders[i];
+    if (i === 0 || key === 'ordem' || key === '#') continue;
+
+    if (key && data[key] !== undefined) {
+       sheet.getRange(rowNum, i + 1).setValue(data[key]);
+    }
+  }
 }
