@@ -138,6 +138,13 @@ const getNumericTempo = (tempoVal) => {
   return hrs + (mins / 60);
 };
 
+// Formata o número quebrado para horas legíveis (ex: 893.416... vira 893.4h ou 893h 25m)
+const formatTotalTempoHrs = (numHrs) => {
+   if (!numHrs || isNaN(numHrs) || numHrs <= 0) return '-';
+   if (Number.isInteger(numHrs)) return `${numHrs}h`;
+   return `${numHrs.toFixed(1)}h`;
+};
+
 const calculateDiscount = (pPago, pOrig) => {
   let pago = getNumericPrice(pPago);
   let orig = getNumericPrice(pOrig);
@@ -395,7 +402,7 @@ export default function App() {
     let stats = { 
       totalJogos, sRanks, avgNota, 
       totalGasto: 0, totalEconomia: 0,
-      notas: { S: sRanks, '10': 0, '9.5': 0, '9': 0, '8.5': 0, '8': 0, 'Outras': 0 },
+      notas: { '10': 0, '9': 0, '8': 0, '7': 0, '6': 0, '5': 0, '4': 0, '3': 0, '2': 0, '1': 0, '0': 0 },
       dif: { A: 0, B: 0, C: 0, D: 0, E: 0 },
       consoles: {},
       generos: {}
@@ -410,12 +417,10 @@ export default function App() {
 
       let n = parseFloat(String(getVal(g, ['nota'])).replace(',','.'));
       if(!isNaN(n)) {
-        if(n === 10) stats.notas['10']++;
-        else if(n === 9.5) stats.notas['9.5']++;
-        else if(n === 9) stats.notas['9']++;
-        else if(n === 8.5) stats.notas['8.5']++;
-        else if(n === 8) stats.notas['8']++;
-        else stats.notas['Outras']++;
+        let baseNote = Math.floor(n); 
+        if (baseNote >= 0 && baseNote <= 10) {
+           stats.notas[String(baseNote)]++;
+        }
       }
 
       let d = String(getVal(g, ['dificuldade'])).toUpperCase().trim();
@@ -425,14 +430,14 @@ export default function App() {
       let genreName = getVal(g, ['franquia', 'genero', 'gênero']) || 'Desconhecido';
       let tHrs = getNumericTempo(getVal(g, ['tempo']));
 
-      if(consoleName && consoleName !== '-') {
+      if(consoleName && consoleName !== '-' && consoleName !== 'Desconhecido') {
         if(!stats.consoles[consoleName]) stats.consoles[consoleName] = { count: 0, totalNota: 0, notaCount: 0, totalTempo: 0 };
         stats.consoles[consoleName].count++;
         stats.consoles[consoleName].totalTempo += tHrs;
         if(!isNaN(n)) { stats.consoles[consoleName].totalNota += n; stats.consoles[consoleName].notaCount++; }
       }
 
-      if(genreName && genreName !== '-') {
+      if(genreName && genreName !== '-' && genreName !== 'Desconhecido') {
         if(!stats.generos[genreName]) stats.generos[genreName] = { count: 0, totalNota: 0, notaCount: 0, totalTempo: 0 };
         stats.generos[genreName].count++;
         stats.generos[genreName].totalTempo += tHrs;
@@ -741,12 +746,13 @@ export default function App() {
                         let d = calculateDiscount(getVal(g, ['preco', 'preco pago']), getVal(g, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
                         let pctPago = (d.pago / d.orig) * 100;
                         let pctDesc = (d.rawDiff / d.orig) * 100;
+                        let nomeJogo = getVal(g, ['titulo', 'nome']);
                         return (
                           <div key={i} className="flex items-center gap-2 text-[10px] font-black uppercase w-full">
-                             <div className="w-1/3 truncate text-right pr-2">{getVal(g, ['titulo', 'nome'])}</div>
+                             <div className="w-1/3 truncate text-right pr-2" title={nomeJogo}>{nomeJogo}</div>
                              <div className="flex w-2/3 h-4 border-[2px] border-slate-900 bg-slate-100">
-                               <div className="bg-[#3B82F6] h-full" style={{width: `${pctPago}%`}}></div>
-                               <div className="bg-[#EF4444] h-full relative group" style={{width: `${pctDesc}%`}}>
+                               <div className="bg-[#3B82F6] h-full" style={{width: `${pctPago}%`}} title={`${nomeJogo} - Preço Pago: R$ ${d.pago.toFixed(2).replace('.', ',')}`}></div>
+                               <div className="bg-[#EF4444] h-full relative group" style={{width: `${pctDesc}%`}} title={`${nomeJogo} - Desconto de R$ ${d.rawDiff.toFixed(2).replace('.', ',')} (${d.pct})`}>
                                   <div className="absolute inset-0 flex items-center justify-center text-white text-[8px] opacity-0 group-hover:opacity-100 transition-opacity">-{d.pct}</div>
                                </div>
                              </div>
@@ -792,9 +798,18 @@ export default function App() {
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Por Nota</h3>
                      <div className="flex flex-col gap-2">
-                       {['S', '10', '9.5', '9', '8.5', '8', 'Outras'].map(n => (
+                       {['S'].map(n => (
                          <div key={n} onClick={() => setViewModal({type:'note', data: n})} className="flex items-center gap-2 text-xs font-black cursor-pointer hover:opacity-70 transition-opacity">
-                           <span className="inline-block w-12 text-center border-[2px] border-slate-900 py-0.5">{n}</span>
+                           <span className="inline-block w-8 text-center border-[2px] border-slate-900 py-0.5">{n}</span>
+                           <div className="flex-grow bg-slate-100 h-4 border-[2px] border-slate-900">
+                             <div className="h-full bg-slate-900" style={{width: `${(dashboardStats.sRanks / dashboardStats.totalJogos) * 100}%`}}></div>
+                           </div>
+                           <span className="w-6 text-right">{dashboardStats.sRanks}</span>
+                         </div>
+                       ))}
+                       {['10', '9', '8', '7', '6', '5'].map(n => (
+                         <div key={n} onClick={() => setViewModal({type:'note', data: n})} className="flex items-center gap-2 text-xs font-black cursor-pointer hover:opacity-70 transition-opacity">
+                           <span className="inline-block w-8 text-center border-[2px] border-slate-900 py-0.5">{n}</span>
                            <div className="flex-grow bg-slate-100 h-4 border-[2px] border-slate-900">
                              <div className="h-full bg-slate-900" style={{width: `${(dashboardStats.notas[n] / dashboardStats.totalJogos) * 100}%`}}></div>
                            </div>
@@ -805,18 +820,18 @@ export default function App() {
                    </div>
                 </div>
                 
-                {/* Rankings */}
+                {/* Rankings Compactos */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Consoles (Nota Média)</h3>
-                     <table className="w-full text-left text-xs font-black uppercase">
+                     <table className="w-full text-left text-[10px] font-black uppercase">
                        <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Console</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Nota</th></tr></thead>
                        <tbody>
                          {Object.keys(dashboardStats.consoles).sort((a,b) => dashboardStats.consoles[b].avgNota - dashboardStats.consoles[a].avgNota).slice(0, 5).map(c => {
                            let stat = dashboardStats.consoles[c];
                            return (
                              <tr key={c} className="border-b border-slate-200">
-                               <td className="py-2"><span onClick={()=>setViewModal({type:'console', data: c})} className="inline-flex cursor-pointer items-center gap-1.5 px-2 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]" style={{ backgroundColor: getConsoleStyle(c).bg, color: getConsoleStyle(c).text }}><ConsoleIcon consoleName={c} /> {c}</span></td>
+                               <td className="py-2"><span onClick={()=>setViewModal({type:'console', data: c})} className="inline-flex cursor-pointer items-center gap-1 px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]" style={{ backgroundColor: getConsoleStyle(c).bg, color: getConsoleStyle(c).text }}><ConsoleIcon consoleName={c} /> {c}</span></td>
                                <td className="py-2 text-center">{stat.count}</td>
                                <td className="py-2 text-center">{stat.avgNota}</td>
                              </tr>
@@ -828,16 +843,16 @@ export default function App() {
                    
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Consoles (Tempo Jogado)</h3>
-                     <table className="w-full text-left text-xs font-black uppercase">
+                     <table className="w-full text-left text-[10px] font-black uppercase">
                        <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Console</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Tempo Total</th></tr></thead>
                        <tbody>
                          {Object.keys(dashboardStats.consoles).sort((a,b) => dashboardStats.consoles[b].totalTempo - dashboardStats.consoles[a].totalTempo).slice(0, 5).map(c => {
                            let stat = dashboardStats.consoles[c];
                            return (
                              <tr key={c} className="border-b border-slate-200">
-                               <td className="py-2"><span onClick={()=>setViewModal({type:'console', data: c})} className="inline-flex cursor-pointer items-center gap-1.5 px-2 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]" style={{ backgroundColor: getConsoleStyle(c).bg, color: getConsoleStyle(c).text }}><ConsoleIcon consoleName={c} /> {c}</span></td>
+                               <td className="py-2"><span onClick={()=>setViewModal({type:'console', data: c})} className="inline-flex cursor-pointer items-center gap-1 px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]" style={{ backgroundColor: getConsoleStyle(c).bg, color: getConsoleStyle(c).text }}><ConsoleIcon consoleName={c} /> {c}</span></td>
                                <td className="py-2 text-center">{stat.count}</td>
-                               <td className="py-2 text-center text-blue-600">{stat.totalTempo > 0 ? `${stat.totalTempo}h` : '-'}</td>
+                               <td className="py-2 text-center text-blue-600">{formatTotalTempoHrs(stat.totalTempo)}</td>
                              </tr>
                            )
                          })}
@@ -847,14 +862,14 @@ export default function App() {
 
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Gêneros (Nota Média)</h3>
-                     <table className="w-full text-left text-xs font-black uppercase">
+                     <table className="w-full text-left text-[10px] font-black uppercase">
                        <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Gênero</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Nota</th></tr></thead>
                        <tbody>
                          {Object.keys(dashboardStats.generos).sort((a,b) => dashboardStats.generos[b].avgNota - dashboardStats.generos[a].avgNota).slice(0, 5).map(c => {
                            let stat = dashboardStats.generos[c];
                            return (
                              <tr key={c} className="border-b border-slate-200">
-                               <td className="py-2"><span onClick={()=>setViewModal({type:'genre', data: c})} className="inline-block cursor-pointer px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)]" style={{backgroundColor: getGenreColor(c)}}>{c}</span></td>
+                               <td className="py-2"><span onClick={()=>setViewModal({type:'genre', data: c})} className="inline-block cursor-pointer px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)]" style={{backgroundColor: getGenreColor(c)}}>{c}</span></td>
                                <td className="py-2 text-center">{stat.count}</td>
                                <td className="py-2 text-center">{stat.avgNota}</td>
                              </tr>
@@ -866,16 +881,16 @@ export default function App() {
 
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Gêneros (Tempo Jogado)</h3>
-                     <table className="w-full text-left text-xs font-black uppercase">
+                     <table className="w-full text-left text-[10px] font-black uppercase">
                        <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Gênero</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Tempo Total</th></tr></thead>
                        <tbody>
                          {Object.keys(dashboardStats.generos).sort((a,b) => dashboardStats.generos[b].totalTempo - dashboardStats.generos[a].totalTempo).slice(0, 5).map(c => {
                            let stat = dashboardStats.generos[c];
                            return (
                              <tr key={c} className="border-b border-slate-200">
-                               <td className="py-2"><span onClick={()=>setViewModal({type:'genre', data: c})} className="inline-block cursor-pointer px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)]" style={{backgroundColor: getGenreColor(c)}}>{c}</span></td>
+                               <td className="py-2"><span onClick={()=>setViewModal({type:'genre', data: c})} className="inline-block cursor-pointer px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)]" style={{backgroundColor: getGenreColor(c)}}>{c}</span></td>
                                <td className="py-2 text-center">{stat.count}</td>
-                               <td className="py-2 text-center text-blue-600">{stat.totalTempo > 0 ? `${stat.totalTempo}h` : '-'}</td>
+                               <td className="py-2 text-center text-blue-600">{formatTotalTempoHrs(stat.totalTempo)}</td>
                              </tr>
                            )
                          })}
@@ -1121,16 +1136,11 @@ export default function App() {
                     if (viewModal.type === 'genre') return vGen === viewModal.data;
                     if (viewModal.type === 'diff') return vDiff === viewModal.data;
                     if (viewModal.type === 'note') {
-                       if (viewModal.data === 'S' || viewModal.data === 'Outras') {
-                          if (viewModal.data === 'S') return vNota === 'S';
-                          if (viewModal.data === 'Outras') {
-                             let nm = parseFloat(vNota.replace(',', '.'));
-                             return !isNaN(nm) && ![10, 9.5, 9, 8.5, 8].includes(nm);
-                          }
-                       } else {
-                          let nm = parseFloat(vNota.replace(',', '.'));
-                          return nm === parseFloat(viewModal.data);
-                       }
+                       if (viewModal.data === 'S') return vNota === 'S';
+                       let nm = parseFloat(vNota.replace(',', '.'));
+                       let targetNota = parseFloat(viewModal.data);
+                       // Se clicou no 9, mostra tanto 9.0 quanto 9.5
+                       return Math.floor(nm) === targetNota;
                     }
                     return false;
                  });
@@ -1148,7 +1158,7 @@ export default function App() {
                         </div>
                         <div className={`p-4 ${theme.border} bg-white shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
                           <h3 className="text-[10px] font-black uppercase text-slate-500 mb-1">Tempo Gasto</h3>
-                          <p className="text-2xl font-black text-blue-700">{totalTimeHrs > 0 ? `${totalTimeHrs.toFixed(1)}h` : '-'}</p>
+                          <p className="text-2xl font-black text-blue-700">{formatTotalTempoHrs(totalTimeHrs)}</p>
                         </div>
                         <div className={`p-4 ${theme.border} bg-white shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
                           <h3 className="text-[10px] font-black uppercase text-slate-500 mb-1">Nota Média</h3>
@@ -1156,7 +1166,9 @@ export default function App() {
                         </div>
                      </div>
                      <div>
-                       <h3 className="text-sm font-black uppercase border-b-[3px] border-slate-900 pb-2 mb-4">Jogos na Categoria: {viewModal.data}</h3>
+                       <h3 className="text-sm font-black uppercase border-b-[3px] border-slate-900 pb-2 mb-4">
+                          Jogos na Categoria: {viewModal.type === 'note' && viewModal.data !== 'S' ? `Nota na casa dos ${viewModal.data}` : viewModal.data}
+                       </h3>
                        {renderGameTable(filteredList)}
                      </div>
                    </div>
