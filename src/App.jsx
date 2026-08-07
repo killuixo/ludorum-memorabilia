@@ -287,9 +287,12 @@ export default function App() {
   const [games, setGames] = useState([]);
   const [syncStatus, setSyncStatus] = useState({ type: 'idle', message: '' });
   const [addStatus, setAddStatus] = useState({ type: 'idle', message: '' });
+  
   const [searchTerm, setSearchTerm] = useState('');
-  // Modificação: direction inicializado como 'desc' para que os mais novos carreguem primeiro.
-  const [sortConfig, setSortConfig] = useState({ key: 'ordem', direction: 'desc' });
+  const [filters, setFilters] = useState({ console: '', genero: '', nota: '', dif: '', suporte: '' });
+  
+  const [descontoSort, setDescontoSort] = useState('desc_val_desc');
+  const [sortConfig, setSortConfig] = useState({ key: 'ordem', direction: 'desc' }); 
 
   const [viewModal, setViewModal] = useState(null);
   const [isEditingFicha, setIsEditingFicha] = useState(false);
@@ -340,16 +343,37 @@ export default function App() {
   };
 
   const handleSort = (key) => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
+    let direction = 'desc';
+    if (sortConfig.key === key && sortConfig.direction === 'desc') direction = 'asc';
     setSortConfig({ key, direction });
+  };
+
+  const resetHome = () => {
+     setActiveTab('dashboard');
+     setSearchTerm('');
+     setFilters({ console: '', genero: '', nota: '', dif: '', suporte: '' });
   };
 
   const isValBlank = (val) => val === '' || val === null || val === undefined || val === '-' || (typeof val === 'number' && isNaN(val)) || (typeof val === 'number' && val === -1);
 
   const sortedAndFilteredGames = useMemo(() => {
-    let list = games.filter(g => g.status === (activeTab === 'finished' ? 'Finalizado' : 'Backlog'));
+    let list = games;
+    if (activeTab === 'finished') list = games.filter(g => g.status === 'Finalizado');
+    if (activeTab === 'backlog') list = games.filter(g => g.status === 'Backlog');
     
+    if (filters.console) list = list.filter(g => getVal(g, ['plataforma', 'console']) === filters.console);
+    if (filters.genero) list = list.filter(g => getVal(g, ['franquia', 'genero', 'gênero']) === filters.genero);
+    if (filters.dif) list = list.filter(g => String(getVal(g, ['dificuldade'])).toUpperCase().trim() === filters.dif);
+    if (filters.suporte) list = list.filter(g => getVal(g, ['suporte']) === filters.suporte);
+    if (filters.nota) {
+      list = list.filter(g => {
+        let n = String(getVal(g, ['nota'])).toUpperCase().trim();
+        if (filters.nota === 'S') return n === 'S';
+        let num = parseFloat(n.replace(',', '.'));
+        return Math.floor(num) === parseInt(filters.nota);
+      });
+    }
+
     if (searchTerm) {
       list = list.filter(g => {
         let t = getVal(g, ['titulo', 'nome']);
@@ -411,10 +435,10 @@ export default function App() {
     });
 
     return list;
-  }, [games, activeTab, searchTerm, sortConfig]);
+  }, [games, activeTab, searchTerm, sortConfig, filters]);
 
   const dashboardStats = useMemo(() => {
-    let fin = games.filter(g => g.status === 'Finalizado');
+    let fin = sortedAndFilteredGames.filter(g => g.status === 'Finalizado');
     let totalJogos = fin.length;
     
     let sRanks = fin.filter(g => String(getVal(g, ['nota'])).toUpperCase().trim() === 'S').length;
@@ -479,7 +503,7 @@ export default function App() {
     stats.totalEconomiaStr = `R$ ${stats.totalEconomia.toFixed(2).replace('.',',')}`;
 
     return stats;
-  }, [games]);
+  }, [sortedAndFilteredGames]);
 
   const uniqueOptions = useMemo(() => {
     let opts = { console: new Set(), genero: new Set(), suporte: new Set(), condicao: new Set() };
@@ -532,12 +556,18 @@ export default function App() {
   };
 
   const handleDelete = async (id) => {
-    setAppState('loading');
+    setFichaStatus({ type: 'loading', message: 'Excluindo jogo da planilha...' });
     try {
       await fetch(configUrl, { method: 'POST', body: JSON.stringify({ action: 'DELETE', id }) });
       await fetchGames(configUrl);
-      setViewModal(null);
-    } catch(e) {}
+      setFichaStatus({ type: 'success', message: 'Jogo excluído com sucesso!' });
+      setTimeout(() => {
+        setViewModal(null);
+        setFichaStatus({ type: 'idle', message: '' });
+      }, 1500);
+    } catch(e) {
+      setFichaStatus({ type: 'error', message: 'Erro ao excluir o jogo.' });
+    }
   };
 
   const Th = ({ label, sortKey, className = "" }) => (
@@ -549,7 +579,10 @@ export default function App() {
     </th>
   );
 
-  const renderGameTable = (list) => (
+  const renderGameTable = (list) => {
+    const isBacklog = activeTab === 'backlog' && !viewModal;
+    
+    return (
     <div className={`overflow-x-auto border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)] bg-white pb-2 max-w-full`}>
       <table className="w-full text-left border-collapse text-[10px] sm:text-[11px] font-bold">
         <thead>
@@ -559,15 +592,15 @@ export default function App() {
             <Th label="CONSOLE" sortKey="plataforma" />
             <Th label="GÊNERO" sortKey="franquia" />
             <Th label="INÍCIO" sortKey="inicio" className="text-center" />
-            <Th label="FIM" sortKey="fim" className="text-center" />
-            <Th label="TEMPO TOTAL" sortKey="tempo" className="text-center" />
-            <Th label="DURAÇÃO" sortKey="duracao" className="text-center" />
-            <Th label="NOTA" sortKey="nota" className="text-center" />
-            <Th label="DIF" sortKey="dificuldade" className="text-center" />
+            {!isBacklog && <Th label="FIM" sortKey="fim" className="text-center" />}
+            {!isBacklog && <Th label="TEMPO TOTAL" sortKey="tempo" className="text-center" />}
+            {!isBacklog && <Th label="DURAÇÃO" sortKey="duracao" className="text-center" />}
+            {!isBacklog && <Th label="NOTA" sortKey="nota" className="text-center" />}
+            {!isBacklog && <Th label="DIF" sortKey="dificuldade" className="text-center" />}
             <Th label="CONDIÇÃO" sortKey="conquistas" />
             <Th label="PREÇO PAGO" sortKey="preco" className="text-center" />
             <Th label="PREÇO S/ DESC." sortKey="preco_original" className="text-center" />
-            <Th label="DESCONTO" sortKey="desconto" className="text-center" />
+            {!isBacklog && <Th label="DESCONTO" sortKey="desconto" className="text-center" />}
             <Th label="SUPORTE" sortKey="suporte" className="text-center border-r-0" />
           </tr>
         </thead>
@@ -622,21 +655,26 @@ export default function App() {
                 </td>
 
                 <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(inicio)}</td>
-                <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(fim)}</td>
-                <td className="p-2 border-r-[3px] border-slate-900 text-center font-black whitespace-nowrap">{formatTempoStr(tempo)}</td>
-                <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap font-bold text-slate-600">{calculateTimeSpan(inicio, fim)}</td>
                 
-                <td onClick={() => { if(displayClean(nota)) setViewModal({type:'note', data: nota}) }} className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
-                  {getRatingBadge(nota)}
-                </td>
+                {!isBacklog && <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(fim)}</td>}
+                {!isBacklog && <td className="p-2 border-r-[3px] border-slate-900 text-center font-black whitespace-nowrap">{formatTempoStr(tempo)}</td>}
+                {!isBacklog && <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap font-bold text-slate-600">{calculateTimeSpan(inicio, fim)}</td>}
                 
-                <td onClick={() => { if(displayClean(dif)) setViewModal({type:'diff', data: dif}) }} className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
-                  {displayClean(dif) && (
-                    <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] uppercase font-black cursor-pointer hover:-translate-y-0.5 transition-transform" style={{backgroundColor: getDifficultyBadge(dif).bg}}>
-                      {getDifficultyBadge(dif).text}
-                    </span>
-                  )}
-                </td>
+                {!isBacklog && (
+                  <td onClick={() => { if(displayClean(nota)) setViewModal({type:'note', data: nota}) }} className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
+                    {getRatingBadge(nota)}
+                  </td>
+                )}
+                
+                {!isBacklog && (
+                  <td onClick={() => { if(displayClean(dif)) setViewModal({type:'diff', data: dif}) }} className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
+                    {displayClean(dif) && (
+                      <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] uppercase font-black cursor-pointer hover:-translate-y-0.5 transition-transform" style={{backgroundColor: getDifficultyBadge(dif).bg}}>
+                        {getDifficultyBadge(dif).text}
+                      </span>
+                    )}
+                  </td>
+                )}
                 
                 <td className="p-2 border-r-[3px] border-slate-900 max-w-[150px] whitespace-normal break-words">{displayClean(cond)}</td>
                 
@@ -656,15 +694,19 @@ export default function App() {
                   )}
                 </td>
                 
-                <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
-                  {discount.has && (
-                    <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" style={{backgroundColor: getPriceColor(discount.rawDiff)}}>
-                      {discount.val} ({discount.pct})
-                    </span>
-                  )}
-                </td>
+                {!isBacklog && (
+                  <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
+                    {discount.has && (
+                      <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)] group relative cursor-help" style={{backgroundColor: getPriceColor(discount.rawDiff)}}>
+                        {discount.val} ({discount.pct})
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-10 pointer-events-none">
+                          Economia de {discount.val}
+                        </div>
+                      </span>
+                    )}
+                  </td>
+                )}
                 
-                {/* Modificação: Tornado clicável com setViewModal type 'suporte' */}
                 <td onClick={() => { if(displayClean(sup)) setViewModal({type:'suporte', data: sup}) }} className="p-2 border-slate-900 text-center whitespace-nowrap cursor-pointer hover:text-blue-600 transition-colors underline decoration-slate-300 underline-offset-4">
                   {displayClean(sup)}
                 </td>
@@ -675,7 +717,7 @@ export default function App() {
         </tbody>
       </table>
     </div>
-  );
+  )};
 
   if (appState === 'booting' || (appState === 'loading' && games.length === 0)) {
     return (
@@ -700,7 +742,7 @@ export default function App() {
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans p-2 sm:p-4 selection:bg-pink-200 relative">
       
       <div className="max-w-[1600px] mx-auto mb-6 flex flex-wrap items-center justify-between gap-4 sm:gap-6">
-        <div className="flex items-center gap-4 shrink-0">
+        <div onClick={resetHome} className="flex items-center gap-4 shrink-0 cursor-pointer hover:opacity-80 transition-opacity" title="Voltar ao Início e Limpar Filtros">
           <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Logo" className="w-12 h-12 sm:w-14 sm:h-14" />
           <div className={`p-1.5 sm:p-2 ${theme.cyan} ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] transform -rotate-1`}>
             <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tighter">Ludorum</h1>
@@ -709,12 +751,6 @@ export default function App() {
             <h2 className="text-sm sm:text-lg font-bold uppercase tracking-widest">Memorabilia</h2>
           </div>
         </div>
-        
-        {(activeTab === 'finished' || activeTab === 'backlog') && (
-          <div className="flex-grow max-w-md flex items-center">
-            <input type="text" placeholder="🔍 Buscar por título, console ou gênero..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`${theme.input} shadow-[4px_4px_0_0_rgba(15,23,42,1)]`} />
-          </div>
-        )}
       </div>
 
       <div className={`max-w-[1600px] mx-auto ${theme.border} ${theme.card} flex flex-col bg-white overflow-hidden`}>
@@ -740,7 +776,38 @@ export default function App() {
 
         <main className="p-4 sm:p-6 overflow-x-auto">
           
-          {}
+          {/* BLOCO DE FILTROS ALINHADOS LADO A LADO */}
+          {(activeTab === 'dashboard' || activeTab === 'finished' || activeTab === 'backlog') && (
+            <div className="flex flex-col gap-2 mb-6 w-full">
+              <input type="text" placeholder="🔍 Buscar por título, console ou gênero..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`${theme.input} shadow-[4px_4px_0_0_rgba(15,23,42,1)] w-full`} />
+              
+              <div className="flex flex-row flex-wrap gap-4 mt-2">
+                <select value={filters.console} onChange={e=>setFilters({...filters, console: e.target.value})} className={`${theme.input} flex-1 min-w-[180px] text-[10px] py-2 shadow-[2px_2px_0_0_rgba(15,23,42,1)]`}>
+                  <option value="">Todos Consoles</option>
+                  {uniqueOptions.console.map(o=><option key={o} value={o}>{o}</option>)}
+                </select>
+                <select value={filters.genero} onChange={e=>setFilters({...filters, genero: e.target.value})} className={`${theme.input} flex-1 min-w-[180px] text-[10px] py-2 shadow-[2px_2px_0_0_rgba(15,23,42,1)]`}>
+                  <option value="">Todos Gêneros</option>
+                  {uniqueOptions.genero.map(o=><option key={o} value={o}>{o}</option>)}
+                </select>
+                <select value={filters.nota} onChange={e=>setFilters({...filters, nota: e.target.value})} className={`${theme.input} flex-1 min-w-[180px] text-[10px] py-2 shadow-[2px_2px_0_0_rgba(15,23,42,1)]`}>
+                  <option value="">Todas Notas</option>
+                  <option value="S">Rank S</option>
+                  {['10','9','8','7','6','5','4','3','2','1','0'].map(o=><option key={o} value={o}>Nota {o}</option>)}
+                </select>
+                <select value={filters.dif} onChange={e=>setFilters({...filters, dif: e.target.value})} className={`${theme.input} flex-1 min-w-[180px] text-[10px] py-2 shadow-[2px_2px_0_0_rgba(15,23,42,1)]`}>
+                  <option value="">Todas as Dificuldades</option>
+                  {['A','B','C','D','E'].map(o=><option key={o} value={o}>{o}</option>)}
+                </select>
+                <select value={filters.suporte} onChange={e=>setFilters({...filters, suporte: e.target.value})} className={`${theme.input} flex-1 min-w-[180px] text-[10px] py-2 shadow-[2px_2px_0_0_rgba(15,23,42,1)]`}>
+                  <option value="">Todos Suportes</option>
+                  {uniqueOptions.suporte.map(o=><option key={o} value={o}>{o}</option>)}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* DASHBOARD */}
           {activeTab === 'dashboard' && (
              <div className="flex flex-col gap-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -753,7 +820,7 @@ export default function App() {
                     <p className="text-4xl font-black">{dashboardStats.sRanks}</p>
                   </div>
                   <div className={`p-4 ${theme.border} bg-[#93C5FD] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
-                    <h3 className="text-xs font-black uppercase">Nota Média (Sem as 'S')</h3>
+                    <h3 className="text-xs font-black uppercase">Nota Média</h3>
                     <p className="text-4xl font-black">{dashboardStats.avgNota}</p>
                   </div>
                   <div className={`p-4 ${theme.border} bg-[#FDE047] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
@@ -762,12 +829,31 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <div className={`lg:col-span-2 p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
-                    <h3 className="text-sm font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-2">Descontos por Jogo</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                  <div className={`lg:col-span-2 p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] h-fit`}>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 border-b-[3px] border-slate-900 pb-2 gap-2">
+                      <h3 className="text-sm font-black uppercase">Descontos por Jogo</h3>
+                      <select value={descontoSort} onChange={e=>setDescontoSort(e.target.value)} className="text-[10px] p-1.5 border-[2px] border-slate-900 font-bold outline-none cursor-pointer bg-slate-50 shadow-[2px_2px_0_0_rgba(15,23,42,1)]">
+                         <option value="desc_val_desc">Maior Desconto (R$)</option>
+                         <option value="desc_val_asc">Menor Desconto (R$)</option>
+                         <option value="pago_desc">Maior Preço Pago</option>
+                         <option value="pago_asc">Menor Preço Pago</option>
+                         <option value="orig_desc">Maior Preço Original</option>
+                         <option value="alfa_asc">Alfabética (A-Z)</option>
+                      </select>
+                    </div>
                     <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-2">
-                      {games.filter(g => calculateDiscount(getVal(g, ['preco', 'preco pago']), getVal(g, ['preco_original', 'preco sem desconto', 'preço sem desconto'])).has)
-                            .sort((a,b) => calculateDiscount(getVal(b, ['preco', 'preco pago']), getVal(b, ['preco_original', 'preco sem desconto', 'preço sem desconto'])).rawDiff - calculateDiscount(getVal(a, ['preco', 'preco pago']), getVal(a, ['preco_original', 'preco sem desconto', 'preço sem desconto'])).rawDiff)
+                      {sortedAndFilteredGames.filter(g => g.status === 'Finalizado' && calculateDiscount(getVal(g, ['preco', 'preco pago']), getVal(g, ['preco_original', 'preco sem desconto', 'preço sem desconto'])).has)
+                            .sort((a,b) => {
+                               let dA = calculateDiscount(getVal(a, ['preco', 'preco pago']), getVal(a, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
+                               let dB = calculateDiscount(getVal(b, ['preco', 'preco pago']), getVal(b, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
+                               if (descontoSort === 'alfa_asc') return getVal(a, ['titulo', 'nome']).localeCompare(getVal(b, ['titulo', 'nome']));
+                               if (descontoSort === 'pago_asc') return dA.pago - dB.pago;
+                               if (descontoSort === 'pago_desc') return dB.pago - dA.pago;
+                               if (descontoSort === 'orig_desc') return dB.orig - dA.orig;
+                               if (descontoSort === 'desc_val_asc') return dA.rawDiff - dB.rawDiff;
+                               return dB.rawDiff - dA.rawDiff; // default desc_val_desc
+                            })
                             .map((g, i) => {
                         let d = calculateDiscount(getVal(g, ['preco', 'preco pago']), getVal(g, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
                         let pctPago = (d.pago / d.orig) * 100;
@@ -777,8 +863,9 @@ export default function App() {
                           <div key={i} className="flex items-center gap-2 text-[10px] font-black uppercase w-full">
                              <div className="w-1/3 truncate text-right pr-2" title={nomeJogo}>{nomeJogo}</div>
                              <div className="flex w-2/3 h-4 border-[2px] border-slate-900 bg-slate-100">
-                               <div className="bg-[#3B82F6] h-full" style={{width: `${pctPago}%`}} title={`${nomeJogo} - Preço Pago: R$ ${d.pago.toFixed(2).replace('.', ',')}`}></div>
-                               <div className="bg-[#EF4444] h-full relative group" style={{width: `${pctDesc}%`}} title={`${nomeJogo} - Desconto de R$ ${d.rawDiff.toFixed(2).replace('.', ',')} (${d.pct})`}>
+                               <div className="bg-[#3B82F6] h-full relative group" style={{width: `${pctPago}%`}} title={`${nomeJogo} - Preço Pago: R$ ${d.pago.toFixed(2).replace('.', ',')}`}>
+                               </div>
+                               <div className="bg-[#EF4444] h-full relative group cursor-help" style={{width: `${pctDesc}%`}} title={`${nomeJogo} - Desconto de R$ ${d.rawDiff.toFixed(2).replace('.', ',')} (${d.pct})`}>
                                   <div className="absolute inset-0 flex items-center justify-center text-white text-[8px] opacity-0 group-hover:opacity-100 transition-opacity">-{d.pct}</div>
                                </div>
                              </div>
@@ -787,59 +874,68 @@ export default function App() {
                       })}
                     </div>
                   </div>
-                  <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] flex flex-col justify-between items-center`}>
+                  <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] flex flex-col justify-between items-center h-fit`}>
                     <h3 className="text-sm font-black uppercase mb-4 w-full text-center border-b-[3px] border-slate-900 pb-2">Economia Geral</h3>
-                    <div className="w-full flex-grow flex flex-col justify-end items-center mb-4 mt-2">
-                       <div className="w-2/3 max-w-[120px] flex flex-col border-[3px] border-slate-900 h-[250px] bg-slate-100 relative">
-                          <div className="w-full bg-[#EF4444] flex items-center justify-center flex-col transition-all" style={{height: `${(dashboardStats.totalEconomia / (dashboardStats.totalGasto + dashboardStats.totalEconomia)) * 100}%`}}>
-                             <span className="text-white font-black text-sm">{dashboardStats.totalEconomia.toFixed(2)}</span>
+                    <div className="w-full flex-grow flex flex-row justify-center items-center mb-4 mt-2 gap-2">
+                       <div className="w-[80px] sm:w-[100px] flex flex-col border-[3px] border-slate-900 h-[220px] bg-slate-100 relative shadow-[4px_4px_0_0_rgba(15,23,42,1)]" title={`Gasto Total + Economia Total = R$ ${(dashboardStats.totalGasto + dashboardStats.totalEconomia).toFixed(2).replace('.', ',')}`}>
+                          <div className="w-full bg-[#EF4444] flex items-center justify-center flex-col transition-all group relative cursor-help" style={{height: `${dashboardStats.totalGasto + dashboardStats.totalEconomia > 0 ? (dashboardStats.totalEconomia / (dashboardStats.totalGasto + dashboardStats.totalEconomia)) * 100 : 0}%`}}>
+                             <span className="text-white font-black text-xs md:text-sm">{dashboardStats.totalEconomia.toFixed(2)}</span>
+                             <div className="absolute top-1/2 left-full -translate-y-1/2 ml-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-slate-900 text-white text-[10px] px-2 py-1 z-10 pointer-events-none">Total Economizado</div>
                           </div>
-                          <div className="w-full bg-[#3B82F6] flex items-center justify-center flex-col transition-all" style={{height: `${(dashboardStats.totalGasto / (dashboardStats.totalGasto + dashboardStats.totalEconomia)) * 100}%`}}>
-                             <span className="text-white font-black text-sm">{dashboardStats.totalGasto.toFixed(2)}</span>
+                          <div className="w-full bg-[#3B82F6] flex items-center justify-center flex-col transition-all group relative cursor-help" style={{height: `${dashboardStats.totalGasto + dashboardStats.totalEconomia > 0 ? (dashboardStats.totalGasto / (dashboardStats.totalGasto + dashboardStats.totalEconomia)) * 100 : 0}%`}}>
+                             <span className="text-white font-black text-xs md:text-sm">{dashboardStats.totalGasto.toFixed(2)}</span>
+                             <div className="absolute top-1/2 left-full -translate-y-1/2 ml-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-slate-900 text-white text-[10px] px-2 py-1 z-10 pointer-events-none">Total Gasto Real</div>
                           </div>
                        </div>
+                       <div className="flex items-center text-slate-800 pointer-events-none">
+                           <span className="text-[60px] font-light leading-none -translate-y-1">{'}'}</span>
+                           <div className="flex flex-col ml-1">
+                             <span className="text-[10px] font-black uppercase leading-tight text-slate-500">Total Cheio</span>
+                             <span className="text-lg sm:text-xl font-black leading-none">{(dashboardStats.totalGasto + dashboardStats.totalEconomia).toFixed(2).replace('.',',')}</span>
+                           </div>
+                       </div>
                     </div>
-                    <div className="w-full bg-[#991B1B] text-white p-2 border-[3px] border-slate-900 text-center font-black uppercase text-xl shadow-[4px_4px_0_0_rgba(15,23,42,1)]">
-                       Economia {dashboardStats.totalEconomia.toFixed(2).replace('.', ',')}
+                    <div className="w-full bg-[#991B1B] text-white p-2 border-[3px] border-slate-900 text-center font-black uppercase sm:text-lg lg:text-xl shadow-[4px_4px_0_0_rgba(15,23,42,1)]">
+                       Economia R$ {dashboardStats.totalEconomia.toFixed(2).replace('.', ',')}
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
+                <div className="flex flex-wrap items-start gap-6">
+                   <div className={`flex-1 min-w-[280px] p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] h-fit`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Por Dificuldade</h3>
                      <div className="flex flex-col gap-2">
                        {['A', 'B', 'C', 'D', 'E'].map(d => (
-                         <div key={d} onClick={() => setViewModal({type:'diff', data: d})} className="flex items-center gap-2 text-xs font-black cursor-pointer hover:opacity-70 transition-opacity">
-                           <span className="inline-block w-6 text-center border-[2px] border-slate-900 py-0.5" style={{backgroundColor: getDifficultyBadge(d).bg}}>{d}</span>
-                           <div className="flex-grow bg-slate-100 h-4 border-[2px] border-slate-900">
-                             <div className="h-full bg-slate-900" style={{width: `${(dashboardStats.dif[d] / dashboardStats.totalJogos) * 100}%`}}></div>
+                         <div key={d} onClick={() => setViewModal({type:'diff', data: d})} className="flex items-center gap-2 text-xs font-black cursor-pointer group" title={`${dashboardStats.dif[d]} jogos da dificuldade ${d} (${dashboardStats.totalJogos > 0 ? ((dashboardStats.dif[d] / dashboardStats.totalJogos) * 100).toFixed(1) : 0}%)`}>
+                           <span className="inline-block w-6 text-center border-[2px] border-slate-900 py-0.5 group-hover:opacity-70 transition-opacity" style={{backgroundColor: getDifficultyBadge(d).bg}}>{d}</span>
+                           <div className="flex-1 bg-slate-100 h-3 border-[2px] border-slate-900">
+                             <div className="h-full bg-slate-900" style={{width: `${dashboardStats.totalJogos > 0 ? (dashboardStats.dif[d] / dashboardStats.totalJogos) * 100 : 0}%`}}></div>
                            </div>
-                           <span className="w-6 text-right">{dashboardStats.dif[d]}</span>
+                           <span className="w-6 text-right text-[10px]">{dashboardStats.dif[d]}</span>
                          </div>
                        ))}
                      </div>
                    </div>
                    
-                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
+                   <div className={`flex-1 min-w-[280px] p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] h-fit`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Por Nota</h3>
                      <div className="flex flex-col gap-2">
                        {['S'].map(n => (
-                         <div key={n} onClick={() => setViewModal({type:'note', data: n})} className="flex items-center gap-2 text-xs font-black cursor-pointer hover:opacity-70 transition-opacity">
-                           <span className="inline-block w-8 text-center border-[2px] border-slate-900 py-0.5">{n}</span>
-                           <div className="flex-grow bg-slate-100 h-4 border-[2px] border-slate-900">
-                             <div className="h-full bg-slate-900" style={{width: `${(dashboardStats.sRanks / dashboardStats.totalJogos) * 100}%`}}></div>
+                         <div key={n} onClick={() => setViewModal({type:'note', data: n})} className="flex items-center gap-2 text-xs font-black cursor-pointer group" title={`${dashboardStats.sRanks} jogos (${dashboardStats.totalJogos > 0 ? ((dashboardStats.sRanks / dashboardStats.totalJogos) * 100).toFixed(1) : 0}%)`}>
+                           <span className="inline-block w-8 text-center border-[2px] border-slate-900 py-0.5 bg-gradient-to-r from-[#FF8B94] via-[#A8E6CF] to-[#FFD3B6] group-hover:opacity-80 transition-opacity">{n}</span>
+                           <div className="flex-1 bg-slate-100 h-3 border-[2px] border-slate-900">
+                             <div className="h-full bg-slate-900" style={{width: `${dashboardStats.totalJogos > 0 ? (dashboardStats.sRanks / dashboardStats.totalJogos) * 100 : 0}%`}}></div>
                            </div>
-                           <span className="w-6 text-right">{dashboardStats.sRanks}</span>
+                           <span className="w-6 text-right text-[10px]">{dashboardStats.sRanks}</span>
                          </div>
                        ))}
                        {['10', '9', '8', '7', '6', '5'].map(n => (
-                         <div key={n} onClick={() => setViewModal({type:'note', data: n})} className="flex items-center gap-2 text-xs font-black cursor-pointer hover:opacity-70 transition-opacity">
-                           <span className="inline-block w-8 text-center border-[2px] border-slate-900 py-0.5">{n}</span>
-                           <div className="flex-grow bg-slate-100 h-4 border-[2px] border-slate-900">
-                             <div className="h-full bg-slate-900" style={{width: `${(dashboardStats.notas[n] / dashboardStats.totalJogos) * 100}%`}}></div>
+                         <div key={n} onClick={() => setViewModal({type:'note', data: n})} className="flex items-center gap-2 text-xs font-black cursor-pointer group" title={`${dashboardStats.notas[n]} jogos (${dashboardStats.totalJogos > 0 ? ((dashboardStats.notas[n] / dashboardStats.totalJogos) * 100).toFixed(1) : 0}%)`}>
+                           <span className="inline-block w-8 text-center border-[2px] border-slate-900 py-0.5 group-hover:opacity-70 transition-opacity">{n}</span>
+                           <div className="flex-1 bg-slate-100 h-3 border-[2px] border-slate-900">
+                             <div className="h-full bg-slate-900" style={{width: `${dashboardStats.totalJogos > 0 ? (dashboardStats.notas[n] / dashboardStats.totalJogos) * 100 : 0}%`}}></div>
                            </div>
-                           <span className="w-6 text-right">{dashboardStats.notas[n]}</span>
+                           <span className="w-6 text-right text-[10px]">{dashboardStats.notas[n]}</span>
                          </div>
                        ))}
                      </div>
@@ -847,8 +943,8 @@ export default function App() {
                 </div>
                 
                 {/* Rankings Compactos */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto`}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto h-fit`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Consoles (Nota Média)</h3>
                      <table className="w-full text-left text-[10px] font-black uppercase">
                        <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Console</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Nota</th></tr></thead>
@@ -867,7 +963,7 @@ export default function App() {
                      </table>
                    </div>
                    
-                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto`}>
+                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto h-fit`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Consoles (Tempo Jogado)</h3>
                      <table className="w-full text-left text-[10px] font-black uppercase">
                        <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Console</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Tempo Total</th></tr></thead>
@@ -886,7 +982,7 @@ export default function App() {
                      </table>
                    </div>
 
-                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto`}>
+                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto h-fit`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Gêneros (Nota Média)</h3>
                      <table className="w-full text-left text-[10px] font-black uppercase">
                        <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Gênero</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Nota</th></tr></thead>
@@ -905,7 +1001,7 @@ export default function App() {
                      </table>
                    </div>
 
-                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto`}>
+                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto h-fit`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Gêneros (Tempo Jogado)</h3>
                      <table className="w-full text-left text-[10px] font-black uppercase">
                        <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Gênero</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Tempo Total</th></tr></thead>
@@ -928,7 +1024,7 @@ export default function App() {
              </div>
           )}
 
-          {}
+          {/* LISTAS */}
           {(activeTab === 'finished' || activeTab === 'backlog') && (
             <div className="flex flex-col gap-4">
               <div className="flex justify-end">
@@ -938,7 +1034,7 @@ export default function App() {
             </div>
           )}
 
-          {}
+          {/* ADICIONAR NOVO */}
           {activeTab === 'add' && (
             <div className={`p-6 bg-white ${theme.border} ${theme.card} max-w-4xl mx-auto`}>
               <h2 className="text-xl font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-2">Adicionar Novo (Insere no topo da Planilha)</h2>
@@ -960,8 +1056,8 @@ export default function App() {
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Nome *</label><input required value={formData.titulo} onChange={e=>setFormData({...formData, titulo: e.target.value})} className={theme.input} /></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Console</label><input list="consoles-list" value={formData.plataforma} onChange={e=>setFormData({...formData, plataforma: e.target.value})} className={theme.input} /></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Gênero</label><input list="generos-list" value={formData.franquia} onChange={e=>setFormData({...formData, franquia: e.target.value})} className={theme.input} /></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Início</label><input type="date" value={formData.inicio} onChange={e=>setFormData({...formData, inicio: e.target.value})} className={theme.input} /></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Fim</label><input type="date" value={formData.fim} onChange={e=>setFormData({...formData, fim: e.target.value})} className={theme.input} /></div>
+                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Início</label><input placeholder="DD/MM/YYYY ou YYYY-MM-DD" value={formData.inicio} onChange={e=>setFormData({...formData, inicio: e.target.value})} className={theme.input} /></div>
+                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Fim</label><input placeholder="DD/MM/YYYY ou YYYY-MM-DD" value={formData.fim} onChange={e=>setFormData({...formData, fim: e.target.value})} className={theme.input} /></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Tempo</label><input placeholder="Ex: 12h ou 120:00:00" value={formData.tempo} onChange={e=>setFormData({...formData, tempo: e.target.value})} className={theme.input} /></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Nota (0 a 10 ou S)</label><input value={formData.nota} onChange={e=>setFormData({...formData, nota: e.target.value})} className={theme.input} /></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Dificuldade</label><select value={formData.dificuldade} onChange={e=>setFormData({...formData, dificuldade: e.target.value})} className={theme.input}><option value=""></option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></div>
@@ -977,7 +1073,7 @@ export default function App() {
             </div>
           )}
 
-          {}
+          {/* CONFIGURAÇÕES */}
           {activeTab === 'config' && (
              <div className={`max-w-xl mx-auto bg-white p-8 ${theme.border} ${theme.card}`}>
                 <h2 className="text-2xl font-black mb-4 uppercase text-center">Alterar Conexão</h2>
@@ -994,7 +1090,7 @@ export default function App() {
         </main>
       </div>
 
-      {}
+      {/* MODAL E FICHAS */}
       {viewModal && (
         <div className="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
           <div className={`w-full max-w-[1400px] bg-white ${theme.border} ${theme.card} flex flex-col my-auto shadow-2xl`}>
@@ -1006,7 +1102,6 @@ export default function App() {
                 {viewModal.type === 'genre' && `Ficha do Gênero: ${viewModal.data}`}
                 {viewModal.type === 'note' && `Jogos com Nota: ${viewModal.data}`}
                 {viewModal.type === 'diff' && `Jogos com Dificuldade: ${viewModal.data}`}
-                {/* Modificação: Adicionado Título para o Modal de Suporte */}
                 {viewModal.type === 'suporte' && `Ficha do Suporte: ${viewModal.data}`}
               </h2>
               <button onClick={() => setViewModal(null)} className="p-1 hover:bg-white/50 rounded-full transition-colors border-2 border-transparent hover:border-slate-900"><Icons.Close /></button>
@@ -1134,8 +1229,8 @@ export default function App() {
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Nome *</label><input value={fichaData.titulo} onChange={e=>setFichaData({...fichaData, titulo: e.target.value})} className={theme.input} /></div>
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Console</label><input list="consoles-list" value={fichaData.plataforma} onChange={e=>setFichaData({...fichaData, plataforma: e.target.value})} className={theme.input} /></div>
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Gênero</label><input list="generos-list" value={fichaData.franquia} onChange={e=>setFichaData({...fichaData, franquia: e.target.value})} className={theme.input} /></div>
-                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Início</label><input value={fichaData.inicio} onChange={e=>setFichaData({...fichaData, inicio: e.target.value})} className={theme.input} /></div>
-                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Fim</label><input value={fichaData.fim} onChange={e=>setFichaData({...fichaData, fim: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Início (Ex: DD/MM/YYYY)</label><input placeholder="DD/MM/YYYY ou YYYY-MM-DD" value={fichaData.inicio} onChange={e=>setFichaData({...fichaData, inicio: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Fim (Ex: DD/MM/YYYY)</label><input placeholder="DD/MM/YYYY ou YYYY-MM-DD" value={fichaData.fim} onChange={e=>setFichaData({...fichaData, fim: e.target.value})} className={theme.input} /></div>
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Tempo</label><input value={fichaData.tempo} onChange={e=>setFichaData({...fichaData, tempo: e.target.value})} className={theme.input} /></div>
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Nota (0 a 10 ou S)</label><input value={fichaData.nota} onChange={e=>setFichaData({...fichaData, nota: e.target.value})} className={theme.input} /></div>
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Dificuldade</label><input value={fichaData.dificuldade} onChange={e=>setFichaData({...fichaData, dificuldade: e.target.value})} className={theme.input} /></div>
@@ -1164,7 +1259,6 @@ export default function App() {
                     if (viewModal.type === 'console') return vPlat === viewModal.data;
                     if (viewModal.type === 'genre') return vGen === viewModal.data;
                     if (viewModal.type === 'diff') return vDiff === viewModal.data;
-                    // Modificação: Adicionado lógica de filtro para suporte
                     if (viewModal.type === 'suporte') return vSup === viewModal.data;
                     
                     if (viewModal.type === 'note') {
@@ -1184,7 +1278,6 @@ export default function App() {
                  return (
                    <div className="flex flex-col gap-6">
                      
-                     {/* Modificação: Adicionado os Detalhes Específicos para Suporte */}
                      {viewModal.type === 'suporte' && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                            <div className={`p-4 ${theme.border} bg-white shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
@@ -1209,7 +1302,11 @@ export default function App() {
                         </div>
                         <div className={`p-4 ${theme.border} bg-white shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
                           <h3 className="text-[10px] font-black uppercase text-slate-500 mb-1">Nota Média</h3>
-                          <p className="text-2xl font-black">{avg}</p>
+                          <p className="text-2xl font-black">
+                            {viewModal.type === 'note' && viewModal.data === 'S' ? (
+                               <span className="bg-gradient-to-r from-[#FF8B94] via-[#A8E6CF] to-[#FFD3B6] text-transparent bg-clip-text animate-[pulse_2s_ease-in-out_infinite]">S</span>
+                            ) : avg}
+                          </p>
                         </div>
                      </div>
                      <div>
@@ -1254,174 +1351,4 @@ export default function App() {
 
     </div>
   );
-}
-
-const SHEET_FINISHED = 'Games Finalizados';
-const SHEET_BACKLOG = 'Games que quero jogar';
-
-const HEADER_MAP = {
-  '#': 'ordem',
-  'ordem': 'ordem',
-  'nome': 'titulo', 
-  'titulo': 'titulo',
-  'console': 'plataforma', 
-  'plataforma': 'plataforma',
-  'genero': 'franquia', 
-  'franquia': 'franquia',
-  'inicio': 'inicio', 
-  'iniciado': 'inicio',
-  'fim': 'fim', 
-  'termino': 'fim',
-  'tempo': 'tempo',
-  'nota': 'nota',
-  'dificuldade': 'dificuldade',
-  'condicao': 'conquistas', 
-  'conquistas': 'conquistas',
-  'link': 'midia', 
-  'midia': 'midia',
-  'observacao': 'comentarios', 
-  'comentarios': 'comentarios',
-  'preco pago': 'preco', 
-  'preco': 'preco',
-  'preco sem desconto': 'preco_original', // O script agora lida com quebras de linha
-  'suporte': 'suporte'
-};
-
-function normalizeHeader(h) {
-  if (!h) return null;
-  // Remove acentos, transforma em minúsculas e substitui quebras de linha (\n) e múltiplos espaços por um espaço simples
-  let cleaned = String(h)
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\n/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  
-  return HEADER_MAP[cleaned] || cleaned;
-}
-
-function doGet(e) {
-  try {
-    let result = { finished: [], backlog: [] };
-    let ss = SpreadsheetApp.getActiveSpreadsheet();
-    
-    let sheetFin = ss.getSheetByName(SHEET_FINISHED);
-    if(sheetFin) result.finished = extractData(sheetFin, 'Finalizado');
-    
-    let sheetBack = ss.getSheetByName(SHEET_BACKLOG);
-    if(sheetBack) result.backlog = extractData(sheetBack, 'Backlog');
-    
-    return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({error: error.toString()})).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function extractData(sheet, statusStr) {
-  let range = sheet.getDataRange();
-  let values = range.getValues();
-  let displayValues = range.getDisplayValues(); 
-  
-  if(values.length < 2) return [];
-  
-  let headers = values[0].map(normalizeHeader);
-  let rows = [];
-  
-  for(let i = 1; i < values.length; i++) {
-    let rowVal = values[i];
-    let rowDisp = displayValues[i];
-    let obj = {};
-    let hasTitle = false;
-    
-    for(let j = 0; j < headers.length; j++) {
-      let key = headers[j];
-      if (key) {
-        let val = (rowDisp[j] !== undefined && rowDisp[j] !== "") ? rowDisp[j] : rowVal[j];
-        obj[key] = val;
-        if (key === 'titulo' && val) hasTitle = true;
-      }
-    }
-    
-    if(hasTitle) {
-      obj.id = sheet.getName() + '|' + (i + 1); 
-      obj.status = statusStr;
-      rows.push(obj);
-    }
-  }
-  return rows;
-}
-
-function doPost(e) {
-  try {
-    let payload = JSON.parse(e.postData.contents);
-    let action = payload.action;
-    let data = payload.data;
-    let ss = SpreadsheetApp.getActiveSpreadsheet();
-    
-    if (action === 'ADD') {
-      let targetSheetName = data.status === 'Finalizado' ? SHEET_FINISHED : SHEET_BACKLOG;
-      let targetSheet = ss.getSheetByName(targetSheetName);
-      if(!targetSheet) throw new Error("Aba " + targetSheetName + " não encontrada.");
-      addRowTopSafe(targetSheet, data);
-    } 
-    else if (action === 'UPDATE') {
-      let parts = String(data.id).split('|');
-      let sheetName = parts[0];
-      let rowNum = parseInt(parts[1]);
-      
-      let currentSheet = ss.getSheetByName(sheetName);
-      let targetSheetName = data.status === 'Finalizado' ? SHEET_FINISHED : SHEET_BACKLOG;
-      
-      if (sheetName !== targetSheetName) {
-        let targetSheet = ss.getSheetByName(targetSheetName);
-        addRowTopSafe(targetSheet, data);
-        currentSheet.deleteRow(rowNum);
-      } else {
-        updateRowSafe(currentSheet, rowNum, data);
-      }
-    }
-    else if (action === 'DELETE') {
-      let parts = String(payload.id).split('|');
-      let sheetName = parts[0];
-      let rowNum = parseInt(parts[1]);
-      let sheet = ss.getSheetByName(sheetName);
-      if(sheet) sheet.deleteRow(rowNum);
-    }
-    
-    return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({error: error.toString()})).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function addRowTopSafe(sheet, data) {
-  let headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  let mappedHeaders = headers.map(normalizeHeader);
-  
-  sheet.insertRowBefore(2);
-
-  for(let i=0; i<headers.length; i++) {
-    let key = mappedHeaders[i];
-    // Ignora índice 0 (coluna A / #) para não quebrar fórmulas
-    if (i === 0 || key === 'ordem' || key === '#') continue;
-
-    if (key && data[key] !== undefined && data[key] !== "") {
-       sheet.getRange(2, i + 1).setValue(data[key]);
-    }
-  }
-}
-
-function updateRowSafe(sheet, rowNum, data) {
-  let headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  let mappedHeaders = headers.map(normalizeHeader);
-  
-  for(let i=0; i<headers.length; i++) {
-    let key = mappedHeaders[i];
-    if (i === 0 || key === 'ordem' || key === '#') continue;
-
-    if (key && data[key] !== undefined) {
-       sheet.getRange(rowNum, i + 1).setValue(data[key]);
-    }
-  }
 }
