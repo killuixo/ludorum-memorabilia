@@ -179,44 +179,6 @@ const getConsoleStyle = (name) => {
   return { bg: '#FFD3B6', text: '#000000' }; 
 };
 
-const getSuporteInfo = (name) => {
-  let n = String(name).toLowerCase();
-  let categoria = 'Digital';
-  if (n.includes('físico') || n.includes('fisico') || n.includes('dvd') || n.includes('bd') || n.includes('blu-ray') || n.includes('cd') || n.includes('cartucho') || n.includes('disco')) {
-     categoria = 'Físico';
-  }
-  
-  let subCategoria = name || '-';
-  if (n.includes('opl')) subCategoria = 'OPL (Open PS2 Loader)';
-  else if (n.includes('dvd')) subCategoria = 'DVD';
-  else if (n.includes('bd') || n.includes('blu') || n.includes('blu-ray') || n.includes('bluray')) subCategoria = 'Blu-Ray';
-  else if (n.includes('cartucho')) subCategoria = 'Cartucho';
-  else if (n.includes('cd')) subCategoria = 'CD';
-  else if (n.includes('steam')) subCategoria = 'Steam (PC)';
-  else if (n.includes('psn') || n.includes('ps store') || n.includes('playstation store')) subCategoria = 'PlayStation Network (Digital)';
-  else if (n.includes('eshop') || n.includes('nintendo eshop')) subCategoria = 'Nintendo eShop (Digital)';
-  else if (n.includes('xbox live') || n.includes('xbox store')) subCategoria = 'Xbox Store (Digital)';
-  else if (n.includes('epic')) subCategoria = 'Epic Games Store (Digital)';
-  else if (n.includes('gog')) subCategoria = 'GOG (Digital)';
-  
-  return { categoria, subCategoria };
-};
-
-const ConsoleIcon = ({ consoleName }) => {
-  if (!consoleName) return null;
-  const c = String(consoleName).toLowerCase();
-  if (c.includes('ps4') || c.includes('ps5') || c.includes('playstation') || c.includes('ps3') || c.includes('ps2') || c.includes('ps1')) return (
-    <svg className="w-4 h-4 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M8.322 3.123v13.911l3.528 1.139V3.123zM0 16.518l6.398 2.052v-2.736L2.33 14.526l4.068-.788v-2.036L0 13.064zm13.882.261l9.118 2.923-2.905 1.054-6.213-1.996v-1.981zm.001-4.717l9.117 2.924-2.905 1.053-6.212-1.996v-1.981zM11.85 0C5.305 0 0 5.305 0 11.85s5.305 11.85 11.85 11.85-5.305 11.85-11.85S18.395 0 11.85 0z" fill="none"/><path d="M8.5 4.5 3 6.8v9.7l5.5 2V4.5zm12.5 12-5.5-2v2.5l5.5 1.8v-2.3zM14 13.8l5.5 1.8v-2.3L14 11.5v2.3z"/></svg>
-  );
-  if (c.includes('switch') || c.includes('wii') || c.includes('nintendo') || c.includes('snes') || c.includes('ds') || c.includes('gba') || c.includes('gamecube')) return (
-    <svg className="w-4 h-4 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M8 2H4C2.9 2 2 2.9 2 4v16c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm14-7h-4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 13a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>
-  );
-  if (c.includes('pc') || c.includes('steam')) return (
-    <svg className="w-4 h-4 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0a12 12 0 0 0-11.95 10.72L5.8 13.1a3.5 3.5 0 0 1 2.37-.89c.17 0 .34.01.5.04l3.12-4.52a4.48 4.48 0 0 1 5.21 4.27 4.5 4.5 0 0 1-8.31 2.33l-4.22 1.74A12 12 0 1 0 12 0zm-3.5 14a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm7 0a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/></svg>
-  );
-  return <svg className="w-4 h-4 inline-block shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H9v2H7v-2H5v-2h2V9h2v2h2v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>;
-};
-
 const getGenreColor = (name) => {
   let g = String(name || '').toLowerCase();
   if (!g || g === '-') return 'transparent';
@@ -271,6 +233,29 @@ const getPriceColor = (priceVal) => {
   return '#FFD3B6'; 
 };
 
+const getSuporteInfo = (name) => {
+  let n = String(name).toLowerCase();
+  let categoria = 'Digital';
+  if (n.includes('físico') || n.includes('fisico') || n.includes('dvd') || n.includes('bd') || n.includes('blu-ray') || n.includes('cd') || n.includes('cartucho') || n.includes('disco')) {
+     categoria = 'Físico';
+  }
+  
+  let subCategoria = name || '-';
+  if (n.includes('opl')) subCategoria = 'OPL (Open PS2 Loader)';
+  else if (n.includes('dvd')) subCategoria = 'DVD';
+  else if (n.includes('bd') || n.includes('blu') || n.includes('blu-ray') || n.includes('bluray')) subCategoria = 'Blu-Ray';
+  else if (n.includes('cartucho')) subCategoria = 'Cartucho';
+  else if (n.includes('cd')) subCategoria = 'CD';
+  else if (n.includes('steam')) subCategoria = 'Steam (PC)';
+  else if (n.includes('psn') || n.includes('ps store') || n.includes('playstation store')) subCategoria = 'PlayStation Network (Digital)';
+  else if (n.includes('eshop') || n.includes('nintendo eshop')) subCategoria = 'Nintendo eShop (Digital)';
+  else if (n.includes('xbox live') || n.includes('xbox store')) subCategoria = 'Xbox Store (Digital)';
+  else if (n.includes('epic')) subCategoria = 'Epic Games Store (Digital)';
+  else if (n.includes('gog')) subCategoria = 'GOG (Digital)';
+  
+  return { categoria, subCategoria };
+};
+
 const MultiSelectDropdown = ({ label, options, selected, onChange }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -288,11 +273,17 @@ const MultiSelectDropdown = ({ label, options, selected, onChange }) => {
     else onChange([...selected, opt]);
   };
 
+  const displayLabel = selected.length === 0
+    ? label
+    : selected.length === 1
+      ? selected[0]
+      : `${label} (${selected.length})`;
+
   return (
     <div className="relative flex-1 min-w-[150px]" ref={dropdownRef}>
       <div onClick={() => setIsOpen(!isOpen)} className={`${theme.input} h-full cursor-pointer flex justify-between items-center shadow-[2px_2px_0_0_rgba(15,23,42,1)]`}>
         <span className="truncate pr-2 text-[11px] font-black uppercase">
-          {label} {selected.length > 0 ? `(${selected.length})` : ''}
+          {displayLabel}
         </span>
         <span className="text-[10px] shrink-0">▼</span>
       </div>
@@ -321,7 +312,7 @@ const Icons = {
 
 export default function App() {
   const [appState, setAppState] = useState('booting'); 
-  const [activeTab, setActiveTab] = useState('finished');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [configUrl, setConfigUrl] = useState('');
   const [games, setGames] = useState([]);
   const [syncStatus, setSyncStatus] = useState({ type: 'idle', message: '' });
@@ -331,8 +322,15 @@ export default function App() {
   const [filters, setFilters] = useState({ console: [], genero: [], nota: [], dif: [], suporte: [] });
   
   const [descontoSort, setDescontoSort] = useState('desc_val_desc');
-  // Alterado para ordem decrescente (do maior ID para o menor, exibindo o último no topo)
   const [sortConfig, setSortConfig] = useState({ key: 'ordem', direction: 'desc' }); 
+
+  // Ordenação das tabelas top completas
+  const [topSorts, setTopSorts] = useState({
+    consolesNota: { key: 'avgNota', dir: 'desc' },
+    consolesTempo: { key: 'totalTempo', dir: 'desc' },
+    generosNota: { key: 'avgNota', dir: 'desc' },
+    generosTempo: { key: 'totalTempo', dir: 'desc' }
+  });
 
   const [viewModal, setViewModal] = useState(null);
   const [isEditingFicha, setIsEditingFicha] = useState(false);
@@ -435,6 +433,16 @@ export default function App() {
     let direction = 'desc';
     if (sortConfig.key === key && sortConfig.direction === 'desc') direction = 'asc';
     setSortConfig({ key, direction });
+  };
+
+  const handleTopSort = (tableKey, sortKey) => {
+    setTopSorts(prev => ({
+      ...prev,
+      [tableKey]: {
+        key: sortKey,
+        dir: prev[tableKey].key === sortKey && prev[tableKey].dir === 'desc' ? 'asc' : 'desc'
+      }
+    }));
   };
 
   const resetHome = () => {
@@ -603,6 +611,15 @@ export default function App() {
     </th>
   );
 
+  const MiniTh = ({ label, sortKey, tableKey, align="left" }) => (
+    <th onClick={() => handleTopSort(tableKey, sortKey)} className={`pb-1 cursor-pointer hover:opacity-70 transition-opacity text-${align}`}>
+        <div className={`flex items-center gap-1 ${align === 'center' ? 'justify-center' : align === 'right' ? 'justify-end' : 'justify-start'}`}>
+            {label}
+            {topSorts[tableKey].key === sortKey && <Icons.SortArrow asc={topSorts[tableKey].dir === 'asc'} />}
+        </div>
+    </th>
+  );
+
   const renderGameTable = (list) => {
     const isBacklog = activeTab === 'backlog' && !viewModal;
     return (
@@ -661,8 +678,8 @@ export default function App() {
                 
                 <td onClick={() => { if(displayClean(plataforma)) setViewModal({type:'console', data: plataforma}) }} className="p-2 border-r-[3px] border-slate-900 cursor-pointer whitespace-nowrap">
                   {displayClean(plataforma) && (
-                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform font-black uppercase" style={{ backgroundColor: consoleStyle.bg, color: consoleStyle.text }}>
-                      <ConsoleIcon consoleName={plataforma} /> {plataforma}
+                    <span className="inline-flex items-center px-2 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform font-black uppercase" style={{ backgroundColor: consoleStyle.bg, color: consoleStyle.text }}>
+                      {plataforma}
                     </span>
                   )}
                 </td>
@@ -759,7 +776,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans p-2 sm:p-4 selection:bg-pink-200 relative">
       
-      {/* HEADER (Logo + Barra de Busca) */}
+      {/* HEADER */}
       <div className="max-w-[1600px] mx-auto mb-6 flex flex-wrap items-center justify-between gap-4 sm:gap-6">
         <div onClick={resetHome} className="flex items-center gap-4 shrink-0 cursor-pointer hover:opacity-80 transition-opacity" title="Voltar ao Início e Limpar Filtros">
           <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Logo" className="w-12 h-12 sm:w-14 sm:h-14" />
@@ -802,9 +819,9 @@ export default function App() {
 
         <main className="p-4 sm:p-6 overflow-x-auto">
           
-          {/* BARRA DE FILTROS LADO A LADO */}
+          {/* BARRA DE FILTROS */}
           {(activeTab === 'dashboard' || activeTab === 'finished' || activeTab === 'backlog') && (
-            <div className="flex flex-row flex-wrap gap-2 mb-4 w-full">
+            <div className="flex flex-row flex-wrap gap-2 mb-6 w-full">
                <MultiSelectDropdown label="Consoles" options={uniqueOptions.console} selected={filters.console} onChange={(v) => setFilters({...filters, console: v})} />
                <MultiSelectDropdown label="Gêneros" options={uniqueOptions.genero} selected={filters.genero} onChange={(v) => setFilters({...filters, genero: v})} />
                <MultiSelectDropdown label="Notas" options={uniqueOptions.nota} selected={filters.nota} onChange={(v) => setFilters({...filters, nota: v})} />
@@ -861,7 +878,7 @@ export default function App() {
                                if (descontoSort === 'pago_desc') return dB.pago - dA.pago;
                                if (descontoSort === 'orig_desc') return dB.orig - dA.orig;
                                if (descontoSort === 'desc_val_asc') return dA.rawDiff - dB.rawDiff;
-                               return dB.rawDiff - dA.rawDiff; // default desc_val_desc
+                               return dB.rawDiff - dA.rawDiff; 
                             })
                             .map((g, i) => {
                         let d = calculateDiscount(getVal(g, ['preco', 'preco pago']), getVal(g, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
@@ -917,15 +934,17 @@ export default function App() {
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] h-fit`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Por Dificuldade</h3>
                      <div className="flex flex-col gap-2">
-                       {['A', 'B', 'C', 'D', 'E'].map(d => (
-                         <div key={d} onClick={() => setViewModal({type:'diff', data: d})} className="flex items-center gap-2 text-xs font-black cursor-pointer group" title={`${dashboardStats.dif[d]} jogos da dificuldade ${d} (${dashboardStats.totalJogos > 0 ? ((dashboardStats.dif[d] / dashboardStats.totalJogos) * 100).toFixed(1) : 0}%)`}>
+                       {['A', 'B', 'C', 'D', 'E'].map(d => {
+                         let maxDif = Math.max(...Object.values(dashboardStats.dif), 1);
+                         return (
+                         <div key={d} onClick={() => setViewModal({type:'diff', data: d})} className="flex items-center gap-2 text-xs font-black cursor-pointer group" title={`${dashboardStats.dif[d]} jogos da dificuldade ${d}`}>
                            <span className="inline-block w-6 text-center border-[2px] border-slate-900 py-0.5 group-hover:opacity-70 transition-opacity" style={{backgroundColor: getDifficultyBadge(d).bg}}>{d}</span>
                            <div className="flex-1 bg-slate-100 h-3 border-[2px] border-slate-900">
-                             <div className="h-full bg-slate-900" style={{width: `${dashboardStats.totalJogos > 0 ? (dashboardStats.dif[d] / dashboardStats.totalJogos) * 100 : 0}%`}}></div>
+                             <div className="h-full bg-slate-900" style={{width: `${(dashboardStats.dif[d] / maxDif) * 100}%`}}></div>
                            </div>
                            <span className="w-6 text-right text-[10px]">{dashboardStats.dif[d]}</span>
                          </div>
-                       ))}
+                       )})}
                      </div>
                    </div>
                    
@@ -933,24 +952,28 @@ export default function App() {
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] h-fit`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Por Nota</h3>
                      <div className="flex flex-col gap-2">
-                       {['S'].map(n => (
-                         <div key={n} onClick={() => setViewModal({type:'note', data: n})} className="flex items-center gap-2 text-xs font-black cursor-pointer group" title={`${dashboardStats.sRanks} jogos (${dashboardStats.totalJogos > 0 ? ((dashboardStats.sRanks / dashboardStats.totalJogos) * 100).toFixed(1) : 0}%)`}>
+                       {['S'].map(n => {
+                         let maxNota = Math.max(dashboardStats.sRanks, ...Object.values(dashboardStats.notas), 1);
+                         return (
+                         <div key={n} onClick={() => setViewModal({type:'note', data: n})} className="flex items-center gap-2 text-xs font-black cursor-pointer group" title={`${dashboardStats.sRanks} jogos Rank S`}>
                            <span className="inline-block w-8 text-center border-[2px] border-slate-900 py-0.5 bg-gradient-to-r from-[#FF8B94] via-[#A8E6CF] to-[#FFD3B6] group-hover:opacity-80 transition-opacity">{n}</span>
                            <div className="flex-1 bg-slate-100 h-3 border-[2px] border-slate-900">
-                             <div className="h-full bg-slate-900" style={{width: `${dashboardStats.totalJogos > 0 ? (dashboardStats.sRanks / dashboardStats.totalJogos) * 100 : 0}%`}}></div>
+                             <div className="h-full bg-slate-900" style={{width: `${(dashboardStats.sRanks / maxNota) * 100}%`}}></div>
                            </div>
                            <span className="w-6 text-right text-[10px]">{dashboardStats.sRanks}</span>
                          </div>
-                       ))}
-                       {['10', '9', '8', '7', '6', '5'].map(n => (
-                         <div key={n} onClick={() => setViewModal({type:'note', data: n})} className="flex items-center gap-2 text-xs font-black cursor-pointer group" title={`${dashboardStats.notas[n]} jogos (${dashboardStats.totalJogos > 0 ? ((dashboardStats.notas[n] / dashboardStats.totalJogos) * 100).toFixed(1) : 0}%)`}>
+                       )})}
+                       {['10', '9', '8', '7', '6', '5'].map(n => {
+                         let maxNota = Math.max(dashboardStats.sRanks, ...Object.values(dashboardStats.notas), 1);
+                         return (
+                         <div key={n} onClick={() => setViewModal({type:'note', data: n})} className="flex items-center gap-2 text-xs font-black cursor-pointer group" title={`${dashboardStats.notas[n]} jogos`}>
                            <span className="inline-block w-8 text-center border-[2px] border-slate-900 py-0.5 group-hover:opacity-70 transition-opacity">{n}</span>
                            <div className="flex-1 bg-slate-100 h-3 border-[2px] border-slate-900">
-                             <div className="h-full bg-slate-900" style={{width: `${dashboardStats.totalJogos > 0 ? (dashboardStats.notas[n] / dashboardStats.totalJogos) * 100 : 0}%`}}></div>
+                             <div className="h-full bg-slate-900" style={{width: `${(dashboardStats.notas[n] / maxNota) * 100}%`}}></div>
                            </div>
                            <span className="w-6 text-right text-[10px]">{dashboardStats.notas[n]}</span>
                          </div>
-                       ))}
+                       )})}
                      </div>
                    </div>
 
@@ -958,18 +981,19 @@ export default function App() {
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto h-fit`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Consoles (Nota)</h3>
                      <table className="w-full text-left text-[10px] font-black uppercase">
-                       <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Console</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Nota</th></tr></thead>
+                       <thead><tr className="border-b-[2px] border-slate-900"><MiniTh label="Console" sortKey="name" tableKey="consolesNota" /><MiniTh label="Jogos" sortKey="count" tableKey="consolesNota" align="center" /><MiniTh label="Nota" sortKey="avgNota" tableKey="consolesNota" align="center" /></tr></thead>
                        <tbody>
-                         {Object.keys(dashboardStats.consoles).sort((a,b) => dashboardStats.consoles[b].avgNota - dashboardStats.consoles[a].avgNota).slice(0, 5).map(c => {
-                           let stat = dashboardStats.consoles[c];
-                           return (
-                             <tr key={c} className="border-b border-slate-200">
-                               <td className="py-2"><span onClick={()=>setViewModal({type:'console', data: c})} className="inline-flex cursor-pointer items-center gap-1 px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]" style={{ backgroundColor: getConsoleStyle(c).bg, color: getConsoleStyle(c).text }}><ConsoleIcon consoleName={c} /> {c}</span></td>
+                         {Object.keys(dashboardStats.consoles).map(c => ({ name: c, ...dashboardStats.consoles[c] })).sort((a,b) => {
+                            let valA = a[topSorts.consolesNota.key]; let valB = b[topSorts.consolesNota.key];
+                            if (topSorts.consolesNota.key === 'name') return topSorts.consolesNota.dir === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+                            return topSorts.consolesNota.dir === 'asc' ? valA - valB : valB - valA;
+                         }).map(stat => (
+                             <tr key={stat.name} className="border-b border-slate-200 hover:bg-slate-50">
+                               <td className="py-2"><span onClick={()=>setViewModal({type:'console', data: stat.name})} className="inline-flex cursor-pointer items-center px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]" style={{ backgroundColor: getConsoleStyle(stat.name).bg, color: getConsoleStyle(stat.name).text }}>{stat.name}</span></td>
                                <td className="py-2 text-center">{stat.count}</td>
                                <td className="py-2 text-center">{stat.avgNota}</td>
                              </tr>
-                           )
-                         })}
+                         ))}
                        </tbody>
                      </table>
                    </div>
@@ -978,18 +1002,19 @@ export default function App() {
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto h-fit`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Consoles (Tempo)</h3>
                      <table className="w-full text-left text-[10px] font-black uppercase">
-                       <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Console</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Tempo Total</th></tr></thead>
+                       <thead><tr className="border-b-[2px] border-slate-900"><MiniTh label="Console" sortKey="name" tableKey="consolesTempo" /><MiniTh label="Jogos" sortKey="count" tableKey="consolesTempo" align="center" /><MiniTh label="Tempo" sortKey="totalTempo" tableKey="consolesTempo" align="center" /></tr></thead>
                        <tbody>
-                         {Object.keys(dashboardStats.consoles).sort((a,b) => dashboardStats.consoles[b].totalTempo - dashboardStats.consoles[a].totalTempo).slice(0, 5).map(c => {
-                           let stat = dashboardStats.consoles[c];
-                           return (
-                             <tr key={c} className="border-b border-slate-200">
-                               <td className="py-2"><span onClick={()=>setViewModal({type:'console', data: c})} className="inline-flex cursor-pointer items-center gap-1 px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]" style={{ backgroundColor: getConsoleStyle(c).bg, color: getConsoleStyle(c).text }}><ConsoleIcon consoleName={c} /> {c}</span></td>
+                         {Object.keys(dashboardStats.consoles).map(c => ({ name: c, ...dashboardStats.consoles[c] })).sort((a,b) => {
+                            let valA = a[topSorts.consolesTempo.key]; let valB = b[topSorts.consolesTempo.key];
+                            if (topSorts.consolesTempo.key === 'name') return topSorts.consolesTempo.dir === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+                            return topSorts.consolesTempo.dir === 'asc' ? valA - valB : valB - valA;
+                         }).map(stat => (
+                             <tr key={stat.name} className="border-b border-slate-200 hover:bg-slate-50">
+                               <td className="py-2"><span onClick={()=>setViewModal({type:'console', data: stat.name})} className="inline-flex cursor-pointer items-center px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]" style={{ backgroundColor: getConsoleStyle(stat.name).bg, color: getConsoleStyle(stat.name).text }}>{stat.name}</span></td>
                                <td className="py-2 text-center">{stat.count}</td>
                                <td className="py-2 text-center text-blue-600">{formatTotalTempoHrs(stat.totalTempo)}</td>
                              </tr>
-                           )
-                         })}
+                         ))}
                        </tbody>
                      </table>
                    </div>
@@ -998,18 +1023,19 @@ export default function App() {
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto h-fit`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Gêneros (Nota)</h3>
                      <table className="w-full text-left text-[10px] font-black uppercase">
-                       <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Gênero</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Nota</th></tr></thead>
+                       <thead><tr className="border-b-[2px] border-slate-900"><MiniTh label="Gênero" sortKey="name" tableKey="generosNota" /><MiniTh label="Jogos" sortKey="count" tableKey="generosNota" align="center" /><MiniTh label="Nota" sortKey="avgNota" tableKey="generosNota" align="center" /></tr></thead>
                        <tbody>
-                         {Object.keys(dashboardStats.generos).sort((a,b) => dashboardStats.generos[b].avgNota - dashboardStats.generos[a].avgNota).slice(0, 5).map(c => {
-                           let stat = dashboardStats.generos[c];
-                           return (
-                             <tr key={c} className="border-b border-slate-200">
-                               <td className="py-2"><span onClick={()=>setViewModal({type:'genre', data: c})} className="inline-block cursor-pointer px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)]" style={{backgroundColor: getGenreColor(c)}}>{c}</span></td>
+                         {Object.keys(dashboardStats.generos).map(c => ({ name: c, ...dashboardStats.generos[c] })).sort((a,b) => {
+                            let valA = a[topSorts.generosNota.key]; let valB = b[topSorts.generosNota.key];
+                            if (topSorts.generosNota.key === 'name') return topSorts.generosNota.dir === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+                            return topSorts.generosNota.dir === 'asc' ? valA - valB : valB - valA;
+                         }).map(stat => (
+                             <tr key={stat.name} className="border-b border-slate-200 hover:bg-slate-50">
+                               <td className="py-2"><span onClick={()=>setViewModal({type:'genre', data: stat.name})} className="inline-block cursor-pointer px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)]" style={{backgroundColor: getGenreColor(stat.name)}}>{stat.name}</span></td>
                                <td className="py-2 text-center">{stat.count}</td>
                                <td className="py-2 text-center">{stat.avgNota}</td>
                              </tr>
-                           )
-                         })}
+                         ))}
                        </tbody>
                      </table>
                    </div>
@@ -1018,18 +1044,19 @@ export default function App() {
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto h-fit`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Gêneros (Tempo)</h3>
                      <table className="w-full text-left text-[10px] font-black uppercase">
-                       <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Gênero</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Tempo Total</th></tr></thead>
+                       <thead><tr className="border-b-[2px] border-slate-900"><MiniTh label="Gênero" sortKey="name" tableKey="generosTempo" /><MiniTh label="Jogos" sortKey="count" tableKey="generosTempo" align="center" /><MiniTh label="Tempo" sortKey="totalTempo" tableKey="generosTempo" align="center" /></tr></thead>
                        <tbody>
-                         {Object.keys(dashboardStats.generos).sort((a,b) => dashboardStats.generos[b].totalTempo - dashboardStats.generos[a].totalTempo).slice(0, 5).map(c => {
-                           let stat = dashboardStats.generos[c];
-                           return (
-                             <tr key={c} className="border-b border-slate-200">
-                               <td className="py-2"><span onClick={()=>setViewModal({type:'genre', data: c})} className="inline-block cursor-pointer px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)]" style={{backgroundColor: getGenreColor(c)}}>{c}</span></td>
+                         {Object.keys(dashboardStats.generos).map(c => ({ name: c, ...dashboardStats.generos[c] })).sort((a,b) => {
+                            let valA = a[topSorts.generosTempo.key]; let valB = b[topSorts.generosTempo.key];
+                            if (topSorts.generosTempo.key === 'name') return topSorts.generosTempo.dir === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+                            return topSorts.generosTempo.dir === 'asc' ? valA - valB : valB - valA;
+                         }).map(stat => (
+                             <tr key={stat.name} className="border-b border-slate-200 hover:bg-slate-50">
+                               <td className="py-2"><span onClick={()=>setViewModal({type:'genre', data: stat.name})} className="inline-block cursor-pointer px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)]" style={{backgroundColor: getGenreColor(stat.name)}}>{stat.name}</span></td>
                                <td className="py-2 text-center">{stat.count}</td>
                                <td className="py-2 text-center text-blue-600">{formatTotalTempoHrs(stat.totalTempo)}</td>
                              </tr>
-                           )
-                         })}
+                         ))}
                        </tbody>
                      </table>
                    </div>
@@ -1074,7 +1101,7 @@ export default function App() {
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Início</label><input placeholder="DD/MM/YYYY ou YYYY-MM-DD" value={formData.inicio} onChange={e=>setFormData({...formData, inicio: e.target.value})} className={theme.input} /></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Fim</label><input placeholder="DD/MM/YYYY ou YYYY-MM-DD" value={formData.fim} onChange={e=>setFormData({...formData, fim: e.target.value})} className={theme.input} /></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Tempo</label><input placeholder="Ex: 12h ou 120:00:00" value={formData.tempo} onChange={e=>setFormData({...formData, tempo: e.target.value})} className={theme.input} /></div>
-                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Nota (0 a 10 ou S)</label><input value={formData.nota} onChange={e=>setFormData({...formData, nota: e.target.value})} className={theme.input} /></div>
+                  <div className="flex flex-col"><label className="text-xs font-black uppercase">Nota</label><input placeholder="De 0 a 10 ou S" type="text" value={formData.nota} onChange={e=>setFormData({...formData, nota: e.target.value})} className={theme.input} /></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Dificuldade</label><select value={formData.dificuldade} onChange={e=>setFormData({...formData, dificuldade: e.target.value})} className={theme.input}><option value=""></option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input placeholder="69,90" value={formData.preco} onChange={e=>setFormData({...formData, preco: e.target.value})} className={theme.input} /></div>
                   <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço S/ Desconto</label><input placeholder="132,90" value={formData.preco_original} onChange={e=>setFormData({...formData, preco_original: e.target.value})} className={theme.input} /></div>
@@ -1140,8 +1167,8 @@ export default function App() {
                           <span className="text-[10px] font-black uppercase text-slate-500 mb-1">Console</span>
                           {viewModal.data.plataforma && viewModal.data.plataforma !== '-' ? (
                             <div>
-                               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] font-black uppercase" style={{ backgroundColor: getConsoleStyle(viewModal.data.plataforma).bg, color: getConsoleStyle(viewModal.data.plataforma).text }}>
-                                 <ConsoleIcon consoleName={viewModal.data.plataforma} /> {viewModal.data.plataforma}
+                               <span className="inline-flex items-center px-2 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] font-black uppercase" style={{ backgroundColor: getConsoleStyle(viewModal.data.plataforma).bg, color: getConsoleStyle(viewModal.data.plataforma).text }}>
+                                 {viewModal.data.plataforma}
                                </span>
                             </div>
                           ) : null}
@@ -1244,11 +1271,11 @@ export default function App() {
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Nome *</label><input value={fichaData.titulo} onChange={e=>setFichaData({...fichaData, titulo: e.target.value})} className={theme.input} /></div>
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Console</label><input list="consoles-list" value={fichaData.plataforma} onChange={e=>setFichaData({...fichaData, plataforma: e.target.value})} className={theme.input} /></div>
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Gênero</label><input list="generos-list" value={fichaData.franquia} onChange={e=>setFichaData({...fichaData, franquia: e.target.value})} className={theme.input} /></div>
-                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Início (Ex: DD/MM/YYYY)</label><input placeholder="DD/MM/YYYY ou YYYY-MM-DD" value={fichaData.inicio} onChange={e=>setFichaData({...fichaData, inicio: e.target.value})} className={theme.input} /></div>
-                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Fim (Ex: DD/MM/YYYY)</label><input placeholder="DD/MM/YYYY ou YYYY-MM-DD" value={fichaData.fim} onChange={e=>setFichaData({...fichaData, fim: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Início</label><input placeholder="DD/MM/YYYY ou YYYY-MM-DD" value={fichaData.inicio} onChange={e=>setFichaData({...fichaData, inicio: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Fim</label><input placeholder="DD/MM/YYYY ou YYYY-MM-DD" value={fichaData.fim} onChange={e=>setFichaData({...fichaData, fim: e.target.value})} className={theme.input} /></div>
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Tempo</label><input value={fichaData.tempo} onChange={e=>setFichaData({...fichaData, tempo: e.target.value})} className={theme.input} /></div>
-                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Nota (0 a 10 ou S)</label><input value={fichaData.nota} onChange={e=>setFichaData({...fichaData, nota: e.target.value})} className={theme.input} /></div>
-                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Dificuldade</label><input value={fichaData.dificuldade} onChange={e=>setFichaData({...fichaData, dificuldade: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Nota</label><input placeholder="De 0 a 10 ou S" type="text" value={fichaData.nota} onChange={e=>setFichaData({...fichaData, nota: e.target.value})} className={theme.input} /></div>
+                      <div className="flex flex-col"><label className="text-xs font-black uppercase">Dificuldade</label><select value={fichaData.dificuldade} onChange={e=>setFichaData({...fichaData, dificuldade: e.target.value})} className={theme.input}><option value=""></option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></div>
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input value={fichaData.preco} onChange={e=>setFichaData({...fichaData, preco: e.target.value})} className={theme.input} /></div>
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço s/ Desconto</label><input value={fichaData.preco_original} onChange={e=>setFichaData({...fichaData, preco_original: e.target.value})} className={theme.input} /></div>
                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input list="suportes-list" value={fichaData.suporte} onChange={e=>setFichaData({...fichaData, suporte: e.target.value})} className={theme.input} /></div>
