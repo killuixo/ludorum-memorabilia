@@ -291,7 +291,7 @@ const MultiSelectDropdown = ({ label, options, selected, onChange }) => {
   return (
     <div className="relative flex-1 min-w-[150px]" ref={dropdownRef}>
       <div onClick={() => setIsOpen(!isOpen)} className={`${theme.input} h-full cursor-pointer flex justify-between items-center shadow-[2px_2px_0_0_rgba(15,23,42,1)]`}>
-        <span className="truncate pr-2 text-xs font-black uppercase">
+        <span className="truncate pr-2 text-[11px] font-black uppercase">
           {label} {selected.length > 0 ? `(${selected.length})` : ''}
         </span>
         <span className="text-[10px] shrink-0">▼</span>
@@ -328,10 +328,10 @@ export default function App() {
   const [addStatus, setAddStatus] = useState({ type: 'idle', message: '' });
   
   const [searchTerm, setSearchTerm] = useState('');
-  // Agora os filtros são arrays para suportar múltipla escolha
   const [filters, setFilters] = useState({ console: [], genero: [], nota: [], dif: [], suporte: [] });
   
   const [descontoSort, setDescontoSort] = useState('desc_val_desc');
+  // Alterado para ordem decrescente (do maior ID para o menor, exibindo o último no topo)
   const [sortConfig, setSortConfig] = useState({ key: 'ordem', direction: 'desc' }); 
 
   const [viewModal, setViewModal] = useState(null);
@@ -802,7 +802,7 @@ export default function App() {
 
         <main className="p-4 sm:p-6 overflow-x-auto">
           
-          {/* BARRA DE FILTROS LADO A LADO - OCUPANDO TODO O ESPAÇO */}
+          {/* BARRA DE FILTROS LADO A LADO */}
           {(activeTab === 'dashboard' || activeTab === 'finished' || activeTab === 'backlog') && (
             <div className="flex flex-row flex-wrap gap-2 mb-4 w-full">
                <MultiSelectDropdown label="Consoles" options={uniqueOptions.console} selected={filters.console} onChange={(v) => setFilters({...filters, console: v})} />
@@ -813,9 +813,11 @@ export default function App() {
             </div>
           )}
 
-          {/* DASHBOARD */}
+          {/* DASHBOARD COMPLETO */}
           {activeTab === 'dashboard' && (
              <div className="flex flex-col gap-6">
+                
+                {/* 4 Cards Superiores */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <div className={`p-4 ${theme.border} bg-[#A8E6CF] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
                     <h3 className="text-xs font-black uppercase">Total Finalizados</h3>
@@ -835,6 +837,7 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Descontos + Economia Geral */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                   <div className={`lg:col-span-2 p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] h-fit`}>
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 border-b-[3px] border-slate-900 pb-2 gap-2">
@@ -907,8 +910,11 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-start gap-6">
-                   <div className={`flex-1 min-w-[280px] p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] h-fit`}>
+                {/* GRID DE 4 COLUNAS COMPACTO PARA OS DEMAIS CARDS */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
+                   
+                   {/* Dificuldade */}
+                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] h-fit`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Por Dificuldade</h3>
                      <div className="flex flex-col gap-2">
                        {['A', 'B', 'C', 'D', 'E'].map(d => (
@@ -923,7 +929,8 @@ export default function App() {
                      </div>
                    </div>
                    
-                   <div className={`flex-1 min-w-[280px] p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] h-fit`}>
+                   {/* Por Nota */}
+                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] h-fit`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Por Nota</h3>
                      <div className="flex flex-col gap-2">
                        {['S'].map(n => (
@@ -946,12 +953,10 @@ export default function App() {
                        ))}
                      </div>
                    </div>
-                </div>
-                
-                {/* Rankings Compactos */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+
+                   {/* Top Consoles Nota */}
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto h-fit`}>
-                     <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Consoles (Nota Média)</h3>
+                     <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Consoles (Nota)</h3>
                      <table className="w-full text-left text-[10px] font-black uppercase">
                        <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Console</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Nota</th></tr></thead>
                        <tbody>
@@ -969,8 +974,9 @@ export default function App() {
                      </table>
                    </div>
                    
+                   {/* Top Consoles Tempo */}
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto h-fit`}>
-                     <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Consoles (Tempo Jogado)</h3>
+                     <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Consoles (Tempo)</h3>
                      <table className="w-full text-left text-[10px] font-black uppercase">
                        <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Console</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Tempo Total</th></tr></thead>
                        <tbody>
@@ -988,8 +994,9 @@ export default function App() {
                      </table>
                    </div>
 
+                   {/* Top Gêneros Nota */}
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto h-fit`}>
-                     <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Gêneros (Nota Média)</h3>
+                     <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Gêneros (Nota)</h3>
                      <table className="w-full text-left text-[10px] font-black uppercase">
                        <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Gênero</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Nota</th></tr></thead>
                        <tbody>
@@ -1007,8 +1014,9 @@ export default function App() {
                      </table>
                    </div>
 
+                   {/* Top Gêneros Tempo */}
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto h-fit`}>
-                     <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Gêneros (Tempo Jogado)</h3>
+                     <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Gêneros (Tempo)</h3>
                      <table className="w-full text-left text-[10px] font-black uppercase">
                        <thead><tr className="border-b-[2px] border-slate-900"><th className="pb-1">Gênero</th><th className="pb-1 text-center">Jogos</th><th className="pb-1 text-center">Tempo Total</th></tr></thead>
                        <tbody>
@@ -1025,6 +1033,7 @@ export default function App() {
                        </tbody>
                      </table>
                    </div>
+
                 </div>
 
              </div>
