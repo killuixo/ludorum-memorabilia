@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 
 const theme = {
   border: 'border-[3px] border-slate-900',
@@ -271,6 +271,45 @@ const getPriceColor = (priceVal) => {
   return '#FFD3B6'; 
 };
 
+const MultiSelectDropdown = ({ label, options, selected, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setIsOpen(false);
+    };
+    if(isOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  const toggleOption = (opt) => {
+    if (selected.includes(opt)) onChange(selected.filter(x => x !== opt));
+    else onChange([...selected, opt]);
+  };
+
+  return (
+    <div className="relative flex-1 min-w-[150px]" ref={dropdownRef}>
+      <div onClick={() => setIsOpen(!isOpen)} className={`${theme.input} h-full cursor-pointer flex justify-between items-center shadow-[2px_2px_0_0_rgba(15,23,42,1)]`}>
+        <span className="truncate pr-2 text-xs font-black uppercase">
+          {label} {selected.length > 0 ? `(${selected.length})` : ''}
+        </span>
+        <span className="text-[10px] shrink-0">▼</span>
+      </div>
+      {isOpen && (
+        <div className="absolute top-full left-0 mt-1 w-full max-h-60 overflow-y-auto z-50 bg-white border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)] flex flex-col p-1">
+          {options.map(o => (
+            <label key={o} className="flex items-center gap-2 p-2 hover:bg-slate-100 cursor-pointer text-xs font-bold uppercase border-b-[2px] border-slate-100 last:border-0 transition-colors">
+              <input type="checkbox" checked={selected.includes(o)} onChange={() => toggleOption(o)} className="w-3.5 h-3.5 accent-slate-900 shrink-0 cursor-pointer" />
+              <span className="truncate">{o === 'S' ? 'Rank S' : o}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Icons = {
   Home: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>,
   List: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>,
@@ -289,7 +328,8 @@ export default function App() {
   const [addStatus, setAddStatus] = useState({ type: 'idle', message: '' });
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState({ console: '', genero: '', nota: '', dif: '', suporte: '' });
+  // Agora os filtros são arrays para suportar múltipla escolha
+  const [filters, setFilters] = useState({ console: [], genero: [], nota: [], dif: [], suporte: [] });
   
   const [descontoSort, setDescontoSort] = useState('desc_val_desc');
   const [sortConfig, setSortConfig] = useState({ key: 'ordem', direction: 'desc' }); 
@@ -342,185 +382,6 @@ export default function App() {
     fetchGames(configUrl);
   };
 
-  const handleSort = (key) => {
-    let direction = 'desc';
-    if (sortConfig.key === key && sortConfig.direction === 'desc') direction = 'asc';
-    setSortConfig({ key, direction });
-  };
-
-  const resetHome = () => {
-     setActiveTab('dashboard');
-     setSearchTerm('');
-     setFilters({ console: '', genero: '', nota: '', dif: '', suporte: '' });
-  };
-
-  const isValBlank = (val) => val === '' || val === null || val === undefined || val === '-' || (typeof val === 'number' && isNaN(val)) || (typeof val === 'number' && val === -1);
-
-  const sortedAndFilteredGames = useMemo(() => {
-    let list = games;
-    if (activeTab === 'finished') list = games.filter(g => g.status === 'Finalizado');
-    if (activeTab === 'backlog') list = games.filter(g => g.status === 'Backlog');
-    
-    if (filters.console) list = list.filter(g => getVal(g, ['plataforma', 'console']) === filters.console);
-    if (filters.genero) list = list.filter(g => getVal(g, ['franquia', 'genero', 'gênero']) === filters.genero);
-    if (filters.dif) list = list.filter(g => String(getVal(g, ['dificuldade'])).toUpperCase().trim() === filters.dif);
-    if (filters.suporte) list = list.filter(g => getVal(g, ['suporte']) === filters.suporte);
-    if (filters.nota) {
-      list = list.filter(g => {
-        let n = String(getVal(g, ['nota'])).toUpperCase().trim();
-        if (filters.nota === 'S') return n === 'S';
-        let num = parseFloat(n.replace(',', '.'));
-        return Math.floor(num) === parseInt(filters.nota);
-      });
-    }
-
-    if (searchTerm) {
-      list = list.filter(g => {
-        let t = getVal(g, ['titulo', 'nome']);
-        let p = getVal(g, ['plataforma', 'console']);
-        let f = getVal(g, ['franquia', 'genero', 'gênero']);
-        return String(t).toLowerCase().includes(searchTerm.toLowerCase()) ||
-               String(p).toLowerCase().includes(searchTerm.toLowerCase()) ||
-               String(f).toLowerCase().includes(searchTerm.toLowerCase());
-      });
-    }
-
-    list.sort((a, b) => {
-      let valA, valB;
-      
-      if (sortConfig.key === 'ordem') {
-        valA = parseInt(getVal(a, ['#', 'ordem', 'numero'])) || a._fallbackId || 0;
-        valB = parseInt(getVal(b, ['#', 'ordem', 'numero'])) || b._fallbackId || 0;
-      } else if (sortConfig.key === 'nota') {
-        const p = x => {
-          let s = String(x).toUpperCase().trim();
-          if (s === 'S' || s === 'RANK S') return 999;
-          return parseFloat(s.replace(',','.')) || -1;
-        };
-        valA = p(getVal(a, ['nota'])); valB = p(getVal(b, ['nota']));
-      } else if (sortConfig.key === 'tempo') {
-        valA = getNumericTempo(getVal(a, ['tempo']));
-        valB = getNumericTempo(getVal(b, ['tempo']));
-        if (valA === 0) valA = -1; 
-        if (valB === 0) valB = -1;
-      } else if (sortConfig.key === 'duracao') {
-        valA = parseDuracaoDays(getVal(a, ['inicio', 'iniciado']), getVal(a, ['fim', 'termino']));
-        valB = parseDuracaoDays(getVal(b, ['inicio', 'iniciado']), getVal(b, ['fim', 'termino']));
-      } else if (sortConfig.key === 'preco') {
-        valA = getNumericPrice(getVal(a, ['preco', 'preco pago']));
-        valB = getNumericPrice(getVal(b, ['preco', 'preco pago']));
-        if (valA === 0) valA = -1; if (valB === 0) valB = -1;
-      } else if (sortConfig.key === 'preco_original') {
-        valA = getNumericPrice(getVal(a, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
-        valB = getNumericPrice(getVal(b, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
-        if (valA === 0) valA = -1; if (valB === 0) valB = -1;
-      } else if (sortConfig.key === 'desconto') {
-        const getDesc = x => calculateDiscount(getVal(x, ['preco', 'preco pago']), getVal(x, ['preco_original', 'preco sem desconto', 'preço sem desconto'])).rawDiff;
-        valA = getDesc(a); valB = getDesc(b);
-      } else {
-        valA = String(getVal(a, [sortConfig.key])).toLowerCase();
-        valB = String(getVal(b, [sortConfig.key])).toLowerCase();
-      }
-
-      let blankA = isValBlank(valA);
-      let blankB = isValBlank(valB);
-
-      if (blankA && blankB) return 0;
-      if (blankA) return 1;  
-      if (blankB) return -1; 
-
-      if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
-      if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    return list;
-  }, [games, activeTab, searchTerm, sortConfig, filters]);
-
-  const dashboardStats = useMemo(() => {
-    let fin = sortedAndFilteredGames.filter(g => g.status === 'Finalizado');
-    let totalJogos = fin.length;
-    
-    let sRanks = fin.filter(g => String(getVal(g, ['nota'])).toUpperCase().trim() === 'S').length;
-    
-    let notasValidas = fin.map(g => parseFloat(String(getVal(g, ['nota'])).replace(',','.'))).filter(n => !isNaN(n));
-    let avgNota = notasValidas.length > 0 ? (notasValidas.reduce((a,b)=>a+b,0) / notasValidas.length).toFixed(1) : 0;
-    
-    let stats = { 
-      totalJogos, sRanks, avgNota, 
-      totalGasto: 0, totalEconomia: 0,
-      notas: { '10': 0, '9': 0, '8': 0, '7': 0, '6': 0, '5': 0, '4': 0, '3': 0, '2': 0, '1': 0, '0': 0 },
-      dif: { A: 0, B: 0, C: 0, D: 0, E: 0 },
-      consoles: {},
-      generos: {}
-    };
-
-    fin.forEach(g => {
-      let pPago = getNumericPrice(getVal(g, ['preco', 'preco pago']));
-      let pOrig = getNumericPrice(getVal(g, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
-      
-      stats.totalGasto += pPago;
-      if(pOrig > pPago && pOrig > 0) stats.totalEconomia += (pOrig - pPago);
-
-      let n = parseFloat(String(getVal(g, ['nota'])).replace(',','.'));
-      if(!isNaN(n)) {
-        let baseNote = Math.floor(n); 
-        if (baseNote >= 0 && baseNote <= 10) {
-           stats.notas[String(baseNote)]++;
-        }
-      }
-
-      let d = String(getVal(g, ['dificuldade'])).toUpperCase().trim();
-      if(stats.dif[d] !== undefined) stats.dif[d]++;
-
-      let consoleName = getVal(g, ['plataforma', 'console']) || 'Desconhecido';
-      let genreName = getVal(g, ['franquia', 'genero', 'gênero']) || 'Desconhecido';
-      let tHrs = getNumericTempo(getVal(g, ['tempo']));
-
-      if(consoleName && consoleName !== '-' && consoleName !== 'Desconhecido') {
-        if(!stats.consoles[consoleName]) stats.consoles[consoleName] = { count: 0, totalNota: 0, notaCount: 0, totalTempo: 0 };
-        stats.consoles[consoleName].count++;
-        stats.consoles[consoleName].totalTempo += tHrs;
-        if(!isNaN(n)) { stats.consoles[consoleName].totalNota += n; stats.consoles[consoleName].notaCount++; }
-      }
-
-      if(genreName && genreName !== '-' && genreName !== 'Desconhecido') {
-        if(!stats.generos[genreName]) stats.generos[genreName] = { count: 0, totalNota: 0, notaCount: 0, totalTempo: 0 };
-        stats.generos[genreName].count++;
-        stats.generos[genreName].totalTempo += tHrs;
-        if(!isNaN(n)) { stats.generos[genreName].totalNota += n; stats.generos[genreName].notaCount++; }
-      }
-    });
-
-    Object.keys(stats.consoles).forEach(c => {
-       stats.consoles[c].avgNota = stats.consoles[c].notaCount > 0 ? (stats.consoles[c].totalNota / stats.consoles[c].notaCount).toFixed(1) : 0;
-    });
-    Object.keys(stats.generos).forEach(c => {
-       stats.generos[c].avgNota = stats.generos[c].notaCount > 0 ? (stats.generos[c].totalNota / stats.generos[c].notaCount).toFixed(1) : 0;
-    });
-
-    stats.totalGastoStr = `R$ ${stats.totalGasto.toFixed(2).replace('.',',')}`;
-    stats.totalEconomiaStr = `R$ ${stats.totalEconomia.toFixed(2).replace('.',',')}`;
-
-    return stats;
-  }, [sortedAndFilteredGames]);
-
-  const uniqueOptions = useMemo(() => {
-    let opts = { console: new Set(), genero: new Set(), suporte: new Set(), condicao: new Set() };
-    games.forEach(g => {
-      let c = getVal(g, ['plataforma', 'console']); if (c && c !== '-') opts.console.add(c);
-      let gen = getVal(g, ['franquia', 'genero', 'gênero']); if (gen && gen !== '-') opts.genero.add(gen);
-      let s = getVal(g, ['suporte']); if (s && s !== '-') opts.suporte.add(s);
-      let con = getVal(g, ['conquistas', 'condicao', 'condição']); if (con && con !== '-') opts.condicao.add(con);
-    });
-    return {
-      console: Array.from(opts.console).sort(),
-      genero: Array.from(opts.genero).sort(),
-      suporte: Array.from(opts.suporte).sort(),
-      condicao: Array.from(opts.condicao).sort()
-    };
-  }, [games]);
-
   const executeApiCall = async (action, data, statusUpdateFn) => {
     statusUpdateFn({ type: 'loading', message: 'Salvando na planilha...' });
     try {
@@ -570,6 +431,169 @@ export default function App() {
     }
   };
 
+  const handleSort = (key) => {
+    let direction = 'desc';
+    if (sortConfig.key === key && sortConfig.direction === 'desc') direction = 'asc';
+    setSortConfig({ key, direction });
+  };
+
+  const resetHome = () => {
+     setActiveTab('dashboard');
+     setSearchTerm('');
+     setFilters({ console: [], genero: [], nota: [], dif: [], suporte: [] });
+  };
+
+  const isValBlank = (val) => val === '' || val === null || val === undefined || val === '-' || (typeof val === 'number' && isNaN(val)) || (typeof val === 'number' && val === -1);
+
+  const sortedAndFilteredGames = useMemo(() => {
+    let list = games;
+    if (activeTab === 'finished') list = games.filter(g => g.status === 'Finalizado');
+    if (activeTab === 'backlog') list = games.filter(g => g.status === 'Backlog');
+    
+    if (filters.console.length > 0) list = list.filter(g => filters.console.includes(getVal(g, ['plataforma', 'console'])));
+    if (filters.genero.length > 0) list = list.filter(g => filters.genero.includes(getVal(g, ['franquia', 'genero', 'gênero'])));
+    if (filters.dif.length > 0) list = list.filter(g => filters.dif.includes(String(getVal(g, ['dificuldade'])).toUpperCase().trim()));
+    if (filters.suporte.length > 0) list = list.filter(g => filters.suporte.includes(getVal(g, ['suporte'])));
+    
+    if (filters.nota.length > 0) {
+      list = list.filter(g => {
+        let n = String(getVal(g, ['nota'])).toUpperCase().trim();
+        if (n === 'S') return filters.nota.includes('S');
+        let num = parseFloat(n.replace(',', '.'));
+        return !isNaN(num) && filters.nota.includes(String(Math.floor(num)));
+      });
+    }
+
+    if (searchTerm) {
+      list = list.filter(g => {
+        let t = getVal(g, ['titulo', 'nome']);
+        let p = getVal(g, ['plataforma', 'console']);
+        let f = getVal(g, ['franquia', 'genero', 'gênero']);
+        return String(t).toLowerCase().includes(searchTerm.toLowerCase()) ||
+               String(p).toLowerCase().includes(searchTerm.toLowerCase()) ||
+               String(f).toLowerCase().includes(searchTerm.toLowerCase());
+      });
+    }
+
+    list.sort((a, b) => {
+      let valA, valB;
+      if (sortConfig.key === 'ordem') {
+        valA = parseInt(getVal(a, ['#', 'ordem', 'numero'])) || a._fallbackId || 0;
+        valB = parseInt(getVal(b, ['#', 'ordem', 'numero'])) || b._fallbackId || 0;
+      } else if (sortConfig.key === 'nota') {
+        const p = x => {
+          let s = String(x).toUpperCase().trim();
+          if (s === 'S' || s === 'RANK S') return 999;
+          return parseFloat(s.replace(',','.')) || -1;
+        };
+        valA = p(getVal(a, ['nota'])); valB = p(getVal(b, ['nota']));
+      } else if (sortConfig.key === 'tempo') {
+        valA = getNumericTempo(getVal(a, ['tempo']));
+        valB = getNumericTempo(getVal(b, ['tempo']));
+        if (valA === 0) valA = -1; if (valB === 0) valB = -1;
+      } else if (sortConfig.key === 'duracao') {
+        valA = parseDuracaoDays(getVal(a, ['inicio', 'iniciado']), getVal(a, ['fim', 'termino']));
+        valB = parseDuracaoDays(getVal(b, ['inicio', 'iniciado']), getVal(b, ['fim', 'termino']));
+      } else if (sortConfig.key === 'preco') {
+        valA = getNumericPrice(getVal(a, ['preco', 'preco pago']));
+        valB = getNumericPrice(getVal(b, ['preco', 'preco pago']));
+        if (valA === 0) valA = -1; if (valB === 0) valB = -1;
+      } else if (sortConfig.key === 'preco_original') {
+        valA = getNumericPrice(getVal(a, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
+        valB = getNumericPrice(getVal(b, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
+        if (valA === 0) valA = -1; if (valB === 0) valB = -1;
+      } else if (sortConfig.key === 'desconto') {
+        const getDesc = x => calculateDiscount(getVal(x, ['preco', 'preco pago']), getVal(x, ['preco_original', 'preco sem desconto', 'preço sem desconto'])).rawDiff;
+        valA = getDesc(a); valB = getDesc(b);
+      } else {
+        valA = String(getVal(a, [sortConfig.key])).toLowerCase();
+        valB = String(getVal(b, [sortConfig.key])).toLowerCase();
+      }
+
+      let blankA = isValBlank(valA); let blankB = isValBlank(valB);
+      if (blankA && blankB) return 0;
+      if (blankA) return 1;  
+      if (blankB) return -1; 
+      if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return list;
+  }, [games, activeTab, searchTerm, sortConfig, filters]);
+
+  const dashboardStats = useMemo(() => {
+    let fin = sortedAndFilteredGames.filter(g => g.status === 'Finalizado');
+    let totalJogos = fin.length;
+    let sRanks = fin.filter(g => String(getVal(g, ['nota'])).toUpperCase().trim() === 'S').length;
+    let notasValidas = fin.map(g => parseFloat(String(getVal(g, ['nota'])).replace(',','.'))).filter(n => !isNaN(n));
+    let avgNota = notasValidas.length > 0 ? (notasValidas.reduce((a,b)=>a+b,0) / notasValidas.length).toFixed(1) : 0;
+    
+    let stats = { 
+      totalJogos, sRanks, avgNota, totalGasto: 0, totalEconomia: 0,
+      notas: { '10': 0, '9': 0, '8': 0, '7': 0, '6': 0, '5': 0, '4': 0, '3': 0, '2': 0, '1': 0, '0': 0 },
+      dif: { A: 0, B: 0, C: 0, D: 0, E: 0 }, consoles: {}, generos: {}
+    };
+
+    fin.forEach(g => {
+      let pPago = getNumericPrice(getVal(g, ['preco', 'preco pago']));
+      let pOrig = getNumericPrice(getVal(g, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
+      
+      stats.totalGasto += pPago;
+      if(pOrig > pPago && pOrig > 0) stats.totalEconomia += (pOrig - pPago);
+
+      let n = parseFloat(String(getVal(g, ['nota'])).replace(',','.'));
+      if(!isNaN(n)) {
+        let baseNote = Math.floor(n); 
+        if (baseNote >= 0 && baseNote <= 10) stats.notas[String(baseNote)]++;
+      }
+
+      let d = String(getVal(g, ['dificuldade'])).toUpperCase().trim();
+      if(stats.dif[d] !== undefined) stats.dif[d]++;
+
+      let consoleName = getVal(g, ['plataforma', 'console']) || 'Desconhecido';
+      let genreName = getVal(g, ['franquia', 'genero', 'gênero']) || 'Desconhecido';
+      let tHrs = getNumericTempo(getVal(g, ['tempo']));
+
+      if(consoleName && consoleName !== '-' && consoleName !== 'Desconhecido') {
+        if(!stats.consoles[consoleName]) stats.consoles[consoleName] = { count: 0, totalNota: 0, notaCount: 0, totalTempo: 0 };
+        stats.consoles[consoleName].count++;
+        stats.consoles[consoleName].totalTempo += tHrs;
+        if(!isNaN(n)) { stats.consoles[consoleName].totalNota += n; stats.consoles[consoleName].notaCount++; }
+      }
+
+      if(genreName && genreName !== '-' && genreName !== 'Desconhecido') {
+        if(!stats.generos[genreName]) stats.generos[genreName] = { count: 0, totalNota: 0, notaCount: 0, totalTempo: 0 };
+        stats.generos[genreName].count++;
+        stats.generos[genreName].totalTempo += tHrs;
+        if(!isNaN(n)) { stats.generos[genreName].totalNota += n; stats.generos[genreName].notaCount++; }
+      }
+    });
+
+    Object.keys(stats.consoles).forEach(c => stats.consoles[c].avgNota = stats.consoles[c].notaCount > 0 ? (stats.consoles[c].totalNota / stats.consoles[c].notaCount).toFixed(1) : 0);
+    Object.keys(stats.generos).forEach(c => stats.generos[c].avgNota = stats.generos[c].notaCount > 0 ? (stats.generos[c].totalNota / stats.generos[c].notaCount).toFixed(1) : 0);
+    stats.totalGastoStr = `R$ ${stats.totalGasto.toFixed(2).replace('.',',')}`;
+    return stats;
+  }, [sortedAndFilteredGames]);
+
+  const uniqueOptions = useMemo(() => {
+    let opts = { console: new Set(), genero: new Set(), suporte: new Set(), condicao: new Set() };
+    games.forEach(g => {
+      let c = getVal(g, ['plataforma', 'console']); if (c && c !== '-') opts.console.add(c);
+      let gen = getVal(g, ['franquia', 'genero', 'gênero']); if (gen && gen !== '-') opts.genero.add(gen);
+      let s = getVal(g, ['suporte']); if (s && s !== '-') opts.suporte.add(s);
+      let con = getVal(g, ['conquistas', 'condicao', 'condição']); if (con && con !== '-') opts.condicao.add(con);
+    });
+    return {
+      console: Array.from(opts.console).sort(),
+      genero: Array.from(opts.genero).sort(),
+      suporte: Array.from(opts.suporte).sort(),
+      condicao: Array.from(opts.condicao).sort(),
+      nota: ['S', '10', '9', '8', '7', '6', '5', '4', '3', '2', '1', '0'],
+      dif: ['A', 'B', 'C', 'D', 'E']
+    };
+  }, [games]);
+
   const Th = ({ label, sortKey, className = "" }) => (
     <th onClick={() => handleSort(sortKey)} className={`p-2 border-r-[3px] border-slate-900 cursor-pointer hover:bg-black/5 transition-colors whitespace-nowrap ${className}`}>
       <div className="flex items-center justify-between gap-1">
@@ -581,7 +605,6 @@ export default function App() {
 
   const renderGameTable = (list) => {
     const isBacklog = activeTab === 'backlog' && !viewModal;
-    
     return (
     <div className={`overflow-x-auto border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)] bg-white pb-2 max-w-full`}>
       <table className="w-full text-left border-collapse text-[10px] sm:text-[11px] font-bold">
@@ -626,9 +649,7 @@ export default function App() {
             
             return (
               <tr key={game.id || i} className="border-b-[2px] border-slate-900 hover:bg-slate-50 transition-colors">
-                <td className="p-2 border-r-[3px] border-slate-900 text-center font-black bg-slate-100 whitespace-nowrap">
-                  {visualId}
-                </td>
+                <td className="p-2 border-r-[3px] border-slate-900 text-center font-black bg-slate-100 whitespace-nowrap">{visualId}</td>
                 <td onClick={() => { 
                       setFichaData({...game, '#': visualId, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc}); 
                       setViewModal({type:'game', data: {...game, '#': visualId, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc, inicio, fim, tempo, nota, dificuldade: dif, conquistas: cond, suporte: sup}}); 
@@ -655,7 +676,6 @@ export default function App() {
                 </td>
 
                 <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(inicio)}</td>
-                
                 {!isBacklog && <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">{formatDateStr(fim)}</td>}
                 {!isBacklog && <td className="p-2 border-r-[3px] border-slate-900 text-center font-black whitespace-nowrap">{formatTempoStr(tempo)}</td>}
                 {!isBacklog && <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap font-bold text-slate-600">{calculateTimeSpan(inicio, fim)}</td>}
@@ -699,9 +719,7 @@ export default function App() {
                     {discount.has && (
                       <span className="inline-block px-1.5 py-0.5 font-black border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)] group relative cursor-help" style={{backgroundColor: getPriceColor(discount.rawDiff)}}>
                         {discount.val} ({discount.pct})
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-10 pointer-events-none">
-                          Economia de {discount.val}
-                        </div>
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-10 pointer-events-none">Economia de {discount.val}</div>
                       </span>
                     )}
                   </td>
@@ -741,6 +759,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans p-2 sm:p-4 selection:bg-pink-200 relative">
       
+      {/* HEADER (Logo + Barra de Busca) */}
       <div className="max-w-[1600px] mx-auto mb-6 flex flex-wrap items-center justify-between gap-4 sm:gap-6">
         <div onClick={resetHome} className="flex items-center gap-4 shrink-0 cursor-pointer hover:opacity-80 transition-opacity" title="Voltar ao Início e Limpar Filtros">
           <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Logo" className="w-12 h-12 sm:w-14 sm:h-14" />
@@ -751,9 +770,16 @@ export default function App() {
             <h2 className="text-sm sm:text-lg font-bold uppercase tracking-widest">Memorabilia</h2>
           </div>
         </div>
+        
+        {(activeTab === 'dashboard' || activeTab === 'finished' || activeTab === 'backlog') && (
+          <div className="flex-grow max-w-md flex items-center">
+            <input type="text" placeholder="🔍 Buscar por título, console ou gênero..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`${theme.input} shadow-[4px_4px_0_0_rgba(15,23,42,1)]`} />
+          </div>
+        )}
       </div>
 
       <div className={`max-w-[1600px] mx-auto ${theme.border} ${theme.card} flex flex-col bg-white overflow-hidden`}>
+        {/* NAVEGAÇÃO / ABAS */}
         <nav className="flex flex-row overflow-x-auto sm:grid sm:grid-cols-5 border-b-[3px] border-slate-900 bg-slate-100">
           {[
             { id: 'dashboard', label: 'Dashboard', icon: Icons.Home },
@@ -776,34 +802,14 @@ export default function App() {
 
         <main className="p-4 sm:p-6 overflow-x-auto">
           
-          {/* BLOCO DE FILTROS ALINHADOS LADO A LADO */}
+          {/* BARRA DE FILTROS LADO A LADO - OCUPANDO TODO O ESPAÇO */}
           {(activeTab === 'dashboard' || activeTab === 'finished' || activeTab === 'backlog') && (
-            <div className="flex flex-col gap-2 mb-6 w-full">
-              <input type="text" placeholder="🔍 Buscar por título, console ou gênero..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`${theme.input} shadow-[4px_4px_0_0_rgba(15,23,42,1)] w-full`} />
-              
-              <div className="flex flex-row flex-wrap gap-4 mt-2">
-                <select value={filters.console} onChange={e=>setFilters({...filters, console: e.target.value})} className={`${theme.input} flex-1 min-w-[180px] text-[10px] py-2 shadow-[2px_2px_0_0_rgba(15,23,42,1)]`}>
-                  <option value="">Todos Consoles</option>
-                  {uniqueOptions.console.map(o=><option key={o} value={o}>{o}</option>)}
-                </select>
-                <select value={filters.genero} onChange={e=>setFilters({...filters, genero: e.target.value})} className={`${theme.input} flex-1 min-w-[180px] text-[10px] py-2 shadow-[2px_2px_0_0_rgba(15,23,42,1)]`}>
-                  <option value="">Todos Gêneros</option>
-                  {uniqueOptions.genero.map(o=><option key={o} value={o}>{o}</option>)}
-                </select>
-                <select value={filters.nota} onChange={e=>setFilters({...filters, nota: e.target.value})} className={`${theme.input} flex-1 min-w-[180px] text-[10px] py-2 shadow-[2px_2px_0_0_rgba(15,23,42,1)]`}>
-                  <option value="">Todas Notas</option>
-                  <option value="S">Rank S</option>
-                  {['10','9','8','7','6','5','4','3','2','1','0'].map(o=><option key={o} value={o}>Nota {o}</option>)}
-                </select>
-                <select value={filters.dif} onChange={e=>setFilters({...filters, dif: e.target.value})} className={`${theme.input} flex-1 min-w-[180px] text-[10px] py-2 shadow-[2px_2px_0_0_rgba(15,23,42,1)]`}>
-                  <option value="">Todas as Dificuldades</option>
-                  {['A','B','C','D','E'].map(o=><option key={o} value={o}>{o}</option>)}
-                </select>
-                <select value={filters.suporte} onChange={e=>setFilters({...filters, suporte: e.target.value})} className={`${theme.input} flex-1 min-w-[180px] text-[10px] py-2 shadow-[2px_2px_0_0_rgba(15,23,42,1)]`}>
-                  <option value="">Todos Suportes</option>
-                  {uniqueOptions.suporte.map(o=><option key={o} value={o}>{o}</option>)}
-                </select>
-              </div>
+            <div className="flex flex-row flex-wrap gap-2 mb-4 w-full">
+               <MultiSelectDropdown label="Consoles" options={uniqueOptions.console} selected={filters.console} onChange={(v) => setFilters({...filters, console: v})} />
+               <MultiSelectDropdown label="Gêneros" options={uniqueOptions.genero} selected={filters.genero} onChange={(v) => setFilters({...filters, genero: v})} />
+               <MultiSelectDropdown label="Notas" options={uniqueOptions.nota} selected={filters.nota} onChange={(v) => setFilters({...filters, nota: v})} />
+               <MultiSelectDropdown label="Dificuldades" options={uniqueOptions.dif} selected={filters.dif} onChange={(v) => setFilters({...filters, dif: v})} />
+               <MultiSelectDropdown label="Suportes" options={uniqueOptions.suporte} selected={filters.suporte} onChange={(v) => setFilters({...filters, suporte: v})} />
             </div>
           )}
 
@@ -1024,7 +1030,7 @@ export default function App() {
              </div>
           )}
 
-          {/* LISTAS */}
+          {/* LISTAS FINALS & BACKLOG */}
           {(activeTab === 'finished' || activeTab === 'backlog') && (
             <div className="flex flex-col gap-4">
               <div className="flex justify-end">
@@ -1090,7 +1096,7 @@ export default function App() {
         </main>
       </div>
 
-      {/* MODAL E FICHAS */}
+      {/* MODAL E FICHAS ABERTAS... */}
       {viewModal && (
         <div className="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
           <div className={`w-full max-w-[1400px] bg-white ${theme.border} ${theme.card} flex flex-col my-auto shadow-2xl`}>
@@ -1265,7 +1271,6 @@ export default function App() {
                        if (viewModal.data === 'S') return vNota === 'S';
                        let nm = parseFloat(vNota.replace(',', '.'));
                        let targetNota = parseFloat(viewModal.data);
-                       // Se clicou no 9, mostra tanto 9.0 quanto 9.5
                        return Math.floor(nm) === targetNota;
                     }
                     return false;
