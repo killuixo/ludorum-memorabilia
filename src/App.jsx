@@ -226,6 +226,15 @@ const getRatingBadge = (notaVal) => {
   );
 };
 
+const getPriorityColorHex = (prio, totalBacklog = 1) => {
+    let p = parseInt(prio);
+    if (isNaN(p) || p <= 0) return 'transparent';
+    let pct = p / Math.max(totalBacklog, 1);
+    if (pct <= 0.33) return '#FF8B94'; 
+    if (pct <= 0.66) return '#FFD3B6'; 
+    return '#A8E6CF'; 
+};
+
 const getPriceColorPago = (priceVal) => {
   if (priceVal === undefined || priceVal === null || priceVal === '' || priceVal === '-') return 'transparent';
   let p = getNumericPrice(priceVal);
@@ -247,7 +256,6 @@ const getPriceColorDesc = (priceVal) => {
 const getSuporteInfo = (name) => {
   let original = String(name || '').trim();
   if (!original || original === '-') return { categoria: 'Desconhecido', subCategoria: 'Desconhecido' };
-  
   let parts = original.split(/\s*[\/\-]\s*/);
   let categoria = parts[0];
   let catLower = categoria.toLowerCase();
@@ -256,7 +264,6 @@ const getSuporteInfo = (name) => {
   else if (catLower.includes('digital')) categoria = 'Digital';
   
   let subCategoria = parts.length > 1 ? parts.slice(1).join(' / ') : 'Desconhecido';
-  
   return { categoria, subCategoria };
 };
 
@@ -284,7 +291,7 @@ const MultiSelectDropdown = ({ label, options, selected, onChange }) => {
       : `${label} (${selected.length})`;
 
   return (
-    <div className="relative min-w-[100px] max-w-[150px] flex-1" ref={dropdownRef}>
+    <div className="relative min-w-[120px] max-w-[150px] flex-1" ref={dropdownRef}>
       <div onClick={() => setIsOpen(!isOpen)} className={`${theme.input} h-full p-1.5 cursor-pointer flex justify-between items-center shadow-[2px_2px_0_0_rgba(15,23,42,1)]`}>
         <span className="truncate pr-2 text-[10px] sm:text-[11px] font-black uppercase">
           {displayLabel}
@@ -308,10 +315,10 @@ const MultiSelectDropdown = ({ label, options, selected, onChange }) => {
 const PieChartUI = ({ title, slices, onClickSlice }) => {
    if (!slices || slices.length === 0) return null;
    return (
-     <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] flex flex-col items-center justify-between h-full min-h-[300px]`}>
-       <h3 className="text-sm font-black uppercase mb-2 w-full text-center border-b-[3px] border-slate-900 pb-2">{title}</h3>
+     <div className={`p-3 sm:p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] flex flex-col items-center justify-between h-full min-h-[220px]`}>
+       <h3 className="text-xs font-black uppercase mb-2 w-full text-center border-b-[3px] border-slate-900 pb-2">{title}</h3>
        <div className="w-full flex-grow flex items-center justify-center py-2 relative">
-         <svg viewBox="-1.2 -1.2 2.4 2.4" className="w-40 h-40 transform -rotate-90 drop-shadow-md">
+         <svg viewBox="-1.2 -1.2 2.4 2.4" className="w-28 h-28 transform -rotate-90 drop-shadow-md">
             {slices.map(s => {
                const getCoords = (percent) => [Math.cos(2*Math.PI*percent), Math.sin(2*Math.PI*percent)];
                const [startX, startY] = getCoords(s.start);
@@ -323,23 +330,26 @@ const PieChartUI = ({ title, slices, onClickSlice }) => {
                
                const midP = s.start + (s.end - s.start)/2;
                const [tX, tY] = getCoords(midP);
+               const showInsideText = s.pct > 10;
                return (
                  <g key={s.id} onClick={() => onClickSlice && onClickSlice(s)} className="cursor-pointer hover:opacity-80 transition-opacity">
                     <path d={pathData} fill={s.color} stroke="#0f172a" strokeWidth="0.04" />
-                    <text x={tX * 0.65} y={tY * 0.65 - 0.08} fill="white" stroke="white" strokeWidth="0.06" strokeLinejoin="round" fontSize="0.25" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-black" transform={`rotate(90 ${tX * 0.65} ${tY * 0.65 - 0.08})`}>{s.count}</text>
-                    <text x={tX * 0.65} y={tY * 0.65 - 0.08} fill="#0f172a" fontSize="0.25" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-black" transform={`rotate(90 ${tX * 0.65} ${tY * 0.65 - 0.08})`}>{s.count}</text>
-                    
-                    <text x={tX * 0.65} y={tY * 0.65 + 0.18} fill="white" stroke="white" strokeWidth="0.04" strokeLinejoin="round" fontSize="0.13" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-bold" transform={`rotate(90 ${tX * 0.65} ${tY * 0.65 + 0.18})`}>{Math.round(s.pct)}%</text>
-                    <text x={tX * 0.65} y={tY * 0.65 + 0.18} fill="#0f172a" fontSize="0.13" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-bold" transform={`rotate(90 ${tX * 0.65} ${tY * 0.65 + 0.18})`}>{Math.round(s.pct)}%</text>
+                    {showInsideText && (
+                        <>
+                          <text x={tX * 0.65} y={tY * 0.65} fill="white" stroke="#0f172a" strokeWidth="0.08" strokeLinejoin="round" fontSize="0.22" textAnchor="middle" dominantBaseline="central" className="font-black" transform={`rotate(90 ${tX * 0.65} ${tY * 0.65})`}>{Math.round(s.pct)}%</text>
+                          <text x={tX * 0.65} y={tY * 0.65} fill="white" fontSize="0.22" textAnchor="middle" dominantBaseline="central" className="font-black" transform={`rotate(90 ${tX * 0.65} ${tY * 0.65})`}>{Math.round(s.pct)}%</text>
+                        </>
+                    )}
                  </g>
                )
             })}
          </svg>
        </div>
-       <div className="w-full flex flex-col gap-2 border-t-[3px] border-slate-900 pt-3 max-h-[90px] overflow-y-auto custom-scrollbar">
+       <div className="w-full flex flex-col gap-1 border-t-[3px] border-slate-900 pt-2 max-h-[90px] overflow-y-auto custom-scrollbar">
           {slices.map(s => (
-             <div key={s.id} onClick={() => onClickSlice && onClickSlice(s)} className="flex justify-between items-center text-[10px] font-black uppercase cursor-pointer hover:opacity-70 transition-opacity">
-                <div className="flex items-center gap-1.5"><div className="w-3 h-3 border-2 border-slate-900" style={{backgroundColor: s.color}}></div><span className="truncate max-w-[150px]">{s.label}</span></div>
+             <div key={s.id} onClick={() => onClickSlice && onClickSlice(s)} className="flex items-center text-[10px] font-black uppercase cursor-pointer hover:opacity-70 transition-opacity justify-between">
+                <div className="flex items-center gap-1.5"><div className="w-3 h-3 border-2 border-slate-900 shrink-0" style={{backgroundColor: s.color}}></div><span className="truncate max-w-[120px]" title={s.label}>{s.label}</span></div>
+                <span className="text-slate-500 whitespace-nowrap ml-1 shrink-0">{s.count} ({Math.round(s.pct)}%)</span>
              </div>
           ))}
        </div>
@@ -355,8 +365,7 @@ const Icons = {
   Settings: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
   SortArrow: ({ asc }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={`w-3 h-3 ml-1 inline-block transition-transform ${asc ? '' : 'rotate-180'}`}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /></svg>,
   Close: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>,
-  Gamepad: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4 inline-block text-cyan-700 align-text-bottom"><path strokeLinecap="round" strokeLinejoin="round" d="M7 11v2m-1-1h2m7-1h.01M15 13h.01M6.5 6h11c2.5 0 4.5 2 4.5 4.5v1c0 2.5-2 4.5-4.5 4.5H16l-2 3h-4l-2-3H6.5C4 16 2 14 2 11.5v-1C2 8 4 6 6.5 6z" /></svg>,
-  Alert: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" className="w-3.5 h-3.5 inline-block align-text-bottom"><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v9m0 4h.01" /></svg>
+  Gamepad: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4 inline-block text-cyan-700 align-text-bottom"><path strokeLinecap="round" strokeLinejoin="round" d="M7 11v2m-1-1h2m7-1h.01M15 13h.01M6.5 6h11c2.5 0 4.5 2 4.5 4.5v1c0 2.5-2 4.5-4.5 4.5H16l-2 3h-4l-2-3H6.5C4 16 2 14 2 11.5v-1C2 8 4 6 6.5 6z" /></svg>
 };
 
 export default function App() {
@@ -368,7 +377,7 @@ export default function App() {
   const [addStatus, setAddStatus] = useState({ type: 'idle', message: '' });
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState({ console: [], genero: [], nota: [], dif: [], suporte: [] });
+  const [filters, setFilters] = useState({ console: [], genero: [], nota: [], dif: [], suporte: [], statusScope: 'todos' });
   const [backlogStatusFilter, setBacklogStatusFilter] = useState('todos');
   
   const [descontoSort, setDescontoSort] = useState('desc_val_desc');
@@ -461,11 +470,33 @@ export default function App() {
 
   const handleCreateNew = async (e) => {
     e.preventDefault();
+    let targetPrio = parseInt(formData.prioridade);
+    if (formData.status === 'Backlog' && !isNaN(targetPrio)) {
+        let existingGame = games.find(g => g.status === 'Backlog' && parseInt(getVal(g, ['prioridade'])) === targetPrio);
+        if (existingGame) {
+           setAddStatus({ type: 'loading', message: 'Ajustando prioridade...' });
+           try {
+              await fetch(configUrl, { method: 'POST', body: JSON.stringify({ action: 'UPDATE', data: { ...existingGame, prioridade: '' } }) });
+           } catch (err) {}
+        }
+    }
     const success = await executeApiCall('ADD', { ...formData, id: 'temp_id' }, setAddStatus);
     if (success) setFormData(blankForm);
   };
 
   const handleUpdateFicha = async () => {
+    let targetPrio = parseInt(fichaData.prioridade);
+    let oldPrio = parseInt(viewModal.data.prioridade);
+
+    if (fichaData.status === 'Backlog' && !isNaN(targetPrio) && targetPrio !== oldPrio) {
+       let existingGame = games.find(g => g.status === 'Backlog' && g.id !== fichaData.id && parseInt(getVal(g, ['prioridade'])) === targetPrio);
+       if (existingGame) {
+          setFichaStatus({ type: 'loading', message: 'Trocando prioridades...' });
+          try {
+             await fetch(configUrl, { method: 'POST', body: JSON.stringify({ action: 'UPDATE', data: { ...existingGame, prioridade: viewModal.data.prioridade || '' } }) });
+          } catch (e) {}
+       }
+    }
     const success = await executeApiCall('UPDATE', fichaData, setFichaStatus);
     if (success) {
       setIsEditingFicha(false);
@@ -507,7 +538,7 @@ export default function App() {
   const resetHome = () => {
      setActiveTab('dashboard');
      setSearchTerm('');
-     setFilters({ console: [], genero: [], nota: [], dif: [], suporte: [] });
+     setFilters({ console: [], genero: [], nota: [], dif: [], suporte: [], statusScope: 'todos' });
      setBacklogStatusFilter('todos');
   };
 
@@ -590,8 +621,26 @@ export default function App() {
         valB = parseInputDate(getVal(b, [sortConfig.key, 'iniciado', 'termino']));
         if (valA === 0) valA = -1; if (valB === 0) valB = -1;
       } else if (sortConfig.key === 'prioridade') {
-        valA = parseInt(getVal(a, ['prioridade'])) || 9999;
-        valB = parseInt(getVal(b, ['prioridade'])) || 9999;
+        let isStartedA = !!getVal(a, ['inicio', 'iniciado']) && getVal(a, ['inicio', 'iniciado']) !== '-';
+        let isStartedB = !!getVal(b, ['inicio', 'iniciado']) && getVal(b, ['inicio', 'iniciado']) !== '-';
+
+        if (isStartedA && !isStartedB) return -1; 
+        if (!isStartedA && isStartedB) return 1; 
+        if (isStartedA && isStartedB) {
+            let dA = parseInputDate(getVal(a, ['inicio', 'iniciado']));
+            let dB = parseInputDate(getVal(b, ['inicio', 'iniciado']));
+            if (dA === 0) dA = -1; if (dB === 0) dB = -1;
+            return sortConfig.direction === 'asc' ? dA - dB : dB - dA;
+        }
+
+        let pA = parseInt(getVal(a, ['prioridade']));
+        let pB = parseInt(getVal(b, ['prioridade']));
+        let blankA = isNaN(pA); let blankB = isNaN(pB);
+
+        if (blankA && blankB) return 0;
+        if (blankA) return 1; 
+        if (blankB) return -1;
+        return sortConfig.direction === 'asc' ? pA - pB : pB - pA;
       } else {
         valA = String(getVal(a, [sortConfig.key])).toLowerCase();
         valB = String(getVal(b, [sortConfig.key])).toLowerCase();
@@ -610,8 +659,12 @@ export default function App() {
   }, [globalFilteredGames, activeTab, sortConfig, backlogStatusFilter]);
 
   const dashboardStats = useMemo(() => {
-    let fin = globalFilteredGames.filter(g => g.status === 'Finalizado');
-    let back = globalFilteredGames.filter(g => g.status === 'Backlog');
+    let baseList = globalFilteredGames;
+    if (filters.statusScope === 'finalizados') baseList = baseList.filter(g => g.status === 'Finalizado');
+    if (filters.statusScope === 'backlog') baseList = baseList.filter(g => g.status === 'Backlog');
+
+    let fin = baseList.filter(g => g.status === 'Finalizado');
+    let back = baseList.filter(g => g.status === 'Backlog');
     
     let totalJogos = fin.length;
     let totalBacklog = back.length;
@@ -698,7 +751,7 @@ export default function App() {
     Object.keys(stats.consoles).forEach(c => stats.consoles[c].avgNota = stats.consoles[c].notaCount > 0 ? (stats.consoles[c].totalNota / stats.consoles[c].notaCount).toFixed(1) : 0);
     Object.keys(stats.generos).forEach(c => stats.generos[c].avgNota = stats.generos[c].notaCount > 0 ? (stats.generos[c].totalNota / stats.generos[c].notaCount).toFixed(1) : 0);
     return stats;
-  }, [globalFilteredGames]);
+  }, [globalFilteredGames, filters.statusScope]);
 
   const uniqueOptions = useMemo(() => {
     let opts = { console: new Set(), genero: new Set(), suporte: new Set(), condicao: new Set() };
@@ -720,6 +773,18 @@ export default function App() {
 
   const maxBacklogPriority = games.filter(g => g.status === 'Backlog').length + 1;
 
+  const renderPriorityOptions = (currentId) => {
+      return Array.from({length: maxBacklogPriority}).map((_, i) => {
+         let p = i + 1;
+         let occupier = games.find(g => g.status === 'Backlog' && parseInt(getVal(g, ['prioridade'])) === p);
+         let label = String(p);
+         if (occupier && occupier.id !== currentId) {
+             label += ` - ${getVal(occupier, ['titulo', 'nome'])}`;
+         }
+         return <option key={p} value={p}>{label}</option>;
+      });
+  };
+
   const getPieSlices = () => {
      let f = dashboardStats.totalJogos;
      let i = dashboardStats.totalIniciados;
@@ -729,7 +794,7 @@ export default function App() {
      let cp = 0;
      if (f > 0) { slices.push({ id:'f', start: cp, end: cp+(f/t), color: '#A8E6CF', count: f, pct: (f/t)*100, type: 'finalizados', label: 'Finalizados' }); cp += (f/t); }
      if (i > 0) { slices.push({ id:'i', start: cp, end: cp+(i/t), color: '#FFD3B6', count: i, pct: (i/t)*100, type: 'backlog_iniciado', label: 'Iniciados' }); cp += (i/t); }
-     if (b > 0) { slices.push({ id:'b', start: cp, end: cp+(b/t), color: '#E2E8F0', count: b, pct: (b/t)*100, type: 'backlog_nao_iniciado', label: 'Backlog (Fila)' }); cp += (b/t); }
+     if (b > 0) { slices.push({ id:'b', start: cp, end: cp+(b/t), color: '#E2E8F0', count: b, pct: (b/t)*100, type: 'backlog_nao_iniciado', label: 'Backlog Fila' }); cp += (b/t); }
      return slices;
   };
 
@@ -832,7 +897,11 @@ export default function App() {
                             <div className="font-black text-[11px] text-slate-500 shrink-0 flex items-center justify-center">
                                 {!isBacklog && `#${visualId}`}
                                 {isBacklog && isStartedBacklog && <Icons.Gamepad />}
-                                {isBacklog && !isStartedBacklog && prioridade && <span title="Prioridade"><Icons.Alert/> {prioridade}</span>}
+                                {isBacklog && !isStartedBacklog && displayClean(prioridade) && (
+                                   <span className="inline-block px-1 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(0,0,0,1)] text-[9px]" style={{backgroundColor: getPriorityColorHex(prioridade, dashboardStats.totalBacklog), color: '#0f172a'}} title="Prioridade">
+                                      {prioridade}
+                                   </span>
+                                )}
                             </div>
                         </div>
                         
@@ -873,7 +942,7 @@ export default function App() {
         <thead className="sticky top-0 z-10 shadow-sm">
           <tr className={`${activeTab === 'finished' || (viewModal && viewModal.type !== 'backlog_iniciado' && viewModal.type !== 'backlog_nao_iniciado') ? theme.gold : theme.cyan} border-b-[3px] border-slate-900 uppercase font-black text-slate-900`}>
             {!isBacklog && <Th label="#" sortKey="ordem" className="text-center w-10" />}
-            {isBacklog && <Th label={<div className="font-black text-lg text-slate-700" title="Prioridade / Iniciado">!</div>} sortKey="inicio" className="text-center w-10" />}
+            {isBacklog && <Th label={<div className="font-black text-lg text-slate-700" title="Prioridade / Iniciado">!</div>} sortKey="prioridade" className="text-center w-10" />}
             <Th label="NOME DO JOGO" sortKey="titulo" />
             <Th label="CONSOLE" sortKey="plataforma" />
             <Th label="GÊNERO" sortKey="franquia" />
@@ -920,7 +989,11 @@ export default function App() {
                 
                 {isBacklog && (
                   <td className={`p-2 border-r-[3px] border-slate-900 text-center font-black whitespace-nowrap ${isStartedBacklog ? 'bg-cyan-100' : 'bg-slate-100 text-slate-500'}`}>
-                    {isStartedBacklog ? <Icons.Gamepad /> : displayClean(prioridade)}
+                    {isStartedBacklog ? <Icons.Gamepad /> : displayClean(prioridade) ? (
+                        <span className="inline-block px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(0,0,0,1)] text-[10px]" style={{backgroundColor: getPriorityColorHex(prioridade, dashboardStats.totalBacklog), color: '#0f172a'}}>
+                            {prioridade}
+                        </span>
+                    ) : '-'}
                   </td>
                 )}
 
@@ -1086,7 +1159,7 @@ export default function App() {
 
         <main className="p-4 sm:p-6 overflow-x-auto custom-scrollbar">
           
-          {}
+          {/* BARRA DE FILTROS OTIMIZADA */}
           {(activeTab === 'dashboard' || activeTab === 'finished' || activeTab === 'backlog') && (
             <div className="flex flex-row flex-wrap items-center gap-2 mb-6 w-full bg-white p-2 border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)]">
                
@@ -1103,6 +1176,14 @@ export default function App() {
                <MultiSelectDropdown label="Dificuldades" options={uniqueOptions.dif} selected={filters.dif} onChange={(v) => setFilters({...filters, dif: v})} />
                <MultiSelectDropdown label="Suportes" options={uniqueOptions.suporte} selected={filters.suporte} onChange={(v) => setFilters({...filters, suporte: v})} />
                
+               {activeTab === 'dashboard' && (
+                  <select value={filters.statusScope} onChange={e => setFilters({...filters, statusScope: e.target.value})} className={`${theme.input} !w-auto !p-1.5 max-w-[160px] shadow-[2px_2px_0_0_rgba(15,23,42,1)] text-[10px] sm:text-[11px]`}>
+                     <option value="todos">Mostrar Tudo (Status)</option>
+                     <option value="finalizados">Apenas Finalizados</option>
+                     <option value="backlog">Apenas Backlog</option>
+                  </select>
+               )}
+
                {activeTab === 'backlog' && (
                   <select value={backlogStatusFilter} onChange={e => setBacklogStatusFilter(e.target.value)} className={`${theme.input} !w-auto !p-1.5 max-w-[150px] shadow-[2px_2px_0_0_rgba(15,23,42,1)] text-[10px] sm:text-[11px]`}>
                      <option value="todos">Todos (Status)</option>
@@ -1117,61 +1198,43 @@ export default function App() {
             </div>
           )}
 
-          {}
+          {/* DASHBOARD PRINCIPAL */}
           {activeTab === 'dashboard' && (
              <div className="flex flex-col gap-6">
                 
                 {/* Cards Estatísticos Superiores */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
-                  <div onClick={()=>setActiveTab('finished')} className={`p-4 ${theme.border} bg-[#A8E6CF] shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity`}>
+                  <div onClick={()=>setActiveTab('finished')} className={`p-4 ${theme.border} bg-[#A8E6CF] shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-between`}>
                     <h3 className="text-[10px] sm:text-[11px] font-black uppercase leading-tight">Finalizados</h3>
-                    <p className="text-3xl sm:text-4xl font-black mt-1">{dashboardStats.totalJogos}</p>
+                    <p className="text-3xl sm:text-4xl font-black mt-2">{dashboardStats.totalJogos}</p>
                   </div>
-                  <div onClick={()=>setActiveTab('backlog')} className={`p-4 ${theme.border} bg-slate-200 shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity`}>
+                  <div onClick={()=>setActiveTab('backlog')} className={`p-4 ${theme.border} bg-slate-200 shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-between`}>
                     <h3 className="text-[10px] sm:text-[11px] font-black uppercase leading-tight">Backlog</h3>
-                    <p className="text-3xl sm:text-4xl font-black mt-1">{dashboardStats.totalBacklog}</p>
+                    <p className="text-3xl sm:text-4xl font-black mt-2">{dashboardStats.totalBacklog}</p>
                   </div>
-                  <div onClick={()=>setViewModal({type:'backlog_iniciado', data:'Iniciados'})} className={`p-4 ${theme.border} bg-[#FFD3B6] shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity`}>
+                  <div onClick={()=>setViewModal({type:'backlog_iniciado', data:'Iniciados'})} className={`p-4 ${theme.border} bg-[#FFD3B6] shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-between`}>
                     <h3 className="text-[10px] sm:text-[11px] font-black uppercase leading-tight">Iniciados</h3>
-                    <p className="text-3xl sm:text-4xl font-black mt-1">{dashboardStats.totalIniciados}</p>
+                    <p className="text-3xl sm:text-4xl font-black mt-2">{dashboardStats.totalIniciados}</p>
                   </div>
-                  <div onClick={() => setViewModal({type:'platina', data: 'Platina'})} className={`p-4 ${theme.border} bg-[#E0F2FE] shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity`}>
+                  <div onClick={() => setViewModal({type:'platina', data: 'Platina'})} className={`p-4 ${theme.border} bg-[#E0F2FE] shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-between`}>
                     <h3 className="text-[10px] sm:text-[11px] font-black uppercase leading-tight">Platinas</h3>
-                    <p className="text-3xl sm:text-4xl font-black mt-1">{dashboardStats.platinas}</p>
+                    <p className="text-3xl sm:text-4xl font-black mt-2">{dashboardStats.platinas}</p>
                   </div>
-                  <div className={`p-4 ${theme.border} bg-[#93C5FD] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
+                  <div className={`p-4 ${theme.border} bg-[#93C5FD] shadow-[4px_4px_0_0_rgba(15,23,42,1)] flex flex-col justify-between`}>
                     <h3 className="text-[10px] sm:text-[11px] font-black uppercase leading-tight">Nota Média</h3>
-                    <p className="text-3xl sm:text-4xl font-black mt-1">{dashboardStats.avgNota}</p>
+                    <p className="text-3xl sm:text-4xl font-black mt-2">{dashboardStats.avgNota}</p>
                   </div>
-                  <div onClick={() => setViewModal({type:'note', data: 'S'})} className={`p-4 ${theme.border} bg-gradient-to-r from-[#FF8B94] to-[#FFD3B6] shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity`}>
+                  <div onClick={() => setViewModal({type:'note', data: 'S'})} className={`p-4 ${theme.border} bg-gradient-to-r from-[#FF8B94] to-[#FFD3B6] shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-between`}>
                     <h3 className="text-[10px] sm:text-[11px] font-black uppercase leading-tight">Obras-Primas</h3>
-                    <p className="text-3xl sm:text-4xl font-black mt-1">{dashboardStats.sRanks}</p>
+                    <p className="text-3xl sm:text-4xl font-black mt-2">{dashboardStats.sRanks}</p>
                   </div>
-                  <div className={`p-4 ${theme.border} bg-[#FDE047] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
+                  <div className={`p-4 ${theme.border} bg-[#FDE047] shadow-[4px_4px_0_0_rgba(15,23,42,1)] flex flex-col justify-between`}>
                     <h3 className="text-[10px] sm:text-[11px] font-black uppercase leading-tight">Investido</h3>
-                    <p className="text-lg sm:text-xl font-black mt-3">{formatCurrency(dashboardStats.totalGasto)}</p>
+                    <p className="text-lg sm:text-xl font-black mt-2">{formatCurrency(dashboardStats.totalGasto)}</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-                  <PieChartUI 
-                     title="Status da Biblioteca" 
-                     slices={getPieSlices()} 
-                     onClickSlice={(s) => setViewModal({type: s.type, data: s.label})} 
-                  />
-                  <PieChartUI 
-                     title="Consoles Mais Jogados" 
-                     slices={getGenericPieSlices(dashboardStats.consoles, 'console')} 
-                     onClickSlice={(s) => s.type && setViewModal({type: s.type, data: s.data})} 
-                  />
-                  <PieChartUI 
-                     title="Gêneros Mais Jogados" 
-                     slices={getGenericPieSlices(dashboardStats.generos, 'genre')} 
-                     onClickSlice={(s) => s.type && setViewModal({type: s.type, data: s.data})} 
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
                   {/* Descontos por jogo */}
                   <div className={`lg:col-span-2 p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] h-full min-h-[300px]`}>
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 border-b-[3px] border-slate-900 pb-2 gap-2">
@@ -1248,6 +1311,7 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* GRÁFICOS DE PIZZA COMPACTOS */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 items-start">
                   <PieChartUI 
                      title="Status da Biblioteca" 
@@ -1276,7 +1340,7 @@ export default function App() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
                    
                    {/* Dificuldade */}
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] h-fit`}>
@@ -1474,7 +1538,7 @@ export default function App() {
              </div>
           )}
 
-          {}
+          {/* LISTAS FINALS & BACKLOG */}
           {(activeTab === 'finished' || activeTab === 'backlog') && (() => {
              const isBacklog = activeTab === 'backlog';
              const totalPages = Math.ceil(sortedAndFilteredGames.length / ITEMS_PER_PAGE);
@@ -1493,7 +1557,7 @@ export default function App() {
             )
           })()}
 
-          {}
+          {/* ADICIONAR NOVO */}
           {activeTab === 'add' && (
             <div className={`p-6 bg-white ${theme.border} ${theme.card} max-w-4xl mx-auto`}>
               <h2 className="text-xl font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-2">Adicionar Novo (Insere no topo da Planilha)</h2>
@@ -1539,7 +1603,7 @@ export default function App() {
                         <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input placeholder="69,90" value={formData.preco} onChange={e=>setFormData({...formData, preco: e.target.value})} className={theme.input} /></div>
                         <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço S/ Desconto</label><input placeholder="132,90" value={formData.preco_original} onChange={e=>setFormData({...formData, preco_original: e.target.value})} className={theme.input} /></div>
                         <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input list="suportes-list" value={formData.suporte} onChange={e=>setFormData({...formData, suporte: e.target.value})} className={theme.input} /></div>
-                        <div className="flex flex-col"><label className="text-xs font-black uppercase">Prioridade</label><select value={formData.prioridade} onChange={e=>setFormData({...formData, prioridade: e.target.value})} className={theme.input}><option value=""></option>{Array.from({length: maxBacklogPriority}).map((_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}</select></div>
+                        <div className="flex flex-col"><label className="text-xs font-black uppercase">Prioridade</label><select value={formData.prioridade} onChange={e=>setFormData({...formData, prioridade: e.target.value})} className={theme.input}><option value=""></option>{renderPriorityOptions(null)}</select></div>
                      </>
                   )}
                   
@@ -1549,7 +1613,7 @@ export default function App() {
             </div>
           )}
 
-          {}
+          {/* CONFIGURAÇÕES */}
           {activeTab === 'config' && (
              <div className={`max-w-xl mx-auto bg-white p-8 ${theme.border} ${theme.card}`}>
                 <h2 className="text-2xl font-black mb-4 uppercase text-center">Alterar Conexão</h2>
@@ -1693,7 +1757,15 @@ export default function App() {
                         <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Suporte</span><span className="font-bold">{viewModal.data.suporte && viewModal.data.suporte !== '-' ? viewModal.data.suporte : ''}</span></div>
                         
                         {viewModal.data.status === 'Backlog' && (
-                           <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Prioridade</span><span className="font-bold">{getVal(viewModal.data, ['prioridade']) || '-'}</span></div>
+                           <div className="flex flex-col"><span className="text-[10px] font-black uppercase text-slate-500">Prioridade</span>
+                             {viewModal.data.prioridade ? (
+                                <div>
+                                   <span className="inline-block px-2 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(0,0,0,1)] font-black text-[12px]" style={{backgroundColor: getPriorityColorHex(viewModal.data.prioridade, dashboardStats.totalBacklog), color: '#0f172a'}}>
+                                      {viewModal.data.prioridade}
+                                   </span>
+                                </div>
+                             ) : <span className="font-bold">-</span>}
+                           </div>
                         )}
 
                       </div>
@@ -1757,7 +1829,7 @@ export default function App() {
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input value={fichaData.preco} onChange={e=>setFichaData({...fichaData, preco: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço s/ Desconto</label><input value={fichaData.preco_original} onChange={e=>setFichaData({...fichaData, preco_original: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input list="suportes-list-edit" value={fichaData.suporte} onChange={e=>setFichaData({...fichaData, suporte: e.target.value})} className={theme.input} /></div>
-                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Prioridade</label><select value={fichaData.prioridade} onChange={e=>setFichaData({...fichaData, prioridade: e.target.value})} className={theme.input}><option value=""></option>{Array.from({length: maxBacklogPriority}).map((_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}</select></div>
+                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Prioridade</label><select value={fichaData.prioridade} onChange={e=>setFichaData({...fichaData, prioridade: e.target.value})} className={theme.input}><option value=""></option>{renderPriorityOptions(fichaData.id)}</select></div>
                          </>
                       )}
                     </div>
