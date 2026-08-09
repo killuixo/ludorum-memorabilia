@@ -312,6 +312,48 @@ const MultiSelectDropdown = ({ label, options, selected, onChange }) => {
   );
 };
 
+const PieChartUI = ({ title, slices, onClickSlice }) => {
+   if (!slices || slices.length === 0) return null;
+   return (
+     <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] flex flex-col items-center justify-between h-full min-h-[300px]`}>
+       <h3 className="text-sm font-black uppercase mb-2 w-full text-center border-b-[3px] border-slate-900 pb-2">{title}</h3>
+       <div className="w-full flex-grow flex items-center justify-center py-2 relative">
+         <svg viewBox="-1.2 -1.2 2.4 2.4" className="w-40 h-40 transform -rotate-90 drop-shadow-md">
+            {slices.map(s => {
+               const getCoords = (percent) => [Math.cos(2*Math.PI*percent), Math.sin(2*Math.PI*percent)];
+               const [startX, startY] = getCoords(s.start);
+               const [endX, endY] = getCoords(s.end);
+               const largeArc = s.end - s.start > 0.5 ? 1 : 0;
+               const pathData = s.end - s.start >= 1 
+                  ? `M -1 0 A 1 1 0 1 1 1 0 A 1 1 0 1 1 -1 0`
+                  : `M 0 0 L ${startX} ${startY} A 1 1 0 ${largeArc} 1 ${endX} ${endY} Z`;
+               
+               const midP = s.start + (s.end - s.start)/2;
+               const [tX, tY] = getCoords(midP);
+               return (
+                 <g key={s.id} onClick={() => onClickSlice && onClickSlice(s)} className="cursor-pointer hover:opacity-80 transition-opacity">
+                    <path d={pathData} fill={s.color} stroke="#0f172a" strokeWidth="0.04" />
+                    <text x={tX * 0.65} y={tY * 0.65 - 0.08} fill="white" stroke="white" strokeWidth="0.06" strokeLinejoin="round" fontSize="0.25" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-black" transform={`rotate(90 ${tX * 0.65} ${tY * 0.65 - 0.08})`}>{s.count}</text>
+                    <text x={tX * 0.65} y={tY * 0.65 - 0.08} fill="#0f172a" fontSize="0.25" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-black" transform={`rotate(90 ${tX * 0.65} ${tY * 0.65 - 0.08})`}>{s.count}</text>
+                    
+                    <text x={tX * 0.65} y={tY * 0.65 + 0.18} fill="white" stroke="white" strokeWidth="0.04" strokeLinejoin="round" fontSize="0.13" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-bold" transform={`rotate(90 ${tX * 0.65} ${tY * 0.65 + 0.18})`}>{Math.round(s.pct)}%</text>
+                    <text x={tX * 0.65} y={tY * 0.65 + 0.18} fill="#0f172a" fontSize="0.13" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-bold" transform={`rotate(90 ${tX * 0.65} ${tY * 0.65 + 0.18})`}>{Math.round(s.pct)}%</text>
+                 </g>
+               )
+            })}
+         </svg>
+       </div>
+       <div className="w-full flex flex-col gap-2 border-t-[3px] border-slate-900 pt-3 max-h-[90px] overflow-y-auto custom-scrollbar">
+          {slices.map(s => (
+             <div key={s.id} onClick={() => onClickSlice && onClickSlice(s)} className="flex justify-between items-center text-[10px] font-black uppercase cursor-pointer hover:opacity-70 transition-opacity">
+                <div className="flex items-center gap-1.5"><div className="w-3 h-3 border-2 border-slate-900" style={{backgroundColor: s.color}}></div><span className="truncate max-w-[150px]">{s.label}</span></div>
+             </div>
+          ))}
+       </div>
+     </div>
+   )
+};
+
 const Icons = {
   Home: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>,
   List: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>,
@@ -681,6 +723,26 @@ export default function App() {
      return slices;
   };
 
+  const getGenericPieSlices = (dataObj, type) => {
+     let entries = Object.keys(dataObj).map(k => ({ label: k, count: dataObj[k].count, type, data: k }));
+     entries.sort((a,b) => b.count - a.count);
+     let top = entries.slice(0, 5);
+     let rest = entries.slice(5).reduce((acc, curr) => acc + curr.count, 0);
+     if (rest > 0) top.push({ id: 'outros', label: 'Outros', count: rest, type: null, data: null });
+     
+     let total = top.reduce((acc, curr) => acc + curr.count, 0);
+     let colors = ['#A8E6CF', '#FFD3B6', '#93C5FD', '#C4B5FD', '#FCA5A5', '#E2E8F0'];
+     
+     let slices = [];
+     let cp = 0;
+     top.forEach((item, i) => {
+        let pct = item.count / total;
+        slices.push({ ...item, id: item.id || item.label, start: cp, end: cp + pct, pct: pct * 100, color: colors[i % colors.length] });
+        cp += pct;
+     });
+     return slices;
+  };
+
   const Th = ({ label, sortKey, className = "", onClickOverride }) => (
     <th onClick={() => onClickOverride ? onClickOverride() : handleSort(sortKey)} className={`p-2 border-r-[3px] border-slate-900 cursor-pointer hover:bg-black/10 transition-colors whitespace-nowrap ${className}`}>
       <div className={`flex items-center gap-1 ${className.includes('text-center') ? 'justify-center' : 'justify-between'}`}>
@@ -712,7 +774,7 @@ export default function App() {
   };
 
   const PaginationControls = ({ current, total, onChange }) => {
-    if (total <= 1) return null;
+    if (total <= 1 || viewMode === 'table') return null;
     return (
        <div className="flex justify-center items-center gap-4 mt-6">
           <button disabled={current === 1} onClick={() => onChange(current - 1)} className={`px-3 py-1 font-black uppercase border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] ${current === 1 ? 'opacity-50 cursor-not-allowed bg-slate-200' : 'bg-white hover:bg-slate-100 hover:-translate-y-0.5'} transition-transform`}>Anterior</button>
@@ -801,7 +863,7 @@ export default function App() {
         <thead className="sticky top-0 z-10 shadow-sm">
           <tr className={`${activeTab === 'finished' || (viewModal && viewModal.type !== 'backlog_iniciado' && viewModal.type !== 'backlog_nao_iniciado') ? theme.gold : theme.cyan} border-b-[3px] border-slate-900 uppercase font-black text-slate-900`}>
             {!isBacklog && <Th label="#" sortKey="ordem" className="text-center w-10" />}
-            {isBacklog && <Th label={<div title="Prioridade / Iniciado"><Icons.Alert /></div>} sortKey="inicio" className="text-center w-10" />}
+            {isBacklog && <Th label={<div className="font-black text-lg text-slate-700" title="Prioridade / Iniciado">!</div>} sortKey="inicio" className="text-center w-10" />}
             <Th label="NOME DO JOGO" sortKey="titulo" />
             <Th label="CONSOLE" sortKey="plataforma" />
             <Th label="GÊNERO" sortKey="franquia" />
@@ -1014,11 +1076,10 @@ export default function App() {
 
         <main className="p-4 sm:p-6 overflow-x-auto custom-scrollbar">
           
-          {/* BARRA DE FILTROS COMPACTA */}
+          {}
           {(activeTab === 'dashboard' || activeTab === 'finished' || activeTab === 'backlog') && (
             <div className="flex flex-row flex-wrap items-center gap-2 mb-6 w-full bg-white p-2 border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)]">
                
-               {/* View Mode Toggle */}
                {(activeTab === 'finished' || activeTab === 'backlog') && (
                   <div className="flex items-center gap-1 border-r-[3px] border-slate-900 pr-2 mr-1">
                      <button onClick={() => setViewMode('table')} className={`p-1.5 border-[2px] border-slate-900 transition-colors hover:-translate-y-0.5 ${viewMode === 'table' ? theme.gold : 'bg-slate-100 hover:bg-slate-200'}`} title="Tabela"><Icons.List /></button>
@@ -1050,7 +1111,7 @@ export default function App() {
           {activeTab === 'dashboard' && (
              <div className="flex flex-col gap-6">
                 
-                {/* Cards Estatísticos Superiores - Reordenados */}
+                {/* Cards Estatísticos Superiores */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
                   <div onClick={()=>setActiveTab('finished')} className={`p-4 ${theme.border} bg-[#A8E6CF] shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity`}>
                     <h3 className="text-[10px] sm:text-[11px] font-black uppercase leading-tight">Finalizados</h3>
@@ -1078,58 +1139,29 @@ export default function App() {
                   </div>
                   <div className={`p-4 ${theme.border} bg-[#FDE047] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
                     <h3 className="text-[10px] sm:text-[11px] font-black uppercase leading-tight">Investido</h3>
-                    <p className="text-lg sm:text-xl font-black mt-3">{dashboardStats.totalGastoStr}</p>
+                    <p className="text-lg sm:text-xl font-black mt-3">{formatCurrency(dashboardStats.totalGasto)}</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-                  
-                  {/* Status Pizza */}
-                  <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] flex flex-col items-center justify-between h-full min-h-[300px]`}>
-                     <h3 className="text-sm font-black uppercase mb-2 w-full text-center border-b-[3px] border-slate-900 pb-2">Status da Biblioteca</h3>
-                     
-                     <div className="w-full flex-grow flex items-center justify-center py-2 relative">
-                       <svg viewBox="-1.2 -1.2 2.4 2.4" className="w-40 h-40 transform -rotate-90 drop-shadow-md">
-                          {getPieSlices().map(s => {
-                             const getCoords = (percent) => [Math.cos(2*Math.PI*percent), Math.sin(2*Math.PI*percent)];
-                             const [startX, startY] = getCoords(s.start);
-                             const [endX, endY] = getCoords(s.end);
-                             const largeArc = s.end - s.start > 0.5 ? 1 : 0;
-                             const pathData = s.end - s.start === 1 
-                                ? `M -1 0 A 1 1 0 1 1 1 0 A 1 1 0 1 1 -1 0`
-                                : `M 0 0 L ${startX} ${startY} A 1 1 0 ${largeArc} 1 ${endX} ${endY} Z`;
-                             
-                             const midP = s.start + (s.end - s.start)/2;
-                             const [tX, tY] = getCoords(midP);
-                             return (
-                               <g key={s.id} onClick={() => setViewModal({type: s.type, data: s.label})} className="cursor-pointer hover:opacity-80 transition-opacity">
-                                  <path d={pathData} fill={s.color} stroke="#0f172a" strokeWidth="0.04" />
-                                  
-                                  {/* Renderizando texto com contorno branco para leitura perfeita */}
-                                  <text x={tX * 0.6} y={tY * 0.6 - 0.05} fill="white" stroke="white" strokeWidth="0.08" strokeLinejoin="round" fontSize="0.25" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-black" transform={`rotate(90 ${tX * 0.6} ${tY * 0.6 - 0.05})`}>{s.count}</text>
-                                  <text x={tX * 0.6} y={tY * 0.6 - 0.05} fill="#0f172a" fontSize="0.25" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-black" transform={`rotate(90 ${tX * 0.6} ${tY * 0.6 - 0.05})`}>{s.count}</text>
-                                  
-                                  <text x={tX * 0.6} y={tY * 0.6 + 0.18} fill="white" stroke="white" strokeWidth="0.05" strokeLinejoin="round" fontSize="0.14" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-bold" transform={`rotate(90 ${tX * 0.6} ${tY * 0.6 + 0.18})`}>{Math.round(s.pct)}%</text>
-                                  <text x={tX * 0.6} y={tY * 0.6 + 0.18} fill="#0f172a" fontSize="0.14" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-bold" transform={`rotate(90 ${tX * 0.6} ${tY * 0.6 + 0.18})`}>{Math.round(s.pct)}%</text>
-                               </g>
-                             )
-                          })}
-                       </svg>
-                     </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                  <PieChartUI 
+                     title="Status da Biblioteca" 
+                     slices={getPieSlices()} 
+                     onClickSlice={(s) => setViewModal({type: s.type, data: s.label})} 
+                  />
+                  <PieChartUI 
+                     title="Consoles Mais Jogados" 
+                     slices={getGenericPieSlices(dashboardStats.consoles, 'console')} 
+                     onClickSlice={(s) => s.type && setViewModal({type: s.type, data: s.data})} 
+                  />
+                  <PieChartUI 
+                     title="Gêneros Mais Jogados" 
+                     slices={getGenericPieSlices(dashboardStats.generos, 'genre')} 
+                     onClickSlice={(s) => s.type && setViewModal({type: s.type, data: s.data})} 
+                  />
+                </div>
 
-                     <div className="w-full flex flex-col gap-2 border-t-[3px] border-slate-900 pt-3">
-                        <div className="flex justify-between items-center text-[10px] font-black uppercase cursor-pointer hover:opacity-70 transition-opacity" onClick={()=>setViewModal({type:'finalizados', data:'Finalizados'})}>
-                           <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-[#A8E6CF] border-2 border-slate-900"></div>Finalizados</div>
-                        </div>
-                        <div className="flex justify-between items-center text-[10px] font-black uppercase cursor-pointer hover:opacity-70 transition-opacity" onClick={()=>setViewModal({type:'backlog_iniciado', data:'Iniciados'})}>
-                           <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-[#FFD3B6] border-2 border-slate-900"></div>Iniciados (Jogando)</div>
-                        </div>
-                        <div className="flex justify-between items-center text-[10px] font-black uppercase cursor-pointer hover:opacity-70 transition-opacity" onClick={()=>setViewModal({type:'backlog_nao_iniciado', data:'Backlog (Fila)'})}>
-                           <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-[#E2E8F0] border-2 border-slate-900"></div>Backlog (Fila)</div>
-                        </div>
-                     </div>
-                  </div>
-
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                   {/* Descontos por jogo */}
                   <div className={`lg:col-span-2 p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] h-full min-h-[300px]`}>
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 border-b-[3px] border-slate-900 pb-2 gap-2">
@@ -1182,13 +1214,13 @@ export default function App() {
                   <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] flex flex-col justify-between items-center h-full min-h-[300px]`}>
                     <h3 className="text-sm font-black uppercase mb-4 w-full text-center border-b-[3px] border-slate-900 pb-2">Economia Geral</h3>
                     <div className="w-full flex-grow flex flex-row justify-center items-center mb-4 mt-2 gap-2">
-                       <div className="w-[80px] flex flex-col border-[3px] border-slate-900 h-full max-h-[160px] bg-slate-100 relative shadow-[4px_4px_0_0_rgba(15,23,42,1)]" title={`Gasto Total + Economia Total = R$ ${(dashboardStats.totalGasto + dashboardStats.totalEconomia).toFixed(2).replace('.', ',')}`}>
+                       <div className="w-[80px] sm:w-[100px] flex flex-col border-[3px] border-slate-900 h-full max-h-[160px] bg-slate-100 relative shadow-[4px_4px_0_0_rgba(15,23,42,1)]" title={`Gasto Total + Economia Total = R$ ${(dashboardStats.totalGasto + dashboardStats.totalEconomia).toFixed(2).replace('.', ',')}`}>
                           <div className="w-full bg-[#EF4444] flex items-center justify-center flex-col transition-all group relative cursor-help" style={{height: `${dashboardStats.totalGasto + dashboardStats.totalEconomia > 0 ? (dashboardStats.totalEconomia / (dashboardStats.totalGasto + dashboardStats.totalEconomia)) * 100 : 0}%`}}>
-                             <span className="text-white font-black text-[10px] sm:text-xs">R$ {dashboardStats.totalEconomia.toFixed(0)}</span>
+                             <span className="text-white font-black text-[10px] sm:text-xs text-center px-1 overflow-hidden">{formatCurrency(dashboardStats.totalEconomia)}</span>
                              <div className="absolute top-1/2 left-full -translate-y-1/2 ml-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-slate-900 text-white text-[10px] px-2 py-1 z-10 pointer-events-none">Total Economizado</div>
                           </div>
                           <div className="w-full bg-[#3B82F6] flex items-center justify-center flex-col transition-all group relative cursor-help" style={{height: `${dashboardStats.totalGasto + dashboardStats.totalEconomia > 0 ? (dashboardStats.totalGasto / (dashboardStats.totalGasto + dashboardStats.totalEconomia)) * 100 : 0}%`}}>
-                             <span className="text-white font-black text-[10px] sm:text-xs">R$ {dashboardStats.totalGasto.toFixed(0)}</span>
+                             <span className="text-white font-black text-[10px] sm:text-xs text-center px-1 overflow-hidden">{formatCurrency(dashboardStats.totalGasto)}</span>
                              <div className="absolute top-1/2 left-full -translate-y-1/2 ml-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-slate-900 text-white text-[10px] px-2 py-1 z-10 pointer-events-none">Total Gasto Real</div>
                           </div>
                        </div>
@@ -1196,12 +1228,12 @@ export default function App() {
                            <span className="text-[50px] font-light leading-none -translate-y-1">{'}'}</span>
                            <div className="flex flex-col ml-1">
                              <span className="text-[10px] font-black uppercase leading-tight text-slate-500">Valor Cheio</span>
-                             <span className="text-sm font-black leading-none">R$ {(dashboardStats.totalGasto + dashboardStats.totalEconomia).toFixed(0)}</span>
+                             <span className="text-sm font-black leading-none">{formatCurrency(dashboardStats.totalGasto + dashboardStats.totalEconomia)}</span>
                            </div>
                        </div>
                     </div>
                     <div className="w-full bg-[#991B1B] text-white p-2 border-[3px] border-slate-900 text-center font-black uppercase sm:text-md shadow-[4px_4px_0_0_rgba(15,23,42,1)]">
-                       Econ. R$ {dashboardStats.totalEconomia.toFixed(2).replace('.', ',')}
+                       Econ. {formatCurrency(dashboardStats.totalEconomia)}
                     </div>
                   </div>
                 </div>
@@ -1409,12 +1441,16 @@ export default function App() {
              const isBacklog = activeTab === 'backlog';
              const totalPages = Math.ceil(sortedAndFilteredGames.length / ITEMS_PER_PAGE);
              const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-             const currentList = sortedAndFilteredGames.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+             const currentList = viewMode === 'table' ? sortedAndFilteredGames : sortedAndFilteredGames.slice(startIndex, startIndex + ITEMS_PER_PAGE);
              
              return (
               <div className="flex flex-col gap-4">
-                {viewMode === 'table' ? renderGameTable(currentList, isBacklog) : renderGameCards(currentList, isBacklog)}
-                <PaginationControls current={currentPage} total={totalPages} onChange={setCurrentPage} />
+                {viewMode === 'table' ? renderGameTable(currentList, isBacklog) : (
+                  <>
+                     {renderGameCards(currentList, isBacklog)}
+                     <PaginationControls current={currentPage} total={totalPages} onChange={setCurrentPage} />
+                  </>
+                )}
               </div>
             )
           })()}
@@ -1719,8 +1755,8 @@ export default function App() {
                     }
 
                     if (viewModal.type === 'finalizados') return g.status === 'Finalizado';
-                    if (viewModal.type === 'backlog_iniciado') return g.status === 'Backlog' && !!getVal(g, ['inicio', 'iniciado']);
-                    if (viewModal.type === 'backlog_nao_iniciado') return g.status === 'Backlog' && !getVal(g, ['inicio', 'iniciado']);
+                    if (viewModal.type === 'backlog_iniciado') return g.status === 'Backlog' && !!getVal(g, ['inicio', 'iniciado']) && getVal(g, ['inicio', 'iniciado']) !== '-';
+                    if (viewModal.type === 'backlog_nao_iniciado') return g.status === 'Backlog' && (!getVal(g, ['inicio', 'iniciado']) || getVal(g, ['inicio', 'iniciado']) === '-');
 
                     return false;
                  });
