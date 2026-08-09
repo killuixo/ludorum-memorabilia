@@ -680,16 +680,30 @@ export default function App() {
     let stats = { 
       totalJogos, totalBacklog, totalIniciados, sRanks, avgNota, totalGasto: 0, totalEconomia: 0, platinas: 0,
       notas: { '10': 0, '9': 0, '8': 0, '7': 0, '6': 0, '5': 0, '4': 0, '3': 0, '2': 0, '1': 0, '0': 0 },
-      dif: { A: 0, B: 0, C: 0, D: 0, E: 0 }, consoles: {}, generos: {}, anos: {}, midiaCategoria: {}, midiaSub: {}
+      dif: { A: 0, B: 0, C: 0, D: 0, E: 0 }, consoles: {}, generos: {}, anos: {}, midiaCategoria: {}, midiaSub: {},
+      ps4: { gasto: 0, anos: 0, essential: 0, deluxe: 0 }
     };
 
+    let earliestPS4Date = new Date().getTime();
+    let hasPS4Date = false;
+    let ps4Gasto = 0;
+
     baseList.forEach(g => {
-      // Calcula gastos incluindo os jogos em Backlog
       let pPago = getNumericPrice(getVal(g, ['preco', 'preco pago']));
       let pOrig = getNumericPrice(getVal(g, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
       
       stats.totalGasto += pPago;
       if(pOrig > pPago && pOrig > 0) stats.totalEconomia += (pOrig - pPago);
+
+      let cNameUpper = String(getVal(g, ['plataforma', 'console']) || '').toUpperCase().trim();
+      if (cNameUpper === 'PS4' || cNameUpper === 'PLAYSTATION 4') {
+         ps4Gasto += pPago;
+         let dIni = parseInputDate(getVal(g, ['inicio', 'iniciado']));
+         if (dIni > 0 && dIni < earliestPS4Date) {
+             earliestPS4Date = dIni;
+             hasPS4Date = true;
+         }
+      }
 
       if (g.status === 'Finalizado') {
           let n = parseFloat(String(getVal(g, ['nota'])).replace(',','.'));
@@ -751,6 +765,22 @@ export default function App() {
       }
     });
 
+    if (!hasPS4Date) earliestPS4Date = new Date('2023-01-01T12:00:00').getTime();
+
+    let latestDate = new Date().getTime();
+    let diffYears = (latestDate - earliestPS4Date) / (1000 * 60 * 60 * 24 * 365.25);
+    if (diffYears < 1) diffYears = 1; 
+
+    const VALOR_ESSENTIAL = 359.90;
+    const VALOR_DELUXE = 691.90;
+
+    stats.ps4 = {
+       gasto: ps4Gasto,
+       anos: diffYears,
+       essential: diffYears * VALOR_ESSENTIAL,
+       deluxe: diffYears * VALOR_DELUXE
+    };
+
     Object.keys(stats.consoles).forEach(c => stats.consoles[c].avgNota = stats.consoles[c].notaCount > 0 ? (stats.consoles[c].totalNota / stats.consoles[c].notaCount).toFixed(1) : 0);
     Object.keys(stats.generos).forEach(c => stats.generos[c].avgNota = stats.generos[c].notaCount > 0 ? (stats.generos[c].totalNota / stats.generos[c].notaCount).toFixed(1) : 0);
     return stats;
@@ -805,14 +835,12 @@ export default function App() {
      let entries = Object.keys(dataObj).map(k => ({ label: k, count: dataObj[k].count, type, data: k }));
      entries.sort((a,b) => b.count - a.count);
      
-     let top = entries; 
-     
-     let total = top.reduce((acc, curr) => acc + curr.count, 0);
+     let total = entries.reduce((acc, curr) => acc + curr.count, 0);
      let colors = ['#A8E6CF', '#FFD3B6', '#93C5FD', '#C4B5FD', '#FCA5A5', '#E2E8F0', '#FDE047', '#FDA4AF', '#86EFAC', '#99F6E4'];
      
      let slices = [];
      let cp = 0;
-     top.forEach((item, i) => {
+     entries.forEach((item, i) => {
         let pct = item.count / total;
         slices.push({ ...item, id: item.id || item.label, start: cp, end: cp + pct, pct: pct * 100, color: colors[i % colors.length] });
         cp += pct;
@@ -1137,7 +1165,6 @@ export default function App() {
         )}
       </div>
 
-      {}
       <div className={`max-w-[1600px] mx-auto ${theme.border} ${theme.card} flex flex-col bg-white overflow-hidden`}>
         {/* NAVEGAÇÃO / ABAS */}
         <nav className="flex flex-row overflow-x-auto sm:grid sm:grid-cols-5 border-b-[3px] border-slate-900 bg-slate-100">
@@ -1237,7 +1264,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* GRÁFICOS DE PIZZA (MOVIDOS PARA CIMA) */}
+                {/* GRÁFICOS DE PIZZA */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 items-start">
                   <PieChartUI 
                      title="Status da Biblioteca" 
@@ -1266,7 +1293,7 @@ export default function App() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-start">
                   {/* Descontos por jogo */}
                   <div className={`lg:col-span-2 p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] h-full min-h-[300px]`}>
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 border-b-[3px] border-slate-900 pb-2 gap-2">
@@ -1341,10 +1368,65 @@ export default function App() {
                        Econ. {formatCurrency(dashboardStats.totalEconomia)}
                     </div>
                   </div>
+
+                  {/* Comparativo PS Plus */}
+                  <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] flex flex-col justify-between items-center h-full min-h-[300px]`}>
+                    <h3 className="text-sm font-black uppercase mb-2 w-full text-center border-b-[3px] border-slate-900 pb-2">Comprar vs Assinar (PS4)</h3>
+                    
+                    {(() => {
+                        let maxVal = Math.max(dashboardStats.ps4.gasto, dashboardStats.ps4.essential, dashboardStats.ps4.deluxe, 1);
+                        let wGasto = (dashboardStats.ps4.gasto / maxVal) * 100;
+                        let wEss = (dashboardStats.ps4.essential / maxVal) * 100;
+                        let wDel = (dashboardStats.ps4.deluxe / maxVal) * 100;
+                        let saved = dashboardStats.ps4.essential - dashboardStats.ps4.gasto;
+
+                        return (
+                          <>
+                             <div className="w-full flex-grow flex flex-col justify-center gap-3 mt-1">
+                                 {/* Gasto */}
+                                 <div className="w-full">
+                                   <div className="flex justify-between text-[10px] font-black uppercase mb-1 text-slate-600">
+                                     <span>Gasto Real (PS4)</span>
+                                     <span className="text-slate-900">{formatCurrency(dashboardStats.ps4.gasto)}</span>
+                                   </div>
+                                   <div className="w-full h-3 bg-slate-100 border-[2px] border-slate-900">
+                                      <div className="h-full bg-[#3B82F6]" style={{width: `${wGasto}%`}}></div>
+                                   </div>
+                                 </div>
+                                 
+                                 {/* Essential */}
+                                 <div className="w-full">
+                                   <div className="flex justify-between text-[10px] font-black uppercase mb-1 text-slate-600">
+                                     <span title={`${dashboardStats.ps4.anos.toFixed(1)} anos de assinatura`} className="cursor-help underline decoration-dashed">Se fosse Essential</span>
+                                     <span className="text-slate-900">{formatCurrency(dashboardStats.ps4.essential)}</span>
+                                   </div>
+                                   <div className="w-full h-3 bg-slate-100 border-[2px] border-slate-900">
+                                      <div className="h-full bg-[#94A3B8]" style={{width: `${wEss}%`}}></div>
+                                   </div>
+                                 </div>
+
+                                 {/* Deluxe */}
+                                 <div className="w-full">
+                                   <div className="flex justify-between text-[10px] font-black uppercase mb-1 text-slate-600">
+                                     <span title={`${dashboardStats.ps4.anos.toFixed(1)} anos de assinatura`} className="cursor-help underline decoration-dashed">Se fosse Deluxe</span>
+                                     <span className="text-slate-900">{formatCurrency(dashboardStats.ps4.deluxe)}</span>
+                                   </div>
+                                   <div className="w-full h-3 bg-slate-100 border-[2px] border-slate-900">
+                                      <div className="h-full bg-[#FCD34D]" style={{width: `${wDel}%`}}></div>
+                                   </div>
+                                 </div>
+                             </div>
+
+                             <div className={`w-full p-2 border-[3px] border-slate-900 text-center font-black uppercase sm:text-[11px] mt-3 shadow-[4px_4px_0_0_rgba(15,23,42,1)] ${saved >= 0 ? 'bg-[#86EFAC] text-slate-900' : 'bg-[#FF8B94] text-slate-900'}`}>
+                                {saved >= 0 ? 'Economizou ' : 'Prejuízo de '}
+                                {formatCurrency(Math.abs(saved))}
+                             </div>
+                          </>
+                        )
+                    })()}
+                  </div>
                 </div>
 
-
-                {}
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
                    
                    {/* Dificuldade */}
@@ -1563,7 +1645,6 @@ export default function App() {
             )
           })()}
 
-          {}
           {/* ADICIONAR NOVO */}
           {activeTab === 'add' && (
             <div className={`p-6 bg-white ${theme.border} ${theme.card} max-w-4xl mx-auto`}>
@@ -1844,7 +1925,6 @@ export default function App() {
                 </>
               )}
 
-              {}
               {/* FICHA DE LISTAGENS FILTRADAS */}
               {viewModal.type !== 'game' && (() => {
                  let filteredList = games.filter(g => {
