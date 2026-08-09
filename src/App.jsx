@@ -245,24 +245,17 @@ const getPriceColorDesc = (priceVal) => {
 };
 
 const getSuporteInfo = (name) => {
-  let n = String(name).toLowerCase();
-  let categoria = 'Digital';
-  if (n.includes('físico') || n.includes('fisico') || n.includes('dvd') || n.includes('bd') || n.includes('blu-ray') || n.includes('cd') || n.includes('cartucho') || n.includes('disco')) {
-     categoria = 'Físico';
-  }
+  let original = String(name || '').trim();
+  if (!original || original === '-') return { categoria: 'Desconhecido', subCategoria: 'Desconhecido' };
   
-  let subCategoria = name || '-';
-  if (n.includes('opl')) subCategoria = 'OPL (Open PS2 Loader)';
-  else if (n.includes('dvd')) subCategoria = 'DVD';
-  else if (n.includes('bd') || n.includes('blu') || n.includes('blu-ray') || n.includes('bluray')) subCategoria = 'Blu-Ray';
-  else if (n.includes('cartucho')) subCategoria = 'Cartucho';
-  else if (n.includes('cd')) subCategoria = 'CD';
-  else if (n.includes('steam')) subCategoria = 'Steam (PC)';
-  else if (n.includes('psn') || n.includes('ps store') || n.includes('playstation store')) subCategoria = 'PlayStation Network (Digital)';
-  else if (n.includes('eshop') || n.includes('nintendo eshop')) subCategoria = 'Nintendo eShop (Digital)';
-  else if (n.includes('xbox live') || n.includes('xbox store')) subCategoria = 'Xbox Store (Digital)';
-  else if (n.includes('epic')) subCategoria = 'Epic Games Store (Digital)';
-  else if (n.includes('gog')) subCategoria = 'GOG (Digital)';
+  let parts = original.split(/\s*[\/\-]\s*/);
+  let categoria = parts[0];
+  let catLower = categoria.toLowerCase();
+  
+  if (catLower.includes('físico') || catLower.includes('fisico')) categoria = 'Físico';
+  else if (catLower.includes('digital')) categoria = 'Digital';
+  
+  let subCategoria = parts.length > 1 ? parts.slice(1).join(' / ') : 'Desconhecido';
   
   return { categoria, subCategoria };
 };
@@ -520,11 +513,9 @@ export default function App() {
 
   const isValBlank = (val) => val === '' || val === null || val === undefined || val === '-' || (typeof val === 'number' && isNaN(val)) || (typeof val === 'number' && val === -1);
 
-  const sortedAndFilteredGames = useMemo(() => {
+  const globalFilteredGames = useMemo(() => {
     let list = games;
-    if (activeTab === 'finished') list = games.filter(g => g.status === 'Finalizado');
-    if (activeTab === 'backlog') list = games.filter(g => g.status === 'Backlog');
-    
+
     if (filters.console.length > 0) list = list.filter(g => filters.console.includes(getVal(g, ['plataforma', 'console'])));
     if (filters.genero.length > 0) list = list.filter(g => filters.genero.includes(getVal(g, ['franquia', 'genero', 'gênero'])));
     if (filters.dif.length > 0) list = list.filter(g => filters.dif.includes(String(getVal(g, ['dificuldade'])).toUpperCase().trim()));
@@ -539,11 +530,6 @@ export default function App() {
       });
     }
 
-    if (activeTab === 'backlog') {
-       if (backlogStatusFilter === 'iniciados') list = list.filter(g => { let ini = getVal(g, ['inicio', 'iniciado']); return ini && ini !== '-'; });
-       if (backlogStatusFilter === 'nao_iniciados') list = list.filter(g => { let ini = getVal(g, ['inicio', 'iniciado']); return !ini || ini === '-'; });
-    }
-
     if (searchTerm) {
       list = list.filter(g => {
         let t = getVal(g, ['titulo', 'nome']);
@@ -553,6 +539,20 @@ export default function App() {
                String(p).toLowerCase().includes(searchTerm.toLowerCase()) ||
                String(f).toLowerCase().includes(searchTerm.toLowerCase());
       });
+    }
+
+    return list;
+  }, [games, filters, searchTerm]);
+
+  const sortedAndFilteredGames = useMemo(() => {
+    let list = [...globalFilteredGames];
+    
+    if (activeTab === 'finished') list = list.filter(g => g.status === 'Finalizado');
+    if (activeTab === 'backlog') list = list.filter(g => g.status === 'Backlog');
+    
+    if (activeTab === 'backlog') {
+       if (backlogStatusFilter === 'iniciados') list = list.filter(g => { let ini = getVal(g, ['inicio', 'iniciado']); return ini && ini !== '-'; });
+       if (backlogStatusFilter === 'nao_iniciados') list = list.filter(g => { let ini = getVal(g, ['inicio', 'iniciado']); return !ini || ini === '-'; });
     }
 
     list.sort((a, b) => {
@@ -607,11 +607,11 @@ export default function App() {
     });
 
     return list;
-  }, [games, activeTab, searchTerm, sortConfig, filters, backlogStatusFilter]);
+  }, [globalFilteredGames, activeTab, sortConfig, backlogStatusFilter]);
 
   const dashboardStats = useMemo(() => {
-    let fin = games.filter(g => g.status === 'Finalizado');
-    let back = games.filter(g => g.status === 'Backlog');
+    let fin = globalFilteredGames.filter(g => g.status === 'Finalizado');
+    let back = globalFilteredGames.filter(g => g.status === 'Backlog');
     
     let totalJogos = fin.length;
     let totalBacklog = back.length;
@@ -627,7 +627,7 @@ export default function App() {
     let stats = { 
       totalJogos, totalBacklog, totalIniciados, sRanks, avgNota, totalGasto: 0, totalEconomia: 0, platinas: 0,
       notas: { '10': 0, '9': 0, '8': 0, '7': 0, '6': 0, '5': 0, '4': 0, '3': 0, '2': 0, '1': 0, '0': 0 },
-      dif: { A: 0, B: 0, C: 0, D: 0, E: 0 }, consoles: {}, generos: {}, anos: {}
+      dif: { A: 0, B: 0, C: 0, D: 0, E: 0 }, consoles: {}, generos: {}, anos: {}, midiaCategoria: {}, midiaSub: {}
     };
 
     fin.forEach(g => {
@@ -652,6 +652,16 @@ export default function App() {
       let cond = String(getVal(g, ['conquistas', 'condicao', 'condição'])).toLowerCase();
 
       if (cond.includes('platina')) stats.platinas++;
+
+      let supInfo = getSuporteInfo(getVal(g, ['suporte']));
+      if (supInfo.categoria !== 'Desconhecido') {
+         if (!stats.midiaCategoria[supInfo.categoria]) stats.midiaCategoria[supInfo.categoria] = { count: 0 };
+         stats.midiaCategoria[supInfo.categoria].count++;
+      }
+      if (supInfo.subCategoria !== 'Desconhecido') {
+         if (!stats.midiaSub[supInfo.subCategoria]) stats.midiaSub[supInfo.subCategoria] = { count: 0 };
+         stats.midiaSub[supInfo.subCategoria].count++;
+      }
 
       let dStr = formatDateStr(getVal(g, ['fim']));
       let year = 'Desc.';
@@ -688,7 +698,7 @@ export default function App() {
     Object.keys(stats.consoles).forEach(c => stats.consoles[c].avgNota = stats.consoles[c].notaCount > 0 ? (stats.consoles[c].totalNota / stats.consoles[c].notaCount).toFixed(1) : 0);
     Object.keys(stats.generos).forEach(c => stats.generos[c].avgNota = stats.generos[c].notaCount > 0 ? (stats.generos[c].totalNota / stats.generos[c].notaCount).toFixed(1) : 0);
     return stats;
-  }, [games]);
+  }, [globalFilteredGames]);
 
   const uniqueOptions = useMemo(() => {
     let opts = { console: new Set(), genero: new Set(), suporte: new Set(), condicao: new Set() };
@@ -1238,6 +1248,34 @@ export default function App() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 items-start">
+                  <PieChartUI 
+                     title="Status da Biblioteca" 
+                     slices={getPieSlices()} 
+                     onClickSlice={(s) => setViewModal({type: s.type, data: s.label})} 
+                  />
+                  <PieChartUI 
+                     title="Mídia: Formatos" 
+                     slices={getGenericPieSlices(dashboardStats.midiaCategoria, 'suporte_cat')} 
+                     onClickSlice={(s) => s.type && setViewModal({type: s.type, data: s.data})} 
+                  />
+                  <PieChartUI 
+                     title="Mídia: Subtipos" 
+                     slices={getGenericPieSlices(dashboardStats.midiaSub, 'suporte_sub')} 
+                     onClickSlice={(s) => s.type && setViewModal({type: s.type, data: s.data})} 
+                  />
+                  <PieChartUI 
+                     title="Top Consoles" 
+                     slices={getGenericPieSlices(dashboardStats.consoles, 'console')} 
+                     onClickSlice={(s) => s.type && setViewModal({type: s.type, data: s.data})} 
+                  />
+                  <PieChartUI 
+                     title="Top Gêneros" 
+                     slices={getGenericPieSlices(dashboardStats.generos, 'genre')} 
+                     onClickSlice={(s) => s.type && setViewModal({type: s.type, data: s.data})} 
+                  />
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
                    
                    {/* Dificuldade */}
@@ -1541,6 +1579,8 @@ export default function App() {
                 {viewModal.type === 'note' && `Jogos com Nota: ${viewModal.data}`}
                 {viewModal.type === 'diff' && `Jogos com Dificuldade: ${viewModal.data}`}
                 {viewModal.type === 'suporte' && `Ficha do Suporte: ${viewModal.data}`}
+                {viewModal.type === 'suporte_cat' && `Formato de Mídia: ${viewModal.data}`}
+                {viewModal.type === 'suporte_sub' && `Subtipo de Mídia: ${viewModal.data}`}
                 {viewModal.type === 'ano' && `Estatísticas de ${viewModal.data}`}
                 {viewModal.type === 'platina' && `Jogos com Platina`}
                 {viewModal.type === 'finalizados' && `Lista de Finalizados`}
@@ -1739,6 +1779,9 @@ export default function App() {
                     if (viewModal.type === 'diff') return g.status === 'Finalizado' && vDiff === viewModal.data;
                     if (viewModal.type === 'suporte') return g.status === 'Finalizado' && vSup === viewModal.data;
                     
+                    if (viewModal.type === 'suporte_cat') return g.status === 'Finalizado' && getSuporteInfo(vSup).categoria === viewModal.data;
+                    if (viewModal.type === 'suporte_sub') return g.status === 'Finalizado' && getSuporteInfo(vSup).subCategoria === viewModal.data;
+
                     if (viewModal.type === 'platina') return g.status === 'Finalizado' && String(getVal(g, ['conquistas', 'condicao', 'condição'])).toLowerCase().includes('platina');
                     if (viewModal.type === 'ano') {
                         let y = 'Desc.';
