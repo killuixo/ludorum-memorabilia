@@ -230,18 +230,18 @@ const getPriceColorPago = (priceVal) => {
   if (priceVal === undefined || priceVal === null || priceVal === '' || priceVal === '-') return 'transparent';
   let p = getNumericPrice(priceVal);
   if (p === 0) return 'transparent';
-  if (p >= 100) return '#FF8B94'; // Alto: Pink
-  if (p >= 40) return '#FFD3B6';  // Médio: Dourado
-  return '#A8E6CF';               // Baixo: Ciano
+  if (p >= 100) return '#FF8B94'; 
+  if (p >= 40) return '#FFD3B6';  
+  return '#A8E6CF';               
 };
 
 const getPriceColorDesc = (priceVal) => {
   if (priceVal === undefined || priceVal === null || priceVal === '' || priceVal === '-') return 'transparent';
   let p = getNumericPrice(priceVal);
   if (p === 0) return 'transparent';
-  if (p >= 100) return '#A8E6CF'; // Alto: Ciano
-  if (p >= 40) return '#FFD3B6';  // Médio: Dourado
-  return '#FF8B94';               // Baixo: Pink
+  if (p >= 100) return '#A8E6CF'; 
+  if (p >= 40) return '#FFD3B6';  
+  return '#FF8B94';               
 };
 
 const getSuporteInfo = (name) => {
@@ -299,7 +299,7 @@ const MultiSelectDropdown = ({ label, options, selected, onChange }) => {
         <span className="text-[10px] shrink-0">▼</span>
       </div>
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-full max-h-60 overflow-y-auto z-50 bg-white border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)] flex flex-col p-1">
+        <div className="absolute top-full left-0 mt-1 w-full max-h-60 overflow-y-auto z-50 bg-white border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)] flex flex-col p-1 custom-scrollbar">
           {options.map(o => (
             <label key={o} className="flex items-center gap-2 p-2 hover:bg-slate-100 cursor-pointer text-xs font-bold uppercase border-b-[2px] border-slate-100 last:border-0 transition-colors">
               <input type="checkbox" checked={selected.includes(o)} onChange={() => toggleOption(o)} className="w-3.5 h-3.5 accent-slate-900 shrink-0 cursor-pointer" />
@@ -315,11 +315,12 @@ const MultiSelectDropdown = ({ label, options, selected, onChange }) => {
 const Icons = {
   Home: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>,
   List: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>,
+  Grid: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg>,
   Plus: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>,
   Settings: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
   SortArrow: ({ asc }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={`w-3 h-3 ml-1 inline-block transition-transform ${asc ? '' : 'rotate-180'}`}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /></svg>,
   Close: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>,
-  Gamepad: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4 inline-block mr-1 text-[#0284C7] align-text-bottom"><path strokeLinecap="round" strokeLinejoin="round" d="M7 11v2m-1-1h2m7-1h.01M15 13h.01M6.5 6h11c2.5 0 4.5 2 4.5 4.5v1c0 2.5-2 4.5-4.5 4.5H16l-2 3h-4l-2-3H6.5C4 16 2 14 2 11.5v-1C2 8 4 6 6.5 6z" /></svg>
+  Gamepad: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5 inline-block text-cyan-600 align-text-bottom"><path strokeLinecap="round" strokeLinejoin="round" d="M7 11v2m-1-1h2m7-1h.01M15 13h.01M6.5 6h11c2.5 0 4.5 2 4.5 4.5v1c0 2.5-2 4.5-4.5 4.5H16l-2 3h-4l-2-3H6.5C4 16 2 14 2 11.5v-1C2 8 4 6 6.5 6z" /></svg>
 };
 
 export default function App() {
@@ -350,6 +351,10 @@ export default function App() {
   const [fichaData, setFichaData] = useState({});
   const [fichaStatus, setFichaStatus] = useState({ type: 'idle', message: '' });
 
+  const [viewMode, setViewMode] = useState('table');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 30;
+
   const blankForm = { status: 'Finalizado', titulo: '', plataforma: '', franquia: '', inicio: '', fim: '', tempo: '', nota: '', dificuldade: '', conquistas: '', preco: '', preco_original: '', suporte: '', midia: '', comentarios: '', prioridade: '' };
   const [formData, setFormData] = useState(blankForm);
 
@@ -366,6 +371,10 @@ export default function App() {
     }, 1500);
     return () => clearTimeout(bootTimer);
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, filters, searchTerm, sortConfig, viewMode]);
 
   const fetchGames = async (url) => {
     setSyncStatus({ type: 'loading', message: 'Sincronizando com a Planilha...' });
@@ -552,13 +561,21 @@ export default function App() {
 
   const dashboardStats = useMemo(() => {
     let fin = sortedAndFilteredGames.filter(g => g.status === 'Finalizado');
+    let back = sortedAndFilteredGames.filter(g => g.status === 'Backlog');
+    
     let totalJogos = fin.length;
+    let totalBacklog = back.length;
+    let totalIniciados = back.filter(g => {
+        let i = getVal(g, ['inicio', 'iniciado']);
+        return i && i !== '-';
+    }).length;
+
     let sRanks = fin.filter(g => String(getVal(g, ['nota'])).toUpperCase().trim() === 'S').length;
     let notasValidas = fin.map(g => parseFloat(String(getVal(g, ['nota'])).replace(',','.'))).filter(n => !isNaN(n));
     let avgNota = notasValidas.length > 0 ? (notasValidas.reduce((a,b)=>a+b,0) / notasValidas.length).toFixed(1) : 0;
     
     let stats = { 
-      totalJogos, sRanks, avgNota, totalGasto: 0, totalEconomia: 0, platinas: 0,
+      totalJogos, totalBacklog, totalIniciados, sRanks, avgNota, totalGasto: 0, totalEconomia: 0, platinas: 0,
       notas: { '10': 0, '9': 0, '8': 0, '7': 0, '6': 0, '5': 0, '4': 0, '3': 0, '2': 0, '1': 0, '0': 0 },
       dif: { A: 0, B: 0, C: 0, D: 0, E: 0 }, consoles: {}, generos: {}, anos: {}
     };
@@ -658,8 +675,8 @@ export default function App() {
   };
 
   const Th = ({ label, sortKey, className = "" }) => (
-    <th onClick={() => handleSort(sortKey)} className={`p-2 border-r-[3px] border-slate-900 cursor-pointer hover:bg-black/5 transition-colors whitespace-nowrap ${className}`}>
-      <div className="flex items-center justify-between gap-1">
+    <th onClick={() => handleSort(sortKey)} className={`p-2 border-r-[3px] border-slate-900 cursor-pointer hover:bg-black/10 transition-colors whitespace-nowrap ${className}`}>
+      <div className={`flex items-center gap-1 ${className.includes('text-center') ? 'justify-center' : 'justify-between'}`}>
         <span>{label}</span>
         {sortConfig.key === sortKey && <Icons.SortArrow asc={sortConfig.direction === 'asc'} />}
       </div>
@@ -667,7 +684,7 @@ export default function App() {
   );
 
   const MiniTh = ({ label, sortKey, tableKey, align="left" }) => (
-    <th onClick={() => handleTopSort(tableKey, sortKey)} className={`pb-1 cursor-pointer hover:opacity-70 transition-opacity text-${align}`}>
+    <th onClick={() => handleTopSort(tableKey, sortKey)} className={`pb-1 px-1 cursor-pointer hover:opacity-70 transition-opacity text-${align}`}>
         <div className={`flex items-center gap-1 ${align === 'center' ? 'justify-center' : align === 'right' ? 'justify-end' : 'justify-start'}`}>
             {label}
             {topSorts[tableKey].key === sortKey && <Icons.SortArrow asc={topSorts[tableKey].dir === 'asc'} />}
@@ -675,14 +692,107 @@ export default function App() {
     </th>
   );
 
-  const renderGameTable = (list) => {
-    const isBacklog = activeTab === 'backlog' && !viewModal;
+  const displayCond = (cond) => {
+    if (!cond || cond === '-') return '';
+    if (String(cond).toLowerCase().includes('platina')) {
+      return (
+        <span onClick={(e) => { e.stopPropagation(); setViewModal({type:'platina', data: 'Platina'}); }} className="inline-block px-2 py-0.5 font-black text-[10px] uppercase border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] bg-gradient-to-r from-[#FFD3B6] via-[#A8E6CF] to-[#FF8B94] animate-[pulse_2s_ease-in-out_infinite] text-slate-900 cursor-pointer hover:-translate-y-0.5 transition-transform">
+           🏆 {cond}
+        </span>
+      );
+    }
+    return cond;
+  };
+
+  const PaginationControls = ({ current, total, onChange }) => {
+    if (total <= 1) return null;
     return (
-    <div className={`overflow-x-auto border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)] bg-white pb-2 max-w-full`}>
+       <div className="flex justify-center items-center gap-4 mt-6">
+          <button disabled={current === 1} onClick={() => onChange(current - 1)} className={`px-3 py-1 font-black uppercase border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] ${current === 1 ? 'opacity-50 cursor-not-allowed bg-slate-200' : 'bg-white hover:bg-slate-100 hover:-translate-y-0.5'} transition-transform`}>Anterior</button>
+          <span className="font-black text-xs text-slate-700 bg-white px-3 py-1 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]">Pág. {current} de {total}</span>
+          <button disabled={current === total} onClick={() => onChange(current + 1)} className={`px-3 py-1 font-black uppercase border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] ${current === total ? 'opacity-50 cursor-not-allowed bg-slate-200' : 'bg-white hover:bg-slate-100 hover:-translate-y-0.5'} transition-transform`}>Próxima</button>
+       </div>
+    )
+  }
+
+  const renderGameCards = (list, isBacklogOverride) => {
+    const isBacklog = isBacklogOverride ?? (activeTab === 'backlog' && !viewModal);
+    if (list.length === 0) return <div className="p-8 text-center text-slate-500 font-black uppercase tracking-widest text-lg bg-white border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)]">Nenhum jogo nesta lista.</div>;
+    return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+            {list.map((game, i) => {
+                let visualId = getVal(game, ['#', 'ordem', 'numero']) || game._fallbackId;
+                let titulo = getVal(game, ['titulo', 'nome']);
+                let plataforma = getVal(game, ['plataforma', 'console']);
+                let genero = getVal(game, ['franquia', 'genero', 'gênero']);
+                let inicio = getVal(game, ['inicio', 'iniciado']);
+                let fim = getVal(game, ['fim', 'termino']);
+                let tempo = getVal(game, ['tempo']);
+                let nota = getVal(game, ['nota']);
+                let dif = getVal(game, ['dificuldade']);
+                let cond = getVal(game, ['conquistas', 'condicao', 'condição']);
+                let pricePago = getVal(game, ['preco', 'preco pago']);
+                let priceSemDesc = getVal(game, ['preco_original', 'preco sem desconto', 'preço sem desconto']);
+                let sup = getVal(game, ['suporte']);
+                let prioridade = getVal(game, ['prioridade']);
+                const consoleStyle = getConsoleStyle(plataforma);
+                const displayClean = (val) => (val && val !== '-' ? val : '');
+                let isStartedBacklog = isBacklog && inicio && inicio !== '-';
+                
+                return (
+                    <div key={game.id || i} onClick={() => {
+                        setFichaData({...game, '#': visualId, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc, prioridade, inicio});
+                        setViewModal({type:'game', data: {...game, '#': visualId, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc, inicio, fim, tempo, nota, dificuldade: dif, conquistas: cond, suporte: sup, prioridade}});
+                        setIsEditingFicha(false);
+                    }} className={`border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)] p-4 flex flex-col gap-2 transition-transform cursor-pointer hover:-translate-y-1 relative ${isStartedBacklog ? 'bg-cyan-50 hover:bg-cyan-100' : 'bg-white hover:bg-slate-50'}`}>
+                        
+                        <div className="flex justify-between items-start border-b-[2px] border-slate-900 pb-2 mb-2 gap-2">
+                            <div className="font-black uppercase text-sm flex-1 leading-tight" title={displayClean(titulo)}>
+                                {isStartedBacklog && <span className="mr-1"><Icons.Gamepad /></span>}
+                                {displayClean(titulo)}
+                            </div>
+                            <div className="font-black text-[10px] text-slate-400">#{visualId}</div>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                            {displayClean(plataforma) && <span className="inline-block px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(0,0,0,1)] font-black uppercase text-[9px]" style={{ backgroundColor: consoleStyle.bg, color: consoleStyle.text }}>{plataforma}</span>}
+                            {displayClean(genero) && <span className="inline-block px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(0,0,0,1)] font-black uppercase text-[9px]" style={{backgroundColor: getGenreColor(genero)}}>{genero}</span>}
+                        </div>
+                        
+                        <div className="text-[10px] font-black uppercase text-slate-600 flex flex-col gap-1 mt-auto">
+                            {!isBacklog && displayClean(tempo) && <div className="flex justify-between border-b border-dashed border-slate-200 pb-1"><span>Tempo:</span> <span className="text-blue-600">{formatTempoStr(tempo)}</span></div>}
+                            {!isBacklog && displayClean(nota) && <div className="flex justify-between items-center border-b border-dashed border-slate-200 pb-1"><span>Nota:</span> <span>{getRatingBadge(nota)}</span></div>}
+                            {isBacklog && <div className="flex justify-between border-b border-dashed border-slate-200 pb-1"><span>Prioridade:</span> <span className="text-slate-800 text-base leading-none">{displayClean(prioridade) || '-'}</span></div>}
+                            {isBacklog && displayClean(inicio) && <div className="flex justify-between border-b border-dashed border-slate-200 pb-1"><span>Iniciado:</span> <span className="text-cyan-700">{formatDateStr(inicio)}</span></div>}
+                            
+                            <div className="flex justify-between items-center mt-1">
+                                <span>Preço:</span>
+                                <span style={{backgroundColor: getPriceColorPago(pricePago)}} className="px-1.5 py-0.5 border-[2px] border-slate-900 text-slate-900 shadow-[1px_1px_0_0_rgba(0,0,0,1)]">
+                                    {formatCurrency(pricePago)}
+                                </span>
+                            </div>
+                            {!isBacklog && displayClean(cond) && (
+                                <div className="mt-2 flex justify-center text-center">
+                                    {displayCond(cond)}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+  }
+
+  const renderGameTable = (list, isBacklogOverride) => {
+    const isBacklog = isBacklogOverride ?? (activeTab === 'backlog' && !viewModal);
+    return (
+    <div className={`overflow-x-auto border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)] bg-white pb-2 max-w-full custom-scrollbar max-h-[70vh]`}>
       <table className="w-full text-left border-collapse text-[10px] sm:text-[11px] font-bold">
-        <thead>
-          <tr className={`${activeTab === 'finished' || viewModal ? theme.gold : theme.cyan} border-b-[3px] border-slate-900 uppercase font-black text-slate-900`}>
+        <thead className="sticky top-0 z-10 shadow-sm">
+          <tr className={`${activeTab === 'finished' || (viewModal && viewModal.type !== 'backlog_iniciado' && viewModal.type !== 'backlog_nao_iniciado') ? theme.gold : theme.cyan} border-b-[3px] border-slate-900 uppercase font-black text-slate-900`}>
             <Th label="#" sortKey="ordem" className="text-center w-10" />
+            {isBacklog && <Th label={<div title="Iniciado" className="flex justify-center"><Icons.Gamepad /></div>} sortKey="inicio" className="text-center w-8 px-1" />}
             <Th label="NOME DO JOGO" sortKey="titulo" />
             <Th label="CONSOLE" sortKey="plataforma" />
             <Th label="GÊNERO" sortKey="franquia" />
@@ -696,7 +806,7 @@ export default function App() {
             <Th label="PREÇO PAGO" sortKey="preco" className="text-center" />
             <Th label="PREÇO S/ DESC." sortKey="preco_original" className="text-center" />
             {!isBacklog && <Th label="DESCONTO" sortKey="desconto" className="text-center" />}
-            <Th label="SUPORTE" sortKey="suporte" className="text-center" />
+            <Th label="SUPORTE" sortKey="suporte" className={`text-center ${isBacklog ? '' : 'border-r-0'}`} />
             {isBacklog && <Th label="PRIORIDADE" sortKey="prioridade" className="text-center border-r-0" />}
           </tr>
         </thead>
@@ -724,15 +834,16 @@ export default function App() {
             let isStartedBacklog = isBacklog && inicio && inicio !== '-';
             
             return (
-              <tr key={game.id || i} className={`border-b-[2px] border-slate-900 transition-colors ${isStartedBacklog ? 'bg-cyan-50 hover:bg-cyan-100' : 'hover:bg-slate-50'}`}>
+              <tr key={game.id || i} className={`border-b-[2px] border-slate-900 transition-colors ${isStartedBacklog ? 'bg-cyan-50 hover:bg-cyan-100' : 'bg-white hover:bg-slate-50'}`}>
                 <td className={`p-2 border-r-[3px] border-slate-900 text-center font-black whitespace-nowrap ${isStartedBacklog ? 'bg-cyan-100' : 'bg-slate-100'}`}>{visualId}</td>
+                {isBacklog && <td className="p-1 border-r-[3px] border-slate-900 text-center">{isStartedBacklog && <Icons.Gamepad />}</td>}
                 <td onClick={() => { 
                       setFichaData({...game, '#': visualId, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc, prioridade, inicio}); 
                       setViewModal({type:'game', data: {...game, '#': visualId, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc, inicio, fim, tempo, nota, dificuldade: dif, conquistas: cond, suporte: sup, prioridade}}); 
                       setIsEditingFicha(false); 
                     }} 
                     className="p-2 border-r-[3px] border-slate-900 font-black text-xs cursor-pointer hover:text-blue-600 transition-colors underline decoration-slate-300 underline-offset-4 whitespace-normal break-words min-w-[150px]">
-                  {isStartedBacklog && <Icons.Gamepad />} {displayClean(titulo)}
+                  {displayClean(titulo)}
                 </td>
                 
                 <td onClick={() => { if(displayClean(plataforma)) setViewModal({type:'console', data: plataforma}) }} className="p-2 border-r-[3px] border-slate-900 cursor-pointer whitespace-nowrap">
@@ -772,7 +883,7 @@ export default function App() {
                   </td>
                 )}
                 
-                {!isBacklog && <td className="p-2 border-r-[3px] border-slate-900 max-w-[150px] whitespace-normal break-words">{displayClean(cond)}</td>}
+                {!isBacklog && <td className="p-2 border-r-[3px] border-slate-900 max-w-[150px] whitespace-normal break-words">{displayCond(cond) || displayClean(cond)}</td>}
                 
                 <td className="p-2 border-r-[3px] border-slate-900 text-center whitespace-nowrap">
                   {displayClean(pricePago) && (
@@ -817,9 +928,19 @@ export default function App() {
     </div>
   )};
 
+  const globalStyles = (
+    <style>{`
+      .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border: 1px solid #0f172a; border-right: none; border-bottom: none;}
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: #0f172a; border-radius: 0px; }
+      .custom-scrollbar::-webkit-scrollbar-corner { background: #f1f5f9; }
+    `}</style>
+  );
+
   if (appState === 'booting' || (appState === 'loading' && games.length === 0)) {
     return (
       <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-4">
+        {globalStyles}
         <div className="flex flex-col items-center gap-6 animate-pulse">
           <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Logo" className="w-36 h-36 drop-shadow-xl" />
           <div className="flex flex-col items-center text-center">
@@ -838,7 +959,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans p-2 sm:p-4 selection:bg-pink-200 relative">
-      
+      {globalStyles}
       {/* HEADER */}
       <div className="max-w-[1600px] mx-auto mb-6 flex flex-wrap items-center justify-between gap-4 sm:gap-6">
         <div onClick={resetHome} className="flex items-center gap-4 shrink-0 cursor-pointer hover:opacity-80 transition-opacity" title="Voltar ao Início e Limpar Filtros">
@@ -868,7 +989,7 @@ export default function App() {
             { id: 'add', label: 'Novo Jogo', icon: Icons.Plus },
             { id: 'config', label: 'Config', icon: Icons.Settings }
           ].map(t => (
-            <button key={t.id} onClick={() => setActiveTab(t.id)} className={`flex flex-col items-center justify-center p-3 sm:flex-row sm:gap-2 min-w-[100px] w-full transition-colors border-r-[3px] border-slate-900 ${activeTab === t.id ? theme.gold : 'bg-white hover:bg-slate-50'}`}>
+            <button key={t.id} onClick={() => setActiveTab(t.id)} className={`flex flex-col items-center justify-center p-3 sm:flex-row sm:gap-2 min-w-[100px] w-full transition-colors border-r-[3px] border-slate-900 custom-scrollbar ${activeTab === t.id ? theme.gold : 'bg-white hover:bg-slate-50'}`}>
               <t.icon /> <span className="text-xs sm:text-sm font-black uppercase">{t.label}</span>
             </button>
           ))}
@@ -880,9 +1001,8 @@ export default function App() {
           </div>
         )}
 
-        <main className="p-4 sm:p-6 overflow-x-auto">
+        <main className="p-4 sm:p-6 overflow-x-auto custom-scrollbar">
           
-          {}
           {(activeTab === 'dashboard' || activeTab === 'finished' || activeTab === 'backlog') && (
             <div className="flex flex-row flex-wrap gap-2 mb-6 w-full">
                <MultiSelectDropdown label="Consoles" options={uniqueOptions.console} selected={filters.console} onChange={(v) => setFilters({...filters, console: v})} />
@@ -897,15 +1017,19 @@ export default function App() {
           {activeTab === 'dashboard' && (
              <div className="flex flex-col gap-6">
                 
-                {/* Cards Superiores */}
-                <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                {/* Cards Estatísticos Superiores */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
                   <div className={`p-4 ${theme.border} bg-[#A8E6CF] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
-                    <h3 className="text-[10px] sm:text-xs font-black uppercase">Total Finalizados</h3>
+                    <h3 className="text-[10px] sm:text-xs font-black uppercase">Finalizados</h3>
                     <p className="text-3xl sm:text-4xl font-black mt-1">{dashboardStats.totalJogos}</p>
                   </div>
-                  <div onClick={() => setViewModal({type:'note', data: 'S'})} className={`p-4 ${theme.border} bg-gradient-to-r from-[#FF8B94] to-[#FFD3B6] shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity`}>
-                    <h3 className="text-[10px] sm:text-xs font-black uppercase">Obras-Primas (Rank S)</h3>
-                    <p className="text-3xl sm:text-4xl font-black mt-1">{dashboardStats.sRanks}</p>
+                  <div onClick={()=>setActiveTab('backlog')} className={`p-4 ${theme.border} bg-slate-200 shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity`}>
+                    <h3 className="text-[10px] sm:text-xs font-black uppercase">Backlog</h3>
+                    <p className="text-3xl sm:text-4xl font-black mt-1">{dashboardStats.totalBacklog}</p>
+                  </div>
+                  <div onClick={()=>setViewModal({type:'backlog_iniciado', data:'Iniciados'})} className={`p-4 ${theme.border} bg-[#FFD3B6] shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity`}>
+                    <h3 className="text-[10px] sm:text-xs font-black uppercase">Iniciados</h3>
+                    <p className="text-3xl sm:text-4xl font-black mt-1">{dashboardStats.totalIniciados}</p>
                   </div>
                   <div onClick={() => setViewModal({type:'platina', data: 'Platina'})} className={`p-4 ${theme.border} bg-[#E0F2FE] shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity`}>
                     <h3 className="text-[10px] sm:text-xs font-black uppercase">Platinas</h3>
@@ -915,13 +1039,16 @@ export default function App() {
                     <h3 className="text-[10px] sm:text-xs font-black uppercase">Nota Média</h3>
                     <p className="text-3xl sm:text-4xl font-black mt-1">{dashboardStats.avgNota}</p>
                   </div>
+                  <div onClick={() => setViewModal({type:'note', data: 'S'})} className={`p-4 ${theme.border} bg-gradient-to-r from-[#FF8B94] to-[#FFD3B6] shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity`}>
+                    <h3 className="text-[10px] sm:text-xs font-black uppercase">Obras-Primas</h3>
+                    <p className="text-3xl sm:text-4xl font-black mt-1">{dashboardStats.sRanks}</p>
+                  </div>
                   <div className={`p-4 ${theme.border} bg-[#FDE047] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
-                    <h3 className="text-[10px] sm:text-xs font-black uppercase">Total Investido</h3>
+                    <h3 className="text-[10px] sm:text-xs font-black uppercase">Investido</h3>
                     <p className="text-xl sm:text-2xl font-black mt-3">{dashboardStats.totalGastoStr}</p>
                   </div>
                 </div>
 
-                {}
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
                   
                   {/* Status Pizza */}
@@ -944,10 +1071,11 @@ export default function App() {
                              return (
                                <g key={s.id} onClick={() => setViewModal({type: s.type, data: s.label})} className="cursor-pointer hover:opacity-80 transition-opacity">
                                   <path d={pathData} fill={s.color} stroke="#0f172a" strokeWidth="0.04" />
-                                  <text x={tX * 0.65} y={tY * 0.65} fill="#0f172a" fontSize="0.18" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-black" transform={`rotate(90 ${tX * 0.65} ${tY * 0.65})`}>
+                                  {/* As coordenadas precisam ser as mesmas no x, y e dentro de rotate */}
+                                  <text x={tX * 0.6} y={tY * 0.6 - 0.05} fill="#0f172a" fontSize="0.2" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-black" transform={`rotate(90 ${tX * 0.6} ${tY * 0.6 - 0.05})`}>
                                      {s.count}
                                   </text>
-                                  <text x={tX * 0.65} y={(tY * 0.65) + 0.2} fill="#0f172a" fontSize="0.1" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-bold" transform={`rotate(90 ${tX * 0.65} ${(tY * 0.65)+0.2})`}>
+                                  <text x={tX * 0.6} y={tY * 0.6 + 0.15} fill="#0f172a" fontSize="0.12" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-bold" transform={`rotate(90 ${tX * 0.6} ${tY * 0.6 + 0.15})`}>
                                      {Math.round(s.pct)}%
                                   </text>
                                </g>
@@ -982,7 +1110,7 @@ export default function App() {
                          <option value="alfa_asc">Alfabética (A-Z)</option>
                       </select>
                     </div>
-                    <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto pr-2">
+                    <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-2 custom-scrollbar">
                       {sortedAndFilteredGames.filter(g => g.status === 'Finalizado' && calculateDiscount(getVal(g, ['preco', 'preco pago']), getVal(g, ['preco_original', 'preco sem desconto', 'preço sem desconto'])).has)
                             .sort((a,b) => {
                                let dA = calculateDiscount(getVal(a, ['preco', 'preco pago']), getVal(a, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
@@ -1002,11 +1130,13 @@ export default function App() {
                         return (
                           <div key={i} className="flex items-center gap-2 text-[10px] font-black uppercase w-full">
                              <div className="w-1/3 truncate text-right pr-2" title={nomeJogo}>{nomeJogo}</div>
-                             <div className="flex w-2/3 h-4 border-[2px] border-slate-900 bg-slate-100">
-                               <div className="bg-[#3B82F6] h-full relative group" style={{width: `${pctPago}%`}} title={`${nomeJogo} - Preço Pago: R$ ${d.pago.toFixed(2).replace('.', ',')}`}>
+                             <div className="flex w-2/3 h-5 border-[2px] border-slate-900 bg-slate-100 shadow-[1px_1px_0_0_rgba(0,0,0,1)] text-[9px]">
+                               <div className="bg-[#3B82F6] h-full flex items-center justify-start pl-1 text-white overflow-hidden whitespace-nowrap cursor-help" style={{width: `${pctPago}%`}} title={`${nomeJogo} - Preço Pago: R$ ${d.pago.toFixed(2).replace('.', ',')}`}>
+                                  {pctPago > 15 ? `R$ ${d.pago.toFixed(2).replace('.',',')}` : ''}
                                </div>
-                               <div className="bg-[#EF4444] h-full relative group cursor-help" style={{width: `${pctDesc}%`}} title={`${nomeJogo} - Desconto de R$ ${d.rawDiff.toFixed(2).replace('.', ',')} (${d.pct})`}>
-                                  <div className="absolute inset-0 flex items-center justify-center text-white text-[8px] opacity-0 group-hover:opacity-100 transition-opacity">-{d.pct}</div>
+                               <div className="bg-[#EF4444] h-full flex items-center justify-end pr-1 text-white overflow-hidden whitespace-nowrap cursor-help relative group" style={{width: `${pctDesc}%`}} title={`${nomeJogo} - Desconto de R$ ${d.rawDiff.toFixed(2).replace('.', ',')} (${d.pct})`}>
+                                  {pctDesc > 15 ? `R$ ${d.rawDiff.toFixed(2).replace('.',',')}` : ''}
+                                  <div className="absolute inset-0 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900/40">-{d.pct}</div>
                                </div>
                              </div>
                           </div>
@@ -1043,7 +1173,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {}
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
                    
                    {/* Dificuldade */}
@@ -1096,133 +1225,145 @@ export default function App() {
                    {/* Horas Jogadas por Ano */}
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto h-fit`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Horas Jogadas por Ano</h3>
-                     <table className="w-full text-left text-[10px] font-black uppercase">
-                       <thead><tr className="border-b-[2px] border-slate-900"><MiniTh label="Ano" sortKey="ano" tableKey="anosTempo" /><MiniTh label="Jogos" sortKey="count" tableKey="anosTempo" align="center" /><MiniTh label="Tempo" sortKey="tempo" tableKey="anosTempo" align="center" /></tr></thead>
-                       <tbody>
-                         {Object.keys(dashboardStats.anos).map(a => ({ ano: a, ...dashboardStats.anos[a] })).sort((a,b) => {
-                            let valA = a[topSorts.anosTempo.key]; let valB = b[topSorts.anosTempo.key];
-                            if (topSorts.anosTempo.key === 'ano') return topSorts.anosTempo.dir === 'asc' ? a.ano.localeCompare(b.ano) : b.ano.localeCompare(a.ano);
-                            return topSorts.anosTempo.dir === 'asc' ? valA - valB : valB - valA;
-                         }).map(stat => (
-                             <tr key={stat.ano} className="border-b border-slate-200 hover:bg-slate-50">
-                               <td className="py-2"><span onClick={()=>setViewModal({type:'ano', data: stat.ano})} className="inline-block cursor-pointer px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] bg-amber-100">{stat.ano}</span></td>
-                               <td className="py-2 text-center">{stat.count}</td>
-                               <td className="py-2 text-center text-blue-600">{formatTotalTempoHrs(stat.tempo)}</td>
-                             </tr>
-                         ))}
-                       </tbody>
-                     </table>
+                     <div className="max-h-[250px] overflow-y-auto custom-scrollbar pr-1">
+                       <table className="w-full text-left text-[10px] font-black uppercase">
+                         <thead className="sticky top-0 bg-white z-10 shadow-sm"><tr className="border-b-[2px] border-slate-900"><MiniTh label="Ano" sortKey="ano" tableKey="anosTempo" /><MiniTh label="Jogos" sortKey="count" tableKey="anosTempo" align="center" /><MiniTh label="Tempo" sortKey="tempo" tableKey="anosTempo" align="center" /></tr></thead>
+                         <tbody>
+                           {Object.keys(dashboardStats.anos).map(a => ({ ano: a, ...dashboardStats.anos[a] })).sort((a,b) => {
+                              let valA = a[topSorts.anosTempo.key]; let valB = b[topSorts.anosTempo.key];
+                              if (topSorts.anosTempo.key === 'ano') return topSorts.anosTempo.dir === 'asc' ? a.ano.localeCompare(b.ano) : b.ano.localeCompare(a.ano);
+                              return topSorts.anosTempo.dir === 'asc' ? valA - valB : valB - valA;
+                           }).map(stat => (
+                               <tr key={stat.ano} className="border-b border-slate-200 hover:bg-slate-50">
+                                 <td className="py-2"><span onClick={()=>setViewModal({type:'ano', data: stat.ano})} className="inline-block cursor-pointer px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] bg-amber-100 hover:-translate-y-0.5 transition-transform">{stat.ano}</span></td>
+                                 <td className="py-2 text-center">{stat.count}</td>
+                                 <td className="py-2 text-center text-blue-600">{formatTotalTempoHrs(stat.tempo)}</td>
+                               </tr>
+                           ))}
+                         </tbody>
+                       </table>
+                     </div>
                    </div>
                    
                    {/* Consoles Mais Jogados por Ano */}
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto h-fit`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Consoles por Ano</h3>
-                     <table className="w-full text-left text-[10px] font-black uppercase">
-                       <thead><tr className="border-b-[2px] border-slate-900"><MiniTh label="Ano" sortKey="ano" tableKey="anosConsoles" /><MiniTh label="Console" sortKey="console" tableKey="anosConsoles" /><MiniTh label="Jogos" sortKey="count" tableKey="anosConsoles" align="center" /></tr></thead>
-                       <tbody>
-                         {Object.keys(dashboardStats.anos).flatMap(a => 
-                             Object.keys(dashboardStats.anos[a].consoles).map(c => ({ ano: a, console: c, count: dashboardStats.anos[a].consoles[c] }))
-                         ).sort((a,b) => {
-                            let valA = a[topSorts.anosConsoles.key]; let valB = b[topSorts.anosConsoles.key];
-                            if (topSorts.anosConsoles.key === 'ano' || topSorts.anosConsoles.key === 'console') {
-                               let cmp = String(valA).localeCompare(String(valB));
-                               if (cmp === 0) return b.count - a.count; // Secundario
-                               return topSorts.anosConsoles.dir === 'asc' ? cmp : -cmp;
-                            }
-                            return topSorts.anosConsoles.dir === 'asc' ? valA - valB : valB - valA;
-                         }).slice(0, 15).map((stat, idx) => ( // limit to keep UI clean
-                             <tr key={`${stat.ano}-${stat.console}-${idx}`} className="border-b border-slate-200 hover:bg-slate-50">
-                               <td className="py-2">{stat.ano}</td>
-                               <td className="py-2"><span onClick={()=>setViewModal({type:'console', data: stat.console})} className="inline-flex cursor-pointer items-center px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] text-[8px]" style={{ backgroundColor: getConsoleStyle(stat.console).bg, color: getConsoleStyle(stat.console).text }}>{stat.console}</span></td>
-                               <td className="py-2 text-center">{stat.count}</td>
-                             </tr>
-                         ))}
-                       </tbody>
-                     </table>
+                     <div className="max-h-[250px] overflow-y-auto custom-scrollbar pr-1">
+                       <table className="w-full text-left text-[10px] font-black uppercase">
+                         <thead className="sticky top-0 bg-white z-10 shadow-sm"><tr className="border-b-[2px] border-slate-900"><MiniTh label="Ano" sortKey="ano" tableKey="anosConsoles" /><MiniTh label="Console" sortKey="console" tableKey="anosConsoles" /><MiniTh label="Jogos" sortKey="count" tableKey="anosConsoles" align="center" /></tr></thead>
+                         <tbody>
+                           {Object.keys(dashboardStats.anos).flatMap(a => 
+                               Object.keys(dashboardStats.anos[a].consoles).map(c => ({ ano: a, console: c, count: dashboardStats.anos[a].consoles[c] }))
+                           ).sort((a,b) => {
+                              let valA = a[topSorts.anosConsoles.key]; let valB = b[topSorts.anosConsoles.key];
+                              if (topSorts.anosConsoles.key === 'ano' || topSorts.anosConsoles.key === 'console') {
+                                 let cmp = String(valA).localeCompare(String(valB));
+                                 if (cmp === 0) return b.count - a.count; 
+                                 return topSorts.anosConsoles.dir === 'asc' ? cmp : -cmp;
+                              }
+                              return topSorts.anosConsoles.dir === 'asc' ? valA - valB : valB - valA;
+                           }).slice(0, 50).map((stat, idx) => ( 
+                               <tr key={`${stat.ano}-${stat.console}-${idx}`} className="border-b border-slate-200 hover:bg-slate-50">
+                                 <td className="py-2">{stat.ano}</td>
+                                 <td className="py-2"><span onClick={()=>setViewModal({type:'console', data: stat.console})} className="inline-flex cursor-pointer items-center px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] text-[8px] hover:-translate-y-0.5 transition-transform" style={{ backgroundColor: getConsoleStyle(stat.console).bg, color: getConsoleStyle(stat.console).text }}>{stat.console}</span></td>
+                                 <td className="py-2 text-center">{stat.count}</td>
+                               </tr>
+                           ))}
+                         </tbody>
+                       </table>
+                     </div>
                    </div>
 
                    {/* Top Consoles Nota */}
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto h-fit`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Consoles (Nota)</h3>
-                     <table className="w-full text-left text-[10px] font-black uppercase">
-                       <thead><tr className="border-b-[2px] border-slate-900"><MiniTh label="Console" sortKey="name" tableKey="consolesNota" /><MiniTh label="Jogos" sortKey="count" tableKey="consolesNota" align="center" /><MiniTh label="Nota" sortKey="avgNota" tableKey="consolesNota" align="center" /></tr></thead>
-                       <tbody>
-                         {Object.keys(dashboardStats.consoles).map(c => ({ name: c, ...dashboardStats.consoles[c] })).sort((a,b) => {
-                            let valA = a[topSorts.consolesNota.key]; let valB = b[topSorts.consolesNota.key];
-                            if (topSorts.consolesNota.key === 'name') return topSorts.consolesNota.dir === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
-                            return topSorts.consolesNota.dir === 'asc' ? valA - valB : valB - valA;
-                         }).map(stat => (
-                             <tr key={stat.name} className="border-b border-slate-200 hover:bg-slate-50">
-                               <td className="py-2"><span onClick={()=>setViewModal({type:'console', data: stat.name})} className="inline-flex cursor-pointer items-center px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]" style={{ backgroundColor: getConsoleStyle(stat.name).bg, color: getConsoleStyle(stat.name).text }}>{stat.name}</span></td>
-                               <td className="py-2 text-center">{stat.count}</td>
-                               <td className="py-2 text-center">{stat.avgNota}</td>
-                             </tr>
-                         ))}
-                       </tbody>
-                     </table>
+                     <div className="max-h-[250px] overflow-y-auto custom-scrollbar pr-1">
+                       <table className="w-full text-left text-[10px] font-black uppercase">
+                         <thead className="sticky top-0 bg-white z-10 shadow-sm"><tr className="border-b-[2px] border-slate-900"><MiniTh label="Console" sortKey="name" tableKey="consolesNota" /><MiniTh label="Jogos" sortKey="count" tableKey="consolesNota" align="center" /><MiniTh label="Nota" sortKey="avgNota" tableKey="consolesNota" align="center" /></tr></thead>
+                         <tbody>
+                           {Object.keys(dashboardStats.consoles).map(c => ({ name: c, ...dashboardStats.consoles[c] })).sort((a,b) => {
+                              let valA = a[topSorts.consolesNota.key]; let valB = b[topSorts.consolesNota.key];
+                              if (topSorts.consolesNota.key === 'name') return topSorts.consolesNota.dir === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+                              return topSorts.consolesNota.dir === 'asc' ? valA - valB : valB - valA;
+                           }).map(stat => (
+                               <tr key={stat.name} className="border-b border-slate-200 hover:bg-slate-50">
+                                 <td className="py-2"><span onClick={()=>setViewModal({type:'console', data: stat.name})} className="inline-flex cursor-pointer items-center px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform" style={{ backgroundColor: getConsoleStyle(stat.name).bg, color: getConsoleStyle(stat.name).text }}>{stat.name}</span></td>
+                                 <td className="py-2 text-center">{stat.count}</td>
+                                 <td className="py-2 text-center">{stat.avgNota}</td>
+                               </tr>
+                           ))}
+                         </tbody>
+                       </table>
+                     </div>
                    </div>
                    
                    {/* Top Consoles Tempo */}
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto h-fit`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Consoles (Tempo)</h3>
-                     <table className="w-full text-left text-[10px] font-black uppercase">
-                       <thead><tr className="border-b-[2px] border-slate-900"><MiniTh label="Console" sortKey="name" tableKey="consolesTempo" /><MiniTh label="Jogos" sortKey="count" tableKey="consolesTempo" align="center" /><MiniTh label="Tempo" sortKey="totalTempo" tableKey="consolesTempo" align="center" /></tr></thead>
-                       <tbody>
-                         {Object.keys(dashboardStats.consoles).map(c => ({ name: c, ...dashboardStats.consoles[c] })).sort((a,b) => {
-                            let valA = a[topSorts.consolesTempo.key]; let valB = b[topSorts.consolesTempo.key];
-                            if (topSorts.consolesTempo.key === 'name') return topSorts.consolesTempo.dir === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
-                            return topSorts.consolesTempo.dir === 'asc' ? valA - valB : valB - valA;
-                         }).map(stat => (
-                             <tr key={stat.name} className="border-b border-slate-200 hover:bg-slate-50">
-                               <td className="py-2"><span onClick={()=>setViewModal({type:'console', data: stat.name})} className="inline-flex cursor-pointer items-center px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)]" style={{ backgroundColor: getConsoleStyle(stat.name).bg, color: getConsoleStyle(stat.name).text }}>{stat.name}</span></td>
-                               <td className="py-2 text-center">{stat.count}</td>
-                               <td className="py-2 text-center text-blue-600">{formatTotalTempoHrs(stat.totalTempo)}</td>
-                             </tr>
-                         ))}
-                       </tbody>
-                     </table>
+                     <div className="max-h-[250px] overflow-y-auto custom-scrollbar pr-1">
+                       <table className="w-full text-left text-[10px] font-black uppercase">
+                         <thead className="sticky top-0 bg-white z-10 shadow-sm"><tr className="border-b-[2px] border-slate-900"><MiniTh label="Console" sortKey="name" tableKey="consolesTempo" /><MiniTh label="Jogos" sortKey="count" tableKey="consolesTempo" align="center" /><MiniTh label="Tempo" sortKey="totalTempo" tableKey="consolesTempo" align="center" /></tr></thead>
+                         <tbody>
+                           {Object.keys(dashboardStats.consoles).map(c => ({ name: c, ...dashboardStats.consoles[c] })).sort((a,b) => {
+                              let valA = a[topSorts.consolesTempo.key]; let valB = b[topSorts.consolesTempo.key];
+                              if (topSorts.consolesTempo.key === 'name') return topSorts.consolesTempo.dir === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+                              return topSorts.consolesTempo.dir === 'asc' ? valA - valB : valB - valA;
+                           }).map(stat => (
+                               <tr key={stat.name} className="border-b border-slate-200 hover:bg-slate-50">
+                                 <td className="py-2"><span onClick={()=>setViewModal({type:'console', data: stat.name})} className="inline-flex cursor-pointer items-center px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform" style={{ backgroundColor: getConsoleStyle(stat.name).bg, color: getConsoleStyle(stat.name).text }}>{stat.name}</span></td>
+                                 <td className="py-2 text-center">{stat.count}</td>
+                                 <td className="py-2 text-center text-blue-600">{formatTotalTempoHrs(stat.totalTempo)}</td>
+                               </tr>
+                           ))}
+                         </tbody>
+                       </table>
+                     </div>
                    </div>
 
                    {/* Top Gêneros Nota */}
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto h-fit`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Gêneros (Nota)</h3>
-                     <table className="w-full text-left text-[10px] font-black uppercase">
-                       <thead><tr className="border-b-[2px] border-slate-900"><MiniTh label="Gênero" sortKey="name" tableKey="generosNota" /><MiniTh label="Jogos" sortKey="count" tableKey="generosNota" align="center" /><MiniTh label="Nota" sortKey="avgNota" tableKey="generosNota" align="center" /></tr></thead>
-                       <tbody>
-                         {Object.keys(dashboardStats.generos).map(c => ({ name: c, ...dashboardStats.generos[c] })).sort((a,b) => {
-                            let valA = a[topSorts.generosNota.key]; let valB = b[topSorts.generosNota.key];
-                            if (topSorts.generosNota.key === 'name') return topSorts.generosNota.dir === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
-                            return topSorts.generosNota.dir === 'asc' ? valA - valB : valB - valA;
-                         }).map(stat => (
-                             <tr key={stat.name} className="border-b border-slate-200 hover:bg-slate-50">
-                               <td className="py-2"><span onClick={()=>setViewModal({type:'genre', data: stat.name})} className="inline-block cursor-pointer px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)]" style={{backgroundColor: getGenreColor(stat.name)}}>{stat.name}</span></td>
-                               <td className="py-2 text-center">{stat.count}</td>
-                               <td className="py-2 text-center">{stat.avgNota}</td>
-                             </tr>
-                         ))}
-                       </tbody>
-                     </table>
+                     <div className="max-h-[250px] overflow-y-auto custom-scrollbar pr-1">
+                       <table className="w-full text-left text-[10px] font-black uppercase">
+                         <thead className="sticky top-0 bg-white z-10 shadow-sm"><tr className="border-b-[2px] border-slate-900"><MiniTh label="Gênero" sortKey="name" tableKey="generosNota" /><MiniTh label="Jogos" sortKey="count" tableKey="generosNota" align="center" /><MiniTh label="Nota" sortKey="avgNota" tableKey="generosNota" align="center" /></tr></thead>
+                         <tbody>
+                           {Object.keys(dashboardStats.generos).map(c => ({ name: c, ...dashboardStats.generos[c] })).sort((a,b) => {
+                              let valA = a[topSorts.generosNota.key]; let valB = b[topSorts.generosNota.key];
+                              if (topSorts.generosNota.key === 'name') return topSorts.generosNota.dir === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+                              return topSorts.generosNota.dir === 'asc' ? valA - valB : valB - valA;
+                           }).map(stat => (
+                               <tr key={stat.name} className="border-b border-slate-200 hover:bg-slate-50">
+                                 <td className="py-2"><span onClick={()=>setViewModal({type:'genre', data: stat.name})} className="inline-block cursor-pointer px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform" style={{backgroundColor: getGenreColor(stat.name)}}>{stat.name}</span></td>
+                                 <td className="py-2 text-center">{stat.count}</td>
+                                 <td className="py-2 text-center">{stat.avgNota}</td>
+                               </tr>
+                           ))}
+                         </tbody>
+                       </table>
+                     </div>
                    </div>
 
                    {/* Top Gêneros Tempo */}
                    <div className={`p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] overflow-x-auto h-fit`}>
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Gêneros (Tempo)</h3>
-                     <table className="w-full text-left text-[10px] font-black uppercase">
-                       <thead><tr className="border-b-[2px] border-slate-900"><MiniTh label="Gênero" sortKey="name" tableKey="generosTempo" /><MiniTh label="Jogos" sortKey="count" tableKey="generosTempo" align="center" /><MiniTh label="Tempo" sortKey="totalTempo" tableKey="generosTempo" align="center" /></tr></thead>
-                       <tbody>
-                         {Object.keys(dashboardStats.generos).map(c => ({ name: c, ...dashboardStats.generos[c] })).sort((a,b) => {
-                            let valA = a[topSorts.generosTempo.key]; let valB = b[topSorts.generosTempo.key];
-                            if (topSorts.generosTempo.key === 'name') return topSorts.generosTempo.dir === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
-                            return topSorts.generosTempo.dir === 'asc' ? valA - valB : valB - valA;
-                         }).map(stat => (
-                             <tr key={stat.name} className="border-b border-slate-200 hover:bg-slate-50">
-                               <td className="py-2"><span onClick={()=>setViewModal({type:'genre', data: stat.name})} className="inline-block cursor-pointer px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)]" style={{backgroundColor: getGenreColor(stat.name)}}>{stat.name}</span></td>
-                               <td className="py-2 text-center">{stat.count}</td>
-                               <td className="py-2 text-center text-blue-600">{formatTotalTempoHrs(stat.totalTempo)}</td>
-                             </tr>
-                         ))}
-                       </tbody>
-                     </table>
+                     <div className="max-h-[250px] overflow-y-auto custom-scrollbar pr-1">
+                       <table className="w-full text-left text-[10px] font-black uppercase">
+                         <thead className="sticky top-0 bg-white z-10 shadow-sm"><tr className="border-b-[2px] border-slate-900"><MiniTh label="Gênero" sortKey="name" tableKey="generosTempo" /><MiniTh label="Jogos" sortKey="count" tableKey="generosTempo" align="center" /><MiniTh label="Tempo" sortKey="totalTempo" tableKey="generosTempo" align="center" /></tr></thead>
+                         <tbody>
+                           {Object.keys(dashboardStats.generos).map(c => ({ name: c, ...dashboardStats.generos[c] })).sort((a,b) => {
+                              let valA = a[topSorts.generosTempo.key]; let valB = b[topSorts.generosTempo.key];
+                              if (topSorts.generosTempo.key === 'name') return topSorts.generosTempo.dir === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+                              return topSorts.generosTempo.dir === 'asc' ? valA - valB : valB - valA;
+                           }).map(stat => (
+                               <tr key={stat.name} className="border-b border-slate-200 hover:bg-slate-50">
+                                 <td className="py-2"><span onClick={()=>setViewModal({type:'genre', data: stat.name})} className="inline-block cursor-pointer px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] hover:-translate-y-0.5 transition-transform" style={{backgroundColor: getGenreColor(stat.name)}}>{stat.name}</span></td>
+                                 <td className="py-2 text-center">{stat.count}</td>
+                                 <td className="py-2 text-center text-blue-600">{formatTotalTempoHrs(stat.totalTempo)}</td>
+                               </tr>
+                           ))}
+                         </tbody>
+                       </table>
+                     </div>
                    </div>
 
                 </div>
@@ -1230,17 +1371,33 @@ export default function App() {
              </div>
           )}
 
-          {}
-          {(activeTab === 'finished' || activeTab === 'backlog') && (
-            <div className="flex flex-col gap-4">
-              <div className="flex justify-end">
-                <div className="text-xs font-black uppercase text-slate-500">Exibindo {sortedAndFilteredGames.length} jogos</div>
+          {/* LISTAS FINALS & BACKLOG COM OPÇÃO CARD */}
+          {(activeTab === 'finished' || activeTab === 'backlog') && (() => {
+             const isBacklog = activeTab === 'backlog';
+             const totalPages = Math.ceil(sortedAndFilteredGames.length / ITEMS_PER_PAGE);
+             const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+             const currentList = sortedAndFilteredGames.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+             
+             return (
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-2 border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)] gap-2">
+                   <div className="flex items-center gap-2">
+                      <button onClick={() => setViewMode('table')} className={`p-1.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] transition-colors hover:-translate-y-0.5 ${viewMode === 'table' ? theme.gold : 'bg-slate-100 hover:bg-slate-200'}`} title="Tabela"><Icons.List /></button>
+                      <button onClick={() => setViewMode('cards')} className={`p-1.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] transition-colors hover:-translate-y-0.5 ${viewMode === 'cards' ? theme.gold : 'bg-slate-100 hover:bg-slate-200'}`} title="Cards"><Icons.Grid /></button>
+                   </div>
+                   <div className="text-xs font-black uppercase text-slate-500">
+                      Total na lista: {sortedAndFilteredGames.length} jogos
+                   </div>
+                </div>
+                
+                {viewMode === 'table' ? renderGameTable(currentList, isBacklog) : renderGameCards(currentList, isBacklog)}
+                
+                <PaginationControls current={currentPage} total={totalPages} onChange={setCurrentPage} />
               </div>
-              {renderGameTable(sortedAndFilteredGames)}
-            </div>
-          )}
+            )
+          })()}
 
-          {}
+          {/* ADICIONAR NOVO */}
           {activeTab === 'add' && (
             <div className={`p-6 bg-white ${theme.border} ${theme.card} max-w-4xl mx-auto`}>
               <h2 className="text-xl font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-2">Adicionar Novo (Insere no topo da Planilha)</h2>
@@ -1270,12 +1427,12 @@ export default function App() {
                         <div className="flex flex-col"><label className="text-xs font-black uppercase">Tempo</label><input placeholder="Ex: 12h ou 120:00:00" value={formData.tempo} onChange={e=>setFormData({...formData, tempo: e.target.value})} className={theme.input} /></div>
                         <div className="flex flex-col"><label className="text-xs font-black uppercase">Nota</label><input placeholder="De 0 a 10 ou S" type="text" value={formData.nota} onChange={e=>setFormData({...formData, nota: e.target.value})} className={theme.input} /></div>
                         <div className="flex flex-col"><label className="text-xs font-black uppercase">Dificuldade</label><select value={formData.dificuldade} onChange={e=>setFormData({...formData, dificuldade: e.target.value})} className={theme.input}><option value=""></option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></div>
-                        <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input placeholder="69,90" value={formData.preco} onChange={e=>setFormData({...formData, preco: e.target.value})} className={theme.input} /></div>
-                        <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço S/ Desconto</label><input placeholder="132,90" value={formData.preco_original} onChange={e=>setFormData({...formData, preco_original: e.target.value})} className={theme.input} /></div>
-                        <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input list="suportes-list" value={formData.suporte} onChange={e=>setFormData({...formData, suporte: e.target.value})} className={theme.input} /></div>
                         <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Condição</label><input list="condicoes-list" value={formData.conquistas} onChange={e=>setFormData({...formData, conquistas: e.target.value})} className={theme.input} /></div>
                         <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Link (YouTube)</label><input value={formData.midia} onChange={e=>setFormData({...formData, midia: e.target.value})} className={theme.input} /></div>
                         <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Observações</label><textarea value={formData.comentarios} onChange={e=>setFormData({...formData, comentarios: e.target.value})} className={theme.input} rows="2" /></div>
+                        <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input placeholder="69,90" value={formData.preco} onChange={e=>setFormData({...formData, preco: e.target.value})} className={theme.input} /></div>
+                        <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço S/ Desconto</label><input placeholder="132,90" value={formData.preco_original} onChange={e=>setFormData({...formData, preco_original: e.target.value})} className={theme.input} /></div>
+                        <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input list="suportes-list" value={formData.suporte} onChange={e=>setFormData({...formData, suporte: e.target.value})} className={theme.input} /></div>
                      </>
                   ) : (
                      <>
@@ -1296,7 +1453,7 @@ export default function App() {
             </div>
           )}
 
-          {}
+          {/* CONFIGURAÇÕES */}
           {activeTab === 'config' && (
              <div className={`max-w-xl mx-auto bg-white p-8 ${theme.border} ${theme.card}`}>
                 <h2 className="text-2xl font-black mb-4 uppercase text-center">Alterar Conexão</h2>
@@ -1335,7 +1492,7 @@ export default function App() {
               <button onClick={() => setViewModal(null)} className="p-1 hover:bg-white/50 rounded-full transition-colors border-2 border-transparent hover:border-slate-900"><Icons.Close /></button>
             </div>
 
-            <div className="p-4 sm:p-6 bg-slate-50 overflow-y-auto max-h-[75vh]">
+            <div className="p-4 sm:p-6 bg-slate-50 overflow-y-auto max-h-[75vh] custom-scrollbar">
               
               {/* FICHA DO JOGO */}
               {viewModal.type === 'game' && (
@@ -1443,7 +1600,7 @@ export default function App() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                            <div className="p-4 bg-white border-[2px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)]">
                              <span className="text-[10px] font-black uppercase text-slate-500 block mb-2">Condição</span>
-                             <p className="font-bold text-sm whitespace-pre-wrap">{viewModal.data.conquistas && viewModal.data.conquistas !== '-' ? viewModal.data.conquistas : ''}</p>
+                             <p className="font-bold text-sm whitespace-pre-wrap flex flex-wrap">{displayCond(viewModal.data.conquistas) || (viewModal.data.conquistas && viewModal.data.conquistas !== '-' ? viewModal.data.conquistas : '')}</p>
                            </div>
                            <div className="p-4 bg-white border-[2px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)]">
                              <span className="text-[10px] font-black uppercase text-slate-500 block mb-2">Observações</span>
@@ -1482,12 +1639,12 @@ export default function App() {
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Tempo</label><input value={fichaData.tempo} onChange={e=>setFichaData({...fichaData, tempo: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Nota</label><input placeholder="De 0 a 10 ou S" type="text" value={fichaData.nota} onChange={e=>setFichaData({...fichaData, nota: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Dificuldade</label><select value={fichaData.dificuldade} onChange={e=>setFichaData({...fichaData, dificuldade: e.target.value})} className={theme.input}><option value=""></option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></div>
-                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input value={fichaData.preco} onChange={e=>setFichaData({...fichaData, preco: e.target.value})} className={theme.input} /></div>
-                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço s/ Desconto</label><input value={fichaData.preco_original} onChange={e=>setFichaData({...fichaData, preco_original: e.target.value})} className={theme.input} /></div>
-                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input list="suportes-list" value={fichaData.suporte} onChange={e=>setFichaData({...fichaData, suporte: e.target.value})} className={theme.input} /></div>
                            <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Condição</label><input list="condicoes-list" value={fichaData.conquistas} onChange={e=>setFichaData({...fichaData, conquistas: e.target.value})} className={theme.input} /></div>
                            <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Link (YouTube)</label><input value={getVal(fichaData, ['midia', 'link'])} onChange={e=>setFichaData({...fichaData, midia: e.target.value, link: e.target.value})} className={theme.input} /></div>
                            <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Observações</label><textarea value={getVal(fichaData, ['comentarios', 'observacao', 'observação'])} onChange={e=>setFichaData({...fichaData, comentarios: e.target.value, observacao: e.target.value})} className={theme.input} rows="2" /></div>
+                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input value={fichaData.preco} onChange={e=>setFichaData({...fichaData, preco: e.target.value})} className={theme.input} /></div>
+                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço s/ Desconto</label><input value={fichaData.preco_original} onChange={e=>setFichaData({...fichaData, preco_original: e.target.value})} className={theme.input} /></div>
+                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input list="suportes-list" value={fichaData.suporte} onChange={e=>setFichaData({...fichaData, suporte: e.target.value})} className={theme.input} /></div>
                          </>
                       ) : (
                          <>
@@ -1506,7 +1663,7 @@ export default function App() {
                 </>
               )}
 
-              {}
+              {/* FICHA DE LISTAGENS FILTRADAS */}
               {viewModal.type !== 'game' && (() => {
                  let filteredList = games.filter(g => {
                     let vPlat = getVal(g, ['plataforma', 'console']);
@@ -1589,45 +1746,7 @@ export default function App() {
                        <h3 className="text-sm font-black uppercase border-b-[3px] border-slate-900 pb-2 mb-4">
                           Listagem
                        </h3>
-                       {/* Se for uma das vistas de Backlog, tratamos as colunas com lógica de backlog (activeTab force) ou usamos uma flag simples, por simplicidade, no render, activeTab='backlog' no viewModal força re-render caso o ususario estiver nele. */}
-                       <div className="overflow-x-auto border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)] bg-white pb-2 max-w-full">
-                           <table className="w-full text-left border-collapse text-[10px] sm:text-[11px] font-bold">
-                              <thead>
-                                <tr className={`${isListBacklog ? theme.cyan : theme.gold} border-b-[3px] border-slate-900 uppercase font-black text-slate-900`}>
-                                   <th className="p-2 border-r-[3px] border-slate-900 text-center w-10">#</th>
-                                   <th className="p-2 border-r-[3px] border-slate-900">NOME DO JOGO</th>
-                                   <th className="p-2 border-r-[3px] border-slate-900">CONSOLE</th>
-                                   <th className="p-2 border-r-[3px] border-slate-900">GÊNERO</th>
-                                   {isListBacklog ? <th className="p-2 border-r-[3px] border-slate-900 text-center">INICIADO</th> : <th className="p-2 border-r-[3px] border-slate-900 text-center">INÍCIO</th>}
-                                   {!isListBacklog && <th className="p-2 border-r-[3px] border-slate-900 text-center">FIM</th>}
-                                   {!isListBacklog && <th className="p-2 border-r-[3px] border-slate-900 text-center">NOTA</th>}
-                                   <th className="p-2 border-r-[3px] border-slate-900 text-center">PREÇO PAGO</th>
-                                   <th className="p-2 border-r-[3px] border-slate-900 text-center">PREÇO S/ DESC.</th>
-                                   {isListBacklog && <th className="p-2 text-center">PRIORIDADE</th>}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {filteredList.map((game, i) => {
-                                  let visualId = getVal(game, ['#', 'ordem', 'numero']) || game._fallbackId;
-                                  let prioridade = getVal(game, ['prioridade']);
-                                  return (
-                                     <tr key={i} className="border-b-[2px] border-slate-900 hover:bg-slate-50 transition-colors">
-                                        <td className="p-2 border-r-[3px] border-slate-900 text-center font-black bg-slate-100">{visualId}</td>
-                                        <td className="p-2 border-r-[3px] border-slate-900 font-black">{isListBacklog && getVal(game, ['inicio', 'iniciado']) && <Icons.Gamepad />} {getVal(game, ['titulo', 'nome'])}</td>
-                                        <td className="p-2 border-r-[3px] border-slate-900">{getVal(game, ['plataforma', 'console'])}</td>
-                                        <td className="p-2 border-r-[3px] border-slate-900">{getVal(game, ['franquia', 'genero', 'gênero'])}</td>
-                                        <td className="p-2 border-r-[3px] border-slate-900 text-center">{formatDateStr(getVal(game, ['inicio', 'iniciado']))}</td>
-                                        {!isListBacklog && <td className="p-2 border-r-[3px] border-slate-900 text-center">{formatDateStr(getVal(game, ['fim', 'termino']))}</td>}
-                                        {!isListBacklog && <td className="p-2 border-r-[3px] border-slate-900 text-center">{getVal(game, ['nota'])}</td>}
-                                        <td className="p-2 border-r-[3px] border-slate-900 text-center">{formatCurrency(getVal(game, ['preco', 'preco pago']))}</td>
-                                        <td className="p-2 border-r-[3px] border-slate-900 text-center">{formatCurrency(getVal(game, ['preco_original', 'preco sem desconto', 'preço sem desconto']))}</td>
-                                        {isListBacklog && <td className="p-2 text-center font-black text-slate-700">{prioridade || '-'}</td>}
-                                     </tr>
-                                  );
-                                })}
-                              </tbody>
-                           </table>
-                       </div>
+                       {renderGameTable(filteredList, isListBacklog)}
                      </div>
                    </div>
                  );
@@ -1665,193 +1784,4 @@ export default function App() {
 
     </div>
   );
-}
-
-const SHEET_FINISHED = 'Games Finalizados';
-const SHEET_BACKLOG = 'Games que quero jogar';
-
-const HEADER_MAP = {
-  '#': 'ordem',
-  'ordem': 'ordem',
-  'nome': 'titulo', 
-  'titulo': 'titulo',
-  'console': 'plataforma', 
-  'plataforma': 'plataforma',
-  'genero': 'franquia', 
-  'franquia': 'franquia',
-  'inicio': 'inicio', 
-  'iniciado': 'inicio',
-  'fim': 'fim', 
-  'termino': 'fim',
-  'tempo': 'tempo',
-  'nota': 'nota',
-  'dificuldade': 'dificuldade',
-  'condicao': 'conquistas', 
-  'conquistas': 'conquistas',
-  'link': 'midia', 
-  'midia': 'midia',
-  'observacao': 'comentarios', 
-  'comentarios': 'comentarios',
-  'preco pago': 'preco', 
-  'preco': 'preco',
-  'preco sem desconto': 'preco_original', 
-  'suporte': 'suporte',
-  'prioridade': 'prioridade'
-};
-
-function normalizeHeader(h) {
-  if (!h) return null;
-  let cleaned = String(h)
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\n/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  
-  return HEADER_MAP[cleaned] || cleaned;
-}
-
-function doGet(e) {
-  try {
-    let result = { finished: [], backlog: [] };
-    let ss = SpreadsheetApp.getActiveSpreadsheet();
-    
-    let sheetFin = ss.getSheetByName(SHEET_FINISHED);
-    if(sheetFin) result.finished = extractData(sheetFin, 'Finalizado');
-    
-    let sheetBack = ss.getSheetByName(SHEET_BACKLOG);
-    if(sheetBack) result.backlog = extractData(sheetBack, 'Backlog');
-    
-    return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({error: error.toString()})).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function extractData(sheet, statusStr) {
-  let range = sheet.getDataRange();
-  let values = range.getValues();
-  let displayValues = range.getDisplayValues(); 
-  
-  if(values.length < 2) return [];
-  
-  let headers = values[0].map(normalizeHeader);
-  let rows = [];
-  
-  for(let i = 1; i < values.length; i++) {
-    let rowVal = values[i];
-    let rowDisp = displayValues[i];
-    let obj = {};
-    let hasTitle = false;
-    
-    for(let j = 0; j < headers.length; j++) {
-      let key = headers[j];
-      if (key) {
-        let val = (rowDisp[j] !== undefined && rowDisp[j] !== "") ? rowDisp[j] : rowVal[j];
-        obj[key] = val;
-        if (key === 'titulo' && val) hasTitle = true;
-      }
-    }
-    
-    if(hasTitle) {
-      obj.id = sheet.getName() + '|' + (i + 1); 
-      obj.status = statusStr;
-      rows.push(obj);
-    }
-  }
-  return rows;
-}
-
-function doPost(e) {
-  try {
-    let payload = JSON.parse(e.postData.contents);
-    let action = payload.action;
-    let data = payload.data;
-    let ss = SpreadsheetApp.getActiveSpreadsheet();
-    
-    if (action === 'ADD') {
-      let targetSheetName = data.status === 'Finalizado' ? SHEET_FINISHED : SHEET_BACKLOG;
-      let targetSheet = ss.getSheetByName(targetSheetName);
-      if(!targetSheet) throw new Error("Aba " + targetSheetName + " não encontrada.");
-      addRowTopSafe(targetSheet, data);
-    } 
-    else if (action === 'UPDATE') {
-      let parts = String(data.id).split('|');
-      let sheetName = parts[0];
-      let rowNum = parseInt(parts[1]);
-      
-      let currentSheet = ss.getSheetByName(sheetName);
-      let targetSheetName = data.status === 'Finalizado' ? SHEET_FINISHED : SHEET_BACKLOG;
-      
-      if (sheetName !== targetSheetName) {
-        let targetSheet = ss.getSheetByName(targetSheetName);
-        addRowTopSafe(targetSheet, data);
-        currentSheet.deleteRow(rowNum);
-      } else {
-        updateRowSafe(currentSheet, rowNum, data);
-      }
-    }
-    else if (action === 'DELETE') {
-      let parts = String(payload.id).split('|');
-      let sheetName = parts[0];
-      let rowNum = parseInt(parts[1]);
-      let sheet = ss.getSheetByName(sheetName);
-      if(sheet) sheet.deleteRow(rowNum);
-    }
-    
-    return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({error: error.toString()})).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-// Converte strings de datas vindas do app para Objetos Date da Planilha.
-function parseGasInputDate(val) {
-  if (typeof val === 'string') {
-     let s = val.trim();
-     let brMatch = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-     if (brMatch) {
-        return new Date(parseInt(brMatch[3]), parseInt(brMatch[2]) - 1, parseInt(brMatch[1]));
-     }
-     let isoMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-     if (isoMatch) {
-        return new Date(parseInt(isoMatch[1]), parseInt(isoMatch[2]) - 1, parseInt(isoMatch[3]));
-     }
-  }
-  return val;
-}
-
-function addRowTopSafe(sheet, data) {
-  let headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  let mappedHeaders = headers.map(normalizeHeader);
-  
-  sheet.insertRowBefore(2); 
-
-  // Pular o index 0 (Col A - numeração visual não salva via app)
-  for(let i=1; i<headers.length; i++) {
-    let key = mappedHeaders[i];
-    if (!key || key === 'ordem' || key === '#') continue;
-
-    if (data[key] !== undefined && data[key] !== "") {
-       let valToWrite = parseGasInputDate(data[key]);
-       sheet.getRange(2, i + 1).setValue(valToWrite); 
-    }
-  }
-}
-
-function updateRowSafe(sheet, rowNum, data) {
-  let headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  let mappedHeaders = headers.map(normalizeHeader);
-  
-  // Pular index 0 
-  for(let i=1; i<headers.length; i++) {
-    let key = mappedHeaders[i];
-    if (!key || key === 'ordem' || key === '#') continue;
-
-    if (data[key] !== undefined) {
-       let valToWrite = parseGasInputDate(data[key]);
-       sheet.getRange(rowNum, i + 1).setValue(valToWrite); 
-    }
-  }
 }
