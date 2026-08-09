@@ -291,9 +291,9 @@ const MultiSelectDropdown = ({ label, options, selected, onChange }) => {
       : `${label} (${selected.length})`;
 
   return (
-    <div className="relative flex-1 min-w-[150px]" ref={dropdownRef}>
-      <div onClick={() => setIsOpen(!isOpen)} className={`${theme.input} h-full cursor-pointer flex justify-between items-center shadow-[2px_2px_0_0_rgba(15,23,42,1)]`}>
-        <span className="truncate pr-2 text-[11px] font-black uppercase">
+    <div className="relative min-w-[100px] max-w-[150px] flex-1" ref={dropdownRef}>
+      <div onClick={() => setIsOpen(!isOpen)} className={`${theme.input} h-full p-1.5 cursor-pointer flex justify-between items-center shadow-[2px_2px_0_0_rgba(15,23,42,1)]`}>
+        <span className="truncate pr-2 text-[10px] sm:text-[11px] font-black uppercase">
           {displayLabel}
         </span>
         <span className="text-[10px] shrink-0">▼</span>
@@ -301,7 +301,7 @@ const MultiSelectDropdown = ({ label, options, selected, onChange }) => {
       {isOpen && (
         <div className="absolute top-full left-0 mt-1 w-full max-h-60 overflow-y-auto z-50 bg-white border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)] flex flex-col p-1 custom-scrollbar">
           {options.map(o => (
-            <label key={o} className="flex items-center gap-2 p-2 hover:bg-slate-100 cursor-pointer text-xs font-bold uppercase border-b-[2px] border-slate-100 last:border-0 transition-colors">
+            <label key={o} className="flex items-center gap-2 p-1.5 hover:bg-slate-100 cursor-pointer text-[10px] font-bold uppercase border-b-[2px] border-slate-100 last:border-0 transition-colors">
               <input type="checkbox" checked={selected.includes(o)} onChange={() => toggleOption(o)} className="w-3.5 h-3.5 accent-slate-900 shrink-0 cursor-pointer" />
               <span className="truncate">{o === 'S' ? 'Rank S' : o}</span>
             </label>
@@ -320,7 +320,8 @@ const Icons = {
   Settings: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
   SortArrow: ({ asc }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={`w-3 h-3 ml-1 inline-block transition-transform ${asc ? '' : 'rotate-180'}`}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /></svg>,
   Close: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>,
-  Gamepad: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5 inline-block text-cyan-600 align-text-bottom"><path strokeLinecap="round" strokeLinejoin="round" d="M7 11v2m-1-1h2m7-1h.01M15 13h.01M6.5 6h11c2.5 0 4.5 2 4.5 4.5v1c0 2.5-2 4.5-4.5 4.5H16l-2 3h-4l-2-3H6.5C4 16 2 14 2 11.5v-1C2 8 4 6 6.5 6z" /></svg>
+  Gamepad: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4 inline-block text-cyan-700 align-text-bottom"><path strokeLinecap="round" strokeLinejoin="round" d="M7 11v2m-1-1h2m7-1h.01M15 13h.01M6.5 6h11c2.5 0 4.5 2 4.5 4.5v1c0 2.5-2 4.5-4.5 4.5H16l-2 3h-4l-2-3H6.5C4 16 2 14 2 11.5v-1C2 8 4 6 6.5 6z" /></svg>,
+  Alert: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" className="w-3.5 h-3.5 inline-block align-text-bottom"><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v9m0 4h.01" /></svg>
 };
 
 export default function App() {
@@ -333,6 +334,7 @@ export default function App() {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({ console: [], genero: [], nota: [], dif: [], suporte: [] });
+  const [backlogStatusFilter, setBacklogStatusFilter] = useState('todos');
   
   const [descontoSort, setDescontoSort] = useState('desc_val_desc');
   const [sortConfig, setSortConfig] = useState({ key: 'ordem', direction: 'desc' }); 
@@ -374,7 +376,7 @@ export default function App() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, filters, searchTerm, sortConfig, viewMode]);
+  }, [activeTab, filters, searchTerm, sortConfig, viewMode, backlogStatusFilter]);
 
   const fetchGames = async (url) => {
     setSyncStatus({ type: 'loading', message: 'Sincronizando com a Planilha...' });
@@ -471,6 +473,7 @@ export default function App() {
      setActiveTab('dashboard');
      setSearchTerm('');
      setFilters({ console: [], genero: [], nota: [], dif: [], suporte: [] });
+     setBacklogStatusFilter('todos');
   };
 
   const isValBlank = (val) => val === '' || val === null || val === undefined || val === '-' || (typeof val === 'number' && isNaN(val)) || (typeof val === 'number' && val === -1);
@@ -492,6 +495,11 @@ export default function App() {
         let num = parseFloat(n.replace(',', '.'));
         return !isNaN(num) && filters.nota.includes(String(Math.floor(num)));
       });
+    }
+
+    if (activeTab === 'backlog') {
+       if (backlogStatusFilter === 'iniciados') list = list.filter(g => { let ini = getVal(g, ['inicio', 'iniciado']); return ini && ini !== '-'; });
+       if (backlogStatusFilter === 'nao_iniciados') list = list.filter(g => { let ini = getVal(g, ['inicio', 'iniciado']); return !ini || ini === '-'; });
     }
 
     if (searchTerm) {
@@ -557,11 +565,11 @@ export default function App() {
     });
 
     return list;
-  }, [games, activeTab, searchTerm, sortConfig, filters]);
+  }, [games, activeTab, searchTerm, sortConfig, filters, backlogStatusFilter]);
 
   const dashboardStats = useMemo(() => {
-    let fin = sortedAndFilteredGames.filter(g => g.status === 'Finalizado');
-    let back = sortedAndFilteredGames.filter(g => g.status === 'Backlog');
+    let fin = games.filter(g => g.status === 'Finalizado');
+    let back = games.filter(g => g.status === 'Backlog');
     
     let totalJogos = fin.length;
     let totalBacklog = back.length;
@@ -637,9 +645,8 @@ export default function App() {
 
     Object.keys(stats.consoles).forEach(c => stats.consoles[c].avgNota = stats.consoles[c].notaCount > 0 ? (stats.consoles[c].totalNota / stats.consoles[c].notaCount).toFixed(1) : 0);
     Object.keys(stats.generos).forEach(c => stats.generos[c].avgNota = stats.generos[c].notaCount > 0 ? (stats.generos[c].totalNota / stats.generos[c].notaCount).toFixed(1) : 0);
-    stats.totalGastoStr = `R$ ${stats.totalGasto.toFixed(2).replace('.',',')}`;
     return stats;
-  }, [sortedAndFilteredGames]);
+  }, [games]);
 
   const uniqueOptions = useMemo(() => {
     let opts = { console: new Set(), genero: new Set(), suporte: new Set(), condicao: new Set() };
@@ -663,8 +670,8 @@ export default function App() {
 
   const getPieSlices = () => {
      let f = dashboardStats.totalJogos;
-     let i = sortedAndFilteredGames.filter(g => g.status === 'Backlog' && getVal(g, ['inicio', 'iniciado'])).length;
-     let b = sortedAndFilteredGames.filter(g => g.status === 'Backlog' && !getVal(g, ['inicio', 'iniciado'])).length;
+     let i = dashboardStats.totalIniciados;
+     let b = dashboardStats.totalBacklog - dashboardStats.totalIniciados;
      let t = f + i + b;
      let slices = [];
      let cp = 0;
@@ -674,8 +681,8 @@ export default function App() {
      return slices;
   };
 
-  const Th = ({ label, sortKey, className = "" }) => (
-    <th onClick={() => handleSort(sortKey)} className={`p-2 border-r-[3px] border-slate-900 cursor-pointer hover:bg-black/10 transition-colors whitespace-nowrap ${className}`}>
+  const Th = ({ label, sortKey, className = "", onClickOverride }) => (
+    <th onClick={() => onClickOverride ? onClickOverride() : handleSort(sortKey)} className={`p-2 border-r-[3px] border-slate-900 cursor-pointer hover:bg-black/10 transition-colors whitespace-nowrap ${className}`}>
       <div className={`flex items-center gap-1 ${className.includes('text-center') ? 'justify-center' : 'justify-between'}`}>
         <span>{label}</span>
         {sortConfig.key === sortKey && <Icons.SortArrow asc={sortConfig.direction === 'asc'} />}
@@ -748,10 +755,13 @@ export default function App() {
                         
                         <div className="flex justify-between items-start border-b-[2px] border-slate-900 pb-2 mb-2 gap-2">
                             <div className="font-black uppercase text-sm flex-1 leading-tight" title={displayClean(titulo)}>
-                                {isStartedBacklog && <span className="mr-1"><Icons.Gamepad /></span>}
                                 {displayClean(titulo)}
                             </div>
-                            <div className="font-black text-[10px] text-slate-400">#{visualId}</div>
+                            <div className="font-black text-[11px] text-slate-500 shrink-0 flex items-center justify-center">
+                                {!isBacklog && `#${visualId}`}
+                                {isBacklog && isStartedBacklog && <Icons.Gamepad />}
+                                {isBacklog && !isStartedBacklog && prioridade && <span title="Prioridade"><Icons.Alert/> {prioridade}</span>}
+                            </div>
                         </div>
                         
                         <div className="flex flex-wrap gap-1.5 mb-2">
@@ -762,7 +772,6 @@ export default function App() {
                         <div className="text-[10px] font-black uppercase text-slate-600 flex flex-col gap-1 mt-auto">
                             {!isBacklog && displayClean(tempo) && <div className="flex justify-between border-b border-dashed border-slate-200 pb-1"><span>Tempo:</span> <span className="text-blue-600">{formatTempoStr(tempo)}</span></div>}
                             {!isBacklog && displayClean(nota) && <div className="flex justify-between items-center border-b border-dashed border-slate-200 pb-1"><span>Nota:</span> <span>{getRatingBadge(nota)}</span></div>}
-                            {isBacklog && <div className="flex justify-between border-b border-dashed border-slate-200 pb-1"><span>Prioridade:</span> <span className="text-slate-800 text-base leading-none">{displayClean(prioridade) || '-'}</span></div>}
                             {isBacklog && displayClean(inicio) && <div className="flex justify-between border-b border-dashed border-slate-200 pb-1"><span>Iniciado:</span> <span className="text-cyan-700">{formatDateStr(inicio)}</span></div>}
                             
                             <div className="flex justify-between items-center mt-1">
@@ -791,8 +800,8 @@ export default function App() {
       <table className="w-full text-left border-collapse text-[10px] sm:text-[11px] font-bold">
         <thead className="sticky top-0 z-10 shadow-sm">
           <tr className={`${activeTab === 'finished' || (viewModal && viewModal.type !== 'backlog_iniciado' && viewModal.type !== 'backlog_nao_iniciado') ? theme.gold : theme.cyan} border-b-[3px] border-slate-900 uppercase font-black text-slate-900`}>
-            <Th label="#" sortKey="ordem" className="text-center w-10" />
-            {isBacklog && <Th label={<div title="Iniciado" className="flex justify-center"><Icons.Gamepad /></div>} sortKey="inicio" className="text-center w-8 px-1" />}
+            {!isBacklog && <Th label="#" sortKey="ordem" className="text-center w-10" />}
+            {isBacklog && <Th label={<div title="Prioridade / Iniciado"><Icons.Alert /></div>} sortKey="inicio" className="text-center w-10" />}
             <Th label="NOME DO JOGO" sortKey="titulo" />
             <Th label="CONSOLE" sortKey="plataforma" />
             <Th label="GÊNERO" sortKey="franquia" />
@@ -806,8 +815,7 @@ export default function App() {
             <Th label="PREÇO PAGO" sortKey="preco" className="text-center" />
             <Th label="PREÇO S/ DESC." sortKey="preco_original" className="text-center" />
             {!isBacklog && <Th label="DESCONTO" sortKey="desconto" className="text-center" />}
-            <Th label="SUPORTE" sortKey="suporte" className={`text-center ${isBacklog ? '' : 'border-r-0'}`} />
-            {isBacklog && <Th label="PRIORIDADE" sortKey="prioridade" className="text-center border-r-0" />}
+            <Th label="SUPORTE" sortKey="suporte" className="text-center border-r-0" />
           </tr>
         </thead>
         <tbody>
@@ -835,8 +843,15 @@ export default function App() {
             
             return (
               <tr key={game.id || i} className={`border-b-[2px] border-slate-900 transition-colors ${isStartedBacklog ? 'bg-cyan-50 hover:bg-cyan-100' : 'bg-white hover:bg-slate-50'}`}>
-                <td className={`p-2 border-r-[3px] border-slate-900 text-center font-black whitespace-nowrap ${isStartedBacklog ? 'bg-cyan-100' : 'bg-slate-100'}`}>{visualId}</td>
-                {isBacklog && <td className="p-1 border-r-[3px] border-slate-900 text-center">{isStartedBacklog && <Icons.Gamepad />}</td>}
+                
+                {!isBacklog && <td className="p-2 border-r-[3px] border-slate-900 text-center font-black whitespace-nowrap bg-slate-100">{visualId}</td>}
+                
+                {isBacklog && (
+                  <td className={`p-2 border-r-[3px] border-slate-900 text-center font-black whitespace-nowrap ${isStartedBacklog ? 'bg-cyan-100' : 'bg-slate-100 text-slate-500'}`}>
+                    {isStartedBacklog ? <Icons.Gamepad /> : displayClean(prioridade)}
+                  </td>
+                )}
+
                 <td onClick={() => { 
                       setFichaData({...game, '#': visualId, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc, prioridade, inicio}); 
                       setViewModal({type:'game', data: {...game, '#': visualId, titulo, plataforma, franquia: genero, preco: pricePago, preco_original: priceSemDesc, inicio, fim, tempo, nota, dificuldade: dif, conquistas: cond, suporte: sup, prioridade}}); 
@@ -912,17 +927,13 @@ export default function App() {
                   </td>
                 )}
                 
-                <td onClick={() => { if(displayClean(sup)) setViewModal({type:'suporte', data: sup}) }} className={`p-2 border-slate-900 text-center whitespace-nowrap cursor-pointer hover:text-blue-600 transition-colors underline decoration-slate-300 underline-offset-4 ${isBacklog ? 'border-r-[3px]' : ''}`}>
+                <td onClick={() => { if(displayClean(sup)) setViewModal({type:'suporte', data: sup}) }} className={`p-2 border-slate-900 text-center whitespace-nowrap cursor-pointer hover:text-blue-600 transition-colors underline decoration-slate-300 underline-offset-4 border-r-0`}>
                   {displayClean(sup)}
                 </td>
-
-                {isBacklog && (
-                   <td className="p-2 text-center whitespace-nowrap font-black text-slate-700">{displayClean(prioridade)}</td>
-                )}
               </tr>
             );
           })}
-          {list.length === 0 && <tr><td colSpan={isBacklog ? 10 : 15} className="p-8 text-center text-slate-500 font-black uppercase tracking-widest text-lg">Nenhum jogo nesta lista.</td></tr>}
+          {list.length === 0 && <tr><td colSpan={isBacklog ? 9 : 15} className="p-8 text-center text-slate-500 font-black uppercase tracking-widest text-lg">Nenhum jogo nesta lista.</td></tr>}
         </tbody>
       </table>
     </div>
@@ -1003,49 +1014,71 @@ export default function App() {
 
         <main className="p-4 sm:p-6 overflow-x-auto custom-scrollbar">
           
+          {/* BARRA DE FILTROS COMPACTA */}
           {(activeTab === 'dashboard' || activeTab === 'finished' || activeTab === 'backlog') && (
-            <div className="flex flex-row flex-wrap gap-2 mb-6 w-full">
+            <div className="flex flex-row flex-wrap items-center gap-2 mb-6 w-full bg-white p-2 border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)]">
+               
+               {/* View Mode Toggle */}
+               {(activeTab === 'finished' || activeTab === 'backlog') && (
+                  <div className="flex items-center gap-1 border-r-[3px] border-slate-900 pr-2 mr-1">
+                     <button onClick={() => setViewMode('table')} className={`p-1.5 border-[2px] border-slate-900 transition-colors hover:-translate-y-0.5 ${viewMode === 'table' ? theme.gold : 'bg-slate-100 hover:bg-slate-200'}`} title="Tabela"><Icons.List /></button>
+                     <button onClick={() => setViewMode('cards')} className={`p-1.5 border-[2px] border-slate-900 transition-colors hover:-translate-y-0.5 ${viewMode === 'cards' ? theme.gold : 'bg-slate-100 hover:bg-slate-200'}`} title="Cards"><Icons.Grid /></button>
+                  </div>
+               )}
+
                <MultiSelectDropdown label="Consoles" options={uniqueOptions.console} selected={filters.console} onChange={(v) => setFilters({...filters, console: v})} />
                <MultiSelectDropdown label="Gêneros" options={uniqueOptions.genero} selected={filters.genero} onChange={(v) => setFilters({...filters, genero: v})} />
                <MultiSelectDropdown label="Notas" options={uniqueOptions.nota} selected={filters.nota} onChange={(v) => setFilters({...filters, nota: v})} />
                <MultiSelectDropdown label="Dificuldades" options={uniqueOptions.dif} selected={filters.dif} onChange={(v) => setFilters({...filters, dif: v})} />
                <MultiSelectDropdown label="Suportes" options={uniqueOptions.suporte} selected={filters.suporte} onChange={(v) => setFilters({...filters, suporte: v})} />
+               
+               {activeTab === 'backlog' && (
+                  <select value={backlogStatusFilter} onChange={e => setBacklogStatusFilter(e.target.value)} className={`${theme.input} !w-auto !p-1.5 max-w-[150px] shadow-[2px_2px_0_0_rgba(15,23,42,1)] text-[10px] sm:text-[11px]`}>
+                     <option value="todos">Todos (Status)</option>
+                     <option value="iniciados">Apenas Iniciados</option>
+                     <option value="nao_iniciados">Não Iniciados</option>
+                  </select>
+               )}
+
+               <div className="flex-1 min-w-[150px] text-right text-[10px] sm:text-xs font-black uppercase text-slate-500 whitespace-nowrap pl-2">
+                  Total na lista: <span className="text-slate-900">{sortedAndFilteredGames.length}</span> jogos
+               </div>
             </div>
           )}
 
-          {/* DASHBOARD COMPLETO */}
+          {}
           {activeTab === 'dashboard' && (
              <div className="flex flex-col gap-6">
                 
-                {/* Cards Estatísticos Superiores */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
-                  <div className={`p-4 ${theme.border} bg-[#A8E6CF] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
-                    <h3 className="text-[10px] sm:text-xs font-black uppercase">Finalizados</h3>
+                {/* Cards Estatísticos Superiores - Reordenados */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
+                  <div onClick={()=>setActiveTab('finished')} className={`p-4 ${theme.border} bg-[#A8E6CF] shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity`}>
+                    <h3 className="text-[10px] sm:text-[11px] font-black uppercase leading-tight">Finalizados</h3>
                     <p className="text-3xl sm:text-4xl font-black mt-1">{dashboardStats.totalJogos}</p>
                   </div>
                   <div onClick={()=>setActiveTab('backlog')} className={`p-4 ${theme.border} bg-slate-200 shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity`}>
-                    <h3 className="text-[10px] sm:text-xs font-black uppercase">Backlog</h3>
+                    <h3 className="text-[10px] sm:text-[11px] font-black uppercase leading-tight">Backlog</h3>
                     <p className="text-3xl sm:text-4xl font-black mt-1">{dashboardStats.totalBacklog}</p>
                   </div>
                   <div onClick={()=>setViewModal({type:'backlog_iniciado', data:'Iniciados'})} className={`p-4 ${theme.border} bg-[#FFD3B6] shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity`}>
-                    <h3 className="text-[10px] sm:text-xs font-black uppercase">Iniciados</h3>
+                    <h3 className="text-[10px] sm:text-[11px] font-black uppercase leading-tight">Iniciados</h3>
                     <p className="text-3xl sm:text-4xl font-black mt-1">{dashboardStats.totalIniciados}</p>
                   </div>
                   <div onClick={() => setViewModal({type:'platina', data: 'Platina'})} className={`p-4 ${theme.border} bg-[#E0F2FE] shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity`}>
-                    <h3 className="text-[10px] sm:text-xs font-black uppercase">Platinas</h3>
+                    <h3 className="text-[10px] sm:text-[11px] font-black uppercase leading-tight">Platinas</h3>
                     <p className="text-3xl sm:text-4xl font-black mt-1">{dashboardStats.platinas}</p>
                   </div>
                   <div className={`p-4 ${theme.border} bg-[#93C5FD] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
-                    <h3 className="text-[10px] sm:text-xs font-black uppercase">Nota Média</h3>
+                    <h3 className="text-[10px] sm:text-[11px] font-black uppercase leading-tight">Nota Média</h3>
                     <p className="text-3xl sm:text-4xl font-black mt-1">{dashboardStats.avgNota}</p>
                   </div>
                   <div onClick={() => setViewModal({type:'note', data: 'S'})} className={`p-4 ${theme.border} bg-gradient-to-r from-[#FF8B94] to-[#FFD3B6] shadow-[4px_4px_0_0_rgba(15,23,42,1)] cursor-pointer hover:opacity-80 transition-opacity`}>
-                    <h3 className="text-[10px] sm:text-xs font-black uppercase">Obras-Primas</h3>
+                    <h3 className="text-[10px] sm:text-[11px] font-black uppercase leading-tight">Obras-Primas</h3>
                     <p className="text-3xl sm:text-4xl font-black mt-1">{dashboardStats.sRanks}</p>
                   </div>
                   <div className={`p-4 ${theme.border} bg-[#FDE047] shadow-[4px_4px_0_0_rgba(15,23,42,1)]`}>
-                    <h3 className="text-[10px] sm:text-xs font-black uppercase">Investido</h3>
-                    <p className="text-xl sm:text-2xl font-black mt-3">{dashboardStats.totalGastoStr}</p>
+                    <h3 className="text-[10px] sm:text-[11px] font-black uppercase leading-tight">Investido</h3>
+                    <p className="text-lg sm:text-xl font-black mt-3">{dashboardStats.totalGastoStr}</p>
                   </div>
                 </div>
 
@@ -1071,13 +1104,13 @@ export default function App() {
                              return (
                                <g key={s.id} onClick={() => setViewModal({type: s.type, data: s.label})} className="cursor-pointer hover:opacity-80 transition-opacity">
                                   <path d={pathData} fill={s.color} stroke="#0f172a" strokeWidth="0.04" />
-                                  {/* As coordenadas precisam ser as mesmas no x, y e dentro de rotate */}
-                                  <text x={tX * 0.6} y={tY * 0.6 - 0.05} fill="#0f172a" fontSize="0.2" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-black" transform={`rotate(90 ${tX * 0.6} ${tY * 0.6 - 0.05})`}>
-                                     {s.count}
-                                  </text>
-                                  <text x={tX * 0.6} y={tY * 0.6 + 0.15} fill="#0f172a" fontSize="0.12" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-bold" transform={`rotate(90 ${tX * 0.6} ${tY * 0.6 + 0.15})`}>
-                                     {Math.round(s.pct)}%
-                                  </text>
+                                  
+                                  {/* Renderizando texto com contorno branco para leitura perfeita */}
+                                  <text x={tX * 0.6} y={tY * 0.6 - 0.05} fill="white" stroke="white" strokeWidth="0.08" strokeLinejoin="round" fontSize="0.25" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-black" transform={`rotate(90 ${tX * 0.6} ${tY * 0.6 - 0.05})`}>{s.count}</text>
+                                  <text x={tX * 0.6} y={tY * 0.6 - 0.05} fill="#0f172a" fontSize="0.25" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-black" transform={`rotate(90 ${tX * 0.6} ${tY * 0.6 - 0.05})`}>{s.count}</text>
+                                  
+                                  <text x={tX * 0.6} y={tY * 0.6 + 0.18} fill="white" stroke="white" strokeWidth="0.05" strokeLinejoin="round" fontSize="0.14" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-bold" transform={`rotate(90 ${tX * 0.6} ${tY * 0.6 + 0.18})`}>{Math.round(s.pct)}%</text>
+                                  <text x={tX * 0.6} y={tY * 0.6 + 0.18} fill="#0f172a" fontSize="0.14" fontStyle="bold" textAnchor="middle" dominantBaseline="central" className="font-bold" transform={`rotate(90 ${tX * 0.6} ${tY * 0.6 + 0.18})`}>{Math.round(s.pct)}%</text>
                                </g>
                              )
                           })}
@@ -1151,11 +1184,11 @@ export default function App() {
                     <div className="w-full flex-grow flex flex-row justify-center items-center mb-4 mt-2 gap-2">
                        <div className="w-[80px] flex flex-col border-[3px] border-slate-900 h-full max-h-[160px] bg-slate-100 relative shadow-[4px_4px_0_0_rgba(15,23,42,1)]" title={`Gasto Total + Economia Total = R$ ${(dashboardStats.totalGasto + dashboardStats.totalEconomia).toFixed(2).replace('.', ',')}`}>
                           <div className="w-full bg-[#EF4444] flex items-center justify-center flex-col transition-all group relative cursor-help" style={{height: `${dashboardStats.totalGasto + dashboardStats.totalEconomia > 0 ? (dashboardStats.totalEconomia / (dashboardStats.totalGasto + dashboardStats.totalEconomia)) * 100 : 0}%`}}>
-                             <span className="text-white font-black text-xs md:text-sm">{dashboardStats.totalEconomia.toFixed(0)}</span>
+                             <span className="text-white font-black text-[10px] sm:text-xs">R$ {dashboardStats.totalEconomia.toFixed(0)}</span>
                              <div className="absolute top-1/2 left-full -translate-y-1/2 ml-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-slate-900 text-white text-[10px] px-2 py-1 z-10 pointer-events-none">Total Economizado</div>
                           </div>
                           <div className="w-full bg-[#3B82F6] flex items-center justify-center flex-col transition-all group relative cursor-help" style={{height: `${dashboardStats.totalGasto + dashboardStats.totalEconomia > 0 ? (dashboardStats.totalGasto / (dashboardStats.totalGasto + dashboardStats.totalEconomia)) * 100 : 0}%`}}>
-                             <span className="text-white font-black text-xs md:text-sm">{dashboardStats.totalGasto.toFixed(0)}</span>
+                             <span className="text-white font-black text-[10px] sm:text-xs">R$ {dashboardStats.totalGasto.toFixed(0)}</span>
                              <div className="absolute top-1/2 left-full -translate-y-1/2 ml-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-slate-900 text-white text-[10px] px-2 py-1 z-10 pointer-events-none">Total Gasto Real</div>
                           </div>
                        </div>
@@ -1163,7 +1196,7 @@ export default function App() {
                            <span className="text-[50px] font-light leading-none -translate-y-1">{'}'}</span>
                            <div className="flex flex-col ml-1">
                              <span className="text-[10px] font-black uppercase leading-tight text-slate-500">Valor Cheio</span>
-                             <span className="text-md font-black leading-none">{(dashboardStats.totalGasto + dashboardStats.totalEconomia).toFixed(0)}</span>
+                             <span className="text-sm font-black leading-none">R$ {(dashboardStats.totalGasto + dashboardStats.totalEconomia).toFixed(0)}</span>
                            </div>
                        </div>
                     </div>
@@ -1264,7 +1297,7 @@ export default function App() {
                               return topSorts.anosConsoles.dir === 'asc' ? valA - valB : valB - valA;
                            }).slice(0, 50).map((stat, idx) => ( 
                                <tr key={`${stat.ano}-${stat.console}-${idx}`} className="border-b border-slate-200 hover:bg-slate-50">
-                                 <td className="py-2">{stat.ano}</td>
+                                 <td className="py-2"><span onClick={()=>setViewModal({type:'ano', data: stat.ano})} className="inline-block cursor-pointer px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] bg-amber-100 hover:-translate-y-0.5 transition-transform">{stat.ano}</span></td>
                                  <td className="py-2"><span onClick={()=>setViewModal({type:'console', data: stat.console})} className="inline-flex cursor-pointer items-center px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(15,23,42,1)] text-[8px] hover:-translate-y-0.5 transition-transform" style={{ backgroundColor: getConsoleStyle(stat.console).bg, color: getConsoleStyle(stat.console).text }}>{stat.console}</span></td>
                                  <td className="py-2 text-center">{stat.count}</td>
                                </tr>
@@ -1371,7 +1404,7 @@ export default function App() {
              </div>
           )}
 
-          {/* LISTAS FINALS & BACKLOG COM OPÇÃO CARD */}
+          {}
           {(activeTab === 'finished' || activeTab === 'backlog') && (() => {
              const isBacklog = activeTab === 'backlog';
              const totalPages = Math.ceil(sortedAndFilteredGames.length / ITEMS_PER_PAGE);
@@ -1380,24 +1413,13 @@ export default function App() {
              
              return (
               <div className="flex flex-col gap-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-2 border-[3px] border-slate-900 shadow-[4px_4px_0_0_rgba(15,23,42,1)] gap-2">
-                   <div className="flex items-center gap-2">
-                      <button onClick={() => setViewMode('table')} className={`p-1.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] transition-colors hover:-translate-y-0.5 ${viewMode === 'table' ? theme.gold : 'bg-slate-100 hover:bg-slate-200'}`} title="Tabela"><Icons.List /></button>
-                      <button onClick={() => setViewMode('cards')} className={`p-1.5 border-[2px] border-slate-900 shadow-[2px_2px_0_0_rgba(15,23,42,1)] transition-colors hover:-translate-y-0.5 ${viewMode === 'cards' ? theme.gold : 'bg-slate-100 hover:bg-slate-200'}`} title="Cards"><Icons.Grid /></button>
-                   </div>
-                   <div className="text-xs font-black uppercase text-slate-500">
-                      Total na lista: {sortedAndFilteredGames.length} jogos
-                   </div>
-                </div>
-                
                 {viewMode === 'table' ? renderGameTable(currentList, isBacklog) : renderGameCards(currentList, isBacklog)}
-                
                 <PaginationControls current={currentPage} total={totalPages} onChange={setCurrentPage} />
               </div>
             )
           })()}
 
-          {/* ADICIONAR NOVO */}
+          {}
           {activeTab === 'add' && (
             <div className={`p-6 bg-white ${theme.border} ${theme.card} max-w-4xl mx-auto`}>
               <h2 className="text-xl font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-2">Adicionar Novo (Insere no topo da Planilha)</h2>
@@ -1453,7 +1475,7 @@ export default function App() {
             </div>
           )}
 
-          {/* CONFIGURAÇÕES */}
+          {}
           {activeTab === 'config' && (
              <div className={`max-w-xl mx-auto bg-white p-8 ${theme.border} ${theme.card}`}>
                 <h2 className="text-2xl font-black mb-4 uppercase text-center">Alterar Conexão</h2>
@@ -1493,7 +1515,11 @@ export default function App() {
             </div>
 
             <div className="p-4 sm:p-6 bg-slate-50 overflow-y-auto max-h-[75vh] custom-scrollbar">
-              
+              <datalist id="consoles-list-edit">{uniqueOptions.console.map(o => <option key={o} value={o} />)}</datalist>
+              <datalist id="generos-list-edit">{uniqueOptions.genero.map(o => <option key={o} value={o} />)}</datalist>
+              <datalist id="suportes-list-edit">{uniqueOptions.suporte.map(o => <option key={o} value={o} />)}</datalist>
+              <datalist id="condicoes-list-edit">{uniqueOptions.condicao.map(o => <option key={o} value={o} />)}</datalist>
+
               {/* FICHA DO JOGO */}
               {viewModal.type === 'game' && (
                 <>
@@ -1632,29 +1658,29 @@ export default function App() {
                       {fichaData.status === 'Finalizado' ? (
                          <>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Nome *</label><input value={fichaData.titulo} onChange={e=>setFichaData({...fichaData, titulo: e.target.value})} className={theme.input} /></div>
-                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Console</label><input list="consoles-list" value={fichaData.plataforma} onChange={e=>setFichaData({...fichaData, plataforma: e.target.value})} className={theme.input} /></div>
-                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Gênero</label><input list="generos-list" value={fichaData.franquia} onChange={e=>setFichaData({...fichaData, franquia: e.target.value})} className={theme.input} /></div>
+                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Console</label><input list="consoles-list-edit" value={fichaData.plataforma} onChange={e=>setFichaData({...fichaData, plataforma: e.target.value})} className={theme.input} /></div>
+                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Gênero</label><input list="generos-list-edit" value={fichaData.franquia} onChange={e=>setFichaData({...fichaData, franquia: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Início</label><input placeholder="DD/MM/YYYY ou YYYY-MM-DD" value={fichaData.inicio} onChange={e=>setFichaData({...fichaData, inicio: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Fim</label><input placeholder="DD/MM/YYYY ou YYYY-MM-DD" value={fichaData.fim} onChange={e=>setFichaData({...fichaData, fim: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Tempo</label><input value={fichaData.tempo} onChange={e=>setFichaData({...fichaData, tempo: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Nota</label><input placeholder="De 0 a 10 ou S" type="text" value={fichaData.nota} onChange={e=>setFichaData({...fichaData, nota: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Dificuldade</label><select value={fichaData.dificuldade} onChange={e=>setFichaData({...fichaData, dificuldade: e.target.value})} className={theme.input}><option value=""></option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></div>
-                           <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Condição</label><input list="condicoes-list" value={fichaData.conquistas} onChange={e=>setFichaData({...fichaData, conquistas: e.target.value})} className={theme.input} /></div>
+                           <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Condição</label><input list="condicoes-list-edit" value={fichaData.conquistas} onChange={e=>setFichaData({...fichaData, conquistas: e.target.value})} className={theme.input} /></div>
                            <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Link (YouTube)</label><input value={getVal(fichaData, ['midia', 'link'])} onChange={e=>setFichaData({...fichaData, midia: e.target.value, link: e.target.value})} className={theme.input} /></div>
                            <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Observações</label><textarea value={getVal(fichaData, ['comentarios', 'observacao', 'observação'])} onChange={e=>setFichaData({...fichaData, comentarios: e.target.value, observacao: e.target.value})} className={theme.input} rows="2" /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input value={fichaData.preco} onChange={e=>setFichaData({...fichaData, preco: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço s/ Desconto</label><input value={fichaData.preco_original} onChange={e=>setFichaData({...fichaData, preco_original: e.target.value})} className={theme.input} /></div>
-                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input list="suportes-list" value={fichaData.suporte} onChange={e=>setFichaData({...fichaData, suporte: e.target.value})} className={theme.input} /></div>
+                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input list="suportes-list-edit" value={fichaData.suporte} onChange={e=>setFichaData({...fichaData, suporte: e.target.value})} className={theme.input} /></div>
                          </>
                       ) : (
                          <>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Nome *</label><input value={fichaData.titulo} onChange={e=>setFichaData({...fichaData, titulo: e.target.value})} className={theme.input} /></div>
-                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Console</label><input list="consoles-list" value={fichaData.plataforma} onChange={e=>setFichaData({...fichaData, plataforma: e.target.value})} className={theme.input} /></div>
-                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Gênero</label><input list="generos-list" value={fichaData.franquia} onChange={e=>setFichaData({...fichaData, franquia: e.target.value})} className={theme.input} /></div>
+                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Console</label><input list="consoles-list-edit" value={fichaData.plataforma} onChange={e=>setFichaData({...fichaData, plataforma: e.target.value})} className={theme.input} /></div>
+                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Gênero</label><input list="generos-list-edit" value={fichaData.franquia} onChange={e=>setFichaData({...fichaData, franquia: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Iniciado</label><input placeholder="DD/MM/YYYY ou YYYY-MM-DD" value={fichaData.inicio} onChange={e=>setFichaData({...fichaData, inicio: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input value={fichaData.preco} onChange={e=>setFichaData({...fichaData, preco: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço s/ Desconto</label><input value={fichaData.preco_original} onChange={e=>setFichaData({...fichaData, preco_original: e.target.value})} className={theme.input} /></div>
-                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input list="suportes-list" value={fichaData.suporte} onChange={e=>setFichaData({...fichaData, suporte: e.target.value})} className={theme.input} /></div>
+                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input list="suportes-list-edit" value={fichaData.suporte} onChange={e=>setFichaData({...fichaData, suporte: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Prioridade</label><select value={fichaData.prioridade} onChange={e=>setFichaData({...fichaData, prioridade: e.target.value})} className={theme.input}><option value=""></option>{Array.from({length: maxBacklogPriority}).map((_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}</select></div>
                          </>
                       )}
