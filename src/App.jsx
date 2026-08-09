@@ -315,10 +315,10 @@ const MultiSelectDropdown = ({ label, options, selected, onChange }) => {
 const PieChartUI = ({ title, slices, onClickSlice }) => {
    if (!slices || slices.length === 0) return null;
    return (
-     <div className={`p-3 sm:p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] flex flex-col items-center justify-between h-full min-h-[220px]`}>
+     <div className={`p-3 sm:p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] flex flex-col items-center justify-between h-full min-h-[320px]`}>
        <h3 className="text-xs font-black uppercase mb-2 w-full text-center border-b-[3px] border-slate-900 pb-2">{title}</h3>
        <div className="w-full flex-grow flex items-center justify-center py-2 relative">
-         <svg viewBox="-1.2 -1.2 2.4 2.4" className="w-28 h-28 transform -rotate-90 drop-shadow-md">
+         <svg viewBox="-1.2 -1.2 2.4 2.4" className="w-32 h-32 transform -rotate-90 drop-shadow-md">
             {slices.map(s => {
                const getCoords = (percent) => [Math.cos(2*Math.PI*percent), Math.sin(2*Math.PI*percent)];
                const [startX, startY] = getCoords(s.start);
@@ -345,7 +345,7 @@ const PieChartUI = ({ title, slices, onClickSlice }) => {
             })}
          </svg>
        </div>
-       <div className="w-full flex flex-col gap-1 border-t-[3px] border-slate-900 pt-2 max-h-[90px] overflow-y-auto custom-scrollbar">
+       <div className="w-full flex flex-col gap-1 border-t-[3px] border-slate-900 pt-2 max-h-[160px] overflow-y-auto custom-scrollbar">
           {slices.map(s => (
              <div key={s.id} onClick={() => onClickSlice && onClickSlice(s)} className="flex items-center text-[10px] font-black uppercase cursor-pointer hover:opacity-70 transition-opacity justify-between">
                 <div className="flex items-center gap-1.5"><div className="w-3 h-3 border-2 border-slate-900 shrink-0" style={{backgroundColor: s.color}}></div><span className="truncate max-w-[120px]" title={s.label}>{s.label}</span></div>
@@ -365,7 +365,7 @@ const Icons = {
   Settings: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
   SortArrow: ({ asc }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={`w-3 h-3 ml-1 inline-block transition-transform ${asc ? '' : 'rotate-180'}`}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /></svg>,
   Close: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>,
-  Gamepad: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4 inline-block text-cyan-700 align-text-bottom"><path strokeLinecap="round" strokeLinejoin="round" d="M7 11v2m-1-1h2m7-1h.01M15 13h.01M6.5 6h11c2.5 0 4.5 2 4.5 4.5v1c0 2.5-2 4.5-4.5 4.5H16l-2 3h-4l-2-3H6.5C4 16 2 14 2 11.5v-1C2 8 4 6 6.5 6z" /></svg>
+  Gamepad: () => <span className="inline-block text-cyan-700 font-black text-[14px] align-middle px-1 leading-none">▷</span>
 };
 
 export default function App() {
@@ -683,68 +683,71 @@ export default function App() {
       dif: { A: 0, B: 0, C: 0, D: 0, E: 0 }, consoles: {}, generos: {}, anos: {}, midiaCategoria: {}, midiaSub: {}
     };
 
-    fin.forEach(g => {
+    baseList.forEach(g => {
+      // Calcula gastos incluindo os jogos em Backlog
       let pPago = getNumericPrice(getVal(g, ['preco', 'preco pago']));
       let pOrig = getNumericPrice(getVal(g, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
       
       stats.totalGasto += pPago;
       if(pOrig > pPago && pOrig > 0) stats.totalEconomia += (pOrig - pPago);
 
-      let n = parseFloat(String(getVal(g, ['nota'])).replace(',','.'));
-      if(!isNaN(n)) {
-        let baseNote = Math.floor(n); 
-        if (baseNote >= 0 && baseNote <= 10) stats.notas[String(baseNote)]++;
-      }
+      if (g.status === 'Finalizado') {
+          let n = parseFloat(String(getVal(g, ['nota'])).replace(',','.'));
+          if(!isNaN(n)) {
+            let baseNote = Math.floor(n); 
+            if (baseNote >= 0 && baseNote <= 10) stats.notas[String(baseNote)]++;
+          }
 
-      let d = String(getVal(g, ['dificuldade'])).toUpperCase().trim();
-      if(stats.dif[d] !== undefined) stats.dif[d]++;
+          let d = String(getVal(g, ['dificuldade'])).toUpperCase().trim();
+          if(stats.dif[d] !== undefined) stats.dif[d]++;
 
-      let consoleName = getVal(g, ['plataforma', 'console']) || 'Desconhecido';
-      let genreName = getVal(g, ['franquia', 'genero', 'gênero']) || 'Desconhecido';
-      let tHrs = getNumericTempo(getVal(g, ['tempo']));
-      let cond = String(getVal(g, ['conquistas', 'condicao', 'condição'])).toLowerCase();
+          let consoleName = getVal(g, ['plataforma', 'console']) || 'Desconhecido';
+          let genreName = getVal(g, ['franquia', 'genero', 'gênero']) || 'Desconhecido';
+          let tHrs = getNumericTempo(getVal(g, ['tempo']));
+          let cond = String(getVal(g, ['conquistas', 'condicao', 'condição'])).toLowerCase();
 
-      if (cond.includes('platina')) stats.platinas++;
+          if (cond.includes('platina')) stats.platinas++;
 
-      let supInfo = getSuporteInfo(getVal(g, ['suporte']));
-      if (supInfo.categoria !== 'Desconhecido') {
-         if (!stats.midiaCategoria[supInfo.categoria]) stats.midiaCategoria[supInfo.categoria] = { count: 0 };
-         stats.midiaCategoria[supInfo.categoria].count++;
-      }
-      if (supInfo.subCategoria !== 'Desconhecido') {
-         if (!stats.midiaSub[supInfo.subCategoria]) stats.midiaSub[supInfo.subCategoria] = { count: 0 };
-         stats.midiaSub[supInfo.subCategoria].count++;
-      }
+          let supInfo = getSuporteInfo(getVal(g, ['suporte']));
+          if (supInfo.categoria !== 'Desconhecido') {
+             if (!stats.midiaCategoria[supInfo.categoria]) stats.midiaCategoria[supInfo.categoria] = { count: 0 };
+             stats.midiaCategoria[supInfo.categoria].count++;
+          }
+          if (supInfo.subCategoria !== 'Desconhecido') {
+             if (!stats.midiaSub[supInfo.subCategoria]) stats.midiaSub[supInfo.subCategoria] = { count: 0 };
+             stats.midiaSub[supInfo.subCategoria].count++;
+          }
 
-      let dStr = formatDateStr(getVal(g, ['fim']));
-      let year = 'Desc.';
-      if (dStr) {
-         let p = dStr.split('/');
-         if (p.length === 3) year = p[2];
-      }
+          let dStr = formatDateStr(getVal(g, ['fim']));
+          let year = 'Desc.';
+          if (dStr) {
+             let p = dStr.split('/');
+             if (p.length === 3) year = p[2];
+          }
 
-      if (year !== 'Desc.') {
-         if (!stats.anos[year]) stats.anos[year] = { count: 0, tempo: 0, consoles: {} };
-         stats.anos[year].count++;
-         stats.anos[year].tempo += tHrs;
-         if (consoleName && consoleName !== '-' && consoleName !== 'Desconhecido') {
-             if(!stats.anos[year].consoles[consoleName]) stats.anos[year].consoles[consoleName] = 0;
-             stats.anos[year].consoles[consoleName]++;
-         }
-      }
+          if (year !== 'Desc.') {
+             if (!stats.anos[year]) stats.anos[year] = { count: 0, tempo: 0, consoles: {} };
+             stats.anos[year].count++;
+             stats.anos[year].tempo += tHrs;
+             if (consoleName && consoleName !== '-' && consoleName !== 'Desconhecido') {
+                 if(!stats.anos[year].consoles[consoleName]) stats.anos[year].consoles[consoleName] = 0;
+                 stats.anos[year].consoles[consoleName]++;
+             }
+          }
 
-      if(consoleName && consoleName !== '-' && consoleName !== 'Desconhecido') {
-        if(!stats.consoles[consoleName]) stats.consoles[consoleName] = { count: 0, totalNota: 0, notaCount: 0, totalTempo: 0 };
-        stats.consoles[consoleName].count++;
-        stats.consoles[consoleName].totalTempo += tHrs;
-        if(!isNaN(n)) { stats.consoles[consoleName].totalNota += n; stats.consoles[consoleName].notaCount++; }
-      }
+          if(consoleName && consoleName !== '-' && consoleName !== 'Desconhecido') {
+            if(!stats.consoles[consoleName]) stats.consoles[consoleName] = { count: 0, totalNota: 0, notaCount: 0, totalTempo: 0 };
+            stats.consoles[consoleName].count++;
+            stats.consoles[consoleName].totalTempo += tHrs;
+            if(!isNaN(n)) { stats.consoles[consoleName].totalNota += n; stats.consoles[consoleName].notaCount++; }
+          }
 
-      if(genreName && genreName !== '-' && genreName !== 'Desconhecido') {
-        if(!stats.generos[genreName]) stats.generos[genreName] = { count: 0, totalNota: 0, notaCount: 0, totalTempo: 0 };
-        stats.generos[genreName].count++;
-        stats.generos[genreName].totalTempo += tHrs;
-        if(!isNaN(n)) { stats.generos[genreName].totalNota += n; stats.generos[genreName].notaCount++; }
+          if(genreName && genreName !== '-' && genreName !== 'Desconhecido') {
+            if(!stats.generos[genreName]) stats.generos[genreName] = { count: 0, totalNota: 0, notaCount: 0, totalTempo: 0 };
+            stats.generos[genreName].count++;
+            stats.generos[genreName].totalTempo += tHrs;
+            if(!isNaN(n)) { stats.generos[genreName].totalNota += n; stats.generos[genreName].notaCount++; }
+          }
       }
     });
 
@@ -801,12 +804,11 @@ export default function App() {
   const getGenericPieSlices = (dataObj, type) => {
      let entries = Object.keys(dataObj).map(k => ({ label: k, count: dataObj[k].count, type, data: k }));
      entries.sort((a,b) => b.count - a.count);
-     let top = entries.slice(0, 5);
-     let rest = entries.slice(5).reduce((acc, curr) => acc + curr.count, 0);
-     if (rest > 0) top.push({ id: 'outros', label: 'Outros', count: rest, type: null, data: null });
+     
+     let top = entries; 
      
      let total = top.reduce((acc, curr) => acc + curr.count, 0);
-     let colors = ['#A8E6CF', '#FFD3B6', '#93C5FD', '#C4B5FD', '#FCA5A5', '#E2E8F0'];
+     let colors = ['#A8E6CF', '#FFD3B6', '#93C5FD', '#C4B5FD', '#FCA5A5', '#E2E8F0', '#FDE047', '#FDA4AF', '#86EFAC', '#99F6E4'];
      
      let slices = [];
      let cp = 0;
@@ -1135,6 +1137,7 @@ export default function App() {
         )}
       </div>
 
+      {}
       <div className={`max-w-[1600px] mx-auto ${theme.border} ${theme.card} flex flex-col bg-white overflow-hidden`}>
         {/* NAVEGAÇÃO / ABAS */}
         <nav className="flex flex-row overflow-x-auto sm:grid sm:grid-cols-5 border-b-[3px] border-slate-900 bg-slate-100">
@@ -1198,7 +1201,7 @@ export default function App() {
             </div>
           )}
 
-          {/* DASHBOARD PRINCIPAL */}
+          {}
           {activeTab === 'dashboard' && (
              <div className="flex flex-col gap-6">
                 
@@ -1234,6 +1237,35 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* GRÁFICOS DE PIZZA (MOVIDOS PARA CIMA) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 items-start">
+                  <PieChartUI 
+                     title="Status da Biblioteca" 
+                     slices={getPieSlices()} 
+                     onClickSlice={(s) => setViewModal({type: s.type, data: s.label})} 
+                  />
+                  <PieChartUI 
+                     title="Mídia: Formatos" 
+                     slices={getGenericPieSlices(dashboardStats.midiaCategoria, 'suporte_cat')} 
+                     onClickSlice={(s) => s.type && setViewModal({type: s.type, data: s.data})} 
+                  />
+                  <PieChartUI 
+                     title="Mídia: Subtipos" 
+                     slices={getGenericPieSlices(dashboardStats.midiaSub, 'suporte_sub')} 
+                     onClickSlice={(s) => s.type && setViewModal({type: s.type, data: s.data})} 
+                  />
+                  <PieChartUI 
+                     title="Top Consoles" 
+                     slices={getGenericPieSlices(dashboardStats.consoles, 'console')} 
+                     onClickSlice={(s) => s.type && setViewModal({type: s.type, data: s.data})} 
+                  />
+                  <PieChartUI 
+                     title="Top Gêneros" 
+                     slices={getGenericPieSlices(dashboardStats.generos, 'genre')} 
+                     onClickSlice={(s) => s.type && setViewModal({type: s.type, data: s.data})} 
+                  />
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
                   {/* Descontos por jogo */}
                   <div className={`lg:col-span-2 p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] h-full min-h-[300px]`}>
@@ -1249,7 +1281,7 @@ export default function App() {
                       </select>
                     </div>
                     <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-2 custom-scrollbar">
-                      {sortedAndFilteredGames.filter(g => g.status === 'Finalizado' && calculateDiscount(getVal(g, ['preco', 'preco pago']), getVal(g, ['preco_original', 'preco sem desconto', 'preço sem desconto'])).has)
+                      {sortedAndFilteredGames.filter(g => calculateDiscount(getVal(g, ['preco', 'preco pago']), getVal(g, ['preco_original', 'preco sem desconto', 'preço sem desconto'])).has)
                             .sort((a,b) => {
                                let dA = calculateDiscount(getVal(a, ['preco', 'preco pago']), getVal(a, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
                                let dB = calculateDiscount(getVal(b, ['preco', 'preco pago']), getVal(b, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
@@ -1311,35 +1343,8 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* GRÁFICOS DE PIZZA COMPACTOS */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 items-start">
-                  <PieChartUI 
-                     title="Status da Biblioteca" 
-                     slices={getPieSlices()} 
-                     onClickSlice={(s) => setViewModal({type: s.type, data: s.label})} 
-                  />
-                  <PieChartUI 
-                     title="Mídia: Formatos" 
-                     slices={getGenericPieSlices(dashboardStats.midiaCategoria, 'suporte_cat')} 
-                     onClickSlice={(s) => s.type && setViewModal({type: s.type, data: s.data})} 
-                  />
-                  <PieChartUI 
-                     title="Mídia: Subtipos" 
-                     slices={getGenericPieSlices(dashboardStats.midiaSub, 'suporte_sub')} 
-                     onClickSlice={(s) => s.type && setViewModal({type: s.type, data: s.data})} 
-                  />
-                  <PieChartUI 
-                     title="Top Consoles" 
-                     slices={getGenericPieSlices(dashboardStats.consoles, 'console')} 
-                     onClickSlice={(s) => s.type && setViewModal({type: s.type, data: s.data})} 
-                  />
-                  <PieChartUI 
-                     title="Top Gêneros" 
-                     slices={getGenericPieSlices(dashboardStats.generos, 'genre')} 
-                     onClickSlice={(s) => s.type && setViewModal({type: s.type, data: s.data})} 
-                  />
-                </div>
 
+                {}
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
                    
                    {/* Dificuldade */}
@@ -1538,6 +1543,7 @@ export default function App() {
              </div>
           )}
 
+          {}
           {/* LISTAS FINALS & BACKLOG */}
           {(activeTab === 'finished' || activeTab === 'backlog') && (() => {
              const isBacklog = activeTab === 'backlog';
@@ -1557,6 +1563,7 @@ export default function App() {
             )
           })()}
 
+          {}
           {/* ADICIONAR NOVO */}
           {activeTab === 'add' && (
             <div className={`p-6 bg-white ${theme.border} ${theme.card} max-w-4xl mx-auto`}>
@@ -1837,6 +1844,7 @@ export default function App() {
                 </>
               )}
 
+              {}
               {/* FICHA DE LISTAGENS FILTRADAS */}
               {viewModal.type !== 'game' && (() => {
                  let filteredList = games.filter(g => {
