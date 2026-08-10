@@ -1645,6 +1645,7 @@ export default function App() {
             )
           })()}
 
+          {}
           {/* ADICIONAR NOVO */}
           {activeTab === 'add' && (
             <div className={`p-6 bg-white ${theme.border} ${theme.card} max-w-4xl mx-auto`}>
@@ -1701,6 +1702,7 @@ export default function App() {
             </div>
           )}
 
+          {}
           {/* CONFIGURAÇÕES */}
           {activeTab === 'config' && (
              <div className={`max-w-xl mx-auto bg-white p-8 ${theme.border} ${theme.card}`}>
@@ -1718,6 +1720,7 @@ export default function App() {
         </main>
       </div>
 
+      {}
       {}
       {viewModal && (
         <div className="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
@@ -1925,6 +1928,7 @@ export default function App() {
                 </>
               )}
 
+              {}
               {/* FICHA DE LISTAGENS FILTRADAS */}
               {viewModal.type !== 'game' && (() => {
                  let filteredList = games.filter(g => {
