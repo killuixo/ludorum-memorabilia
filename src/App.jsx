@@ -53,22 +53,23 @@ const formatDateStr = (str) => {
       const day = String(d.getUTCDate()).padStart(2, '0');
       const mon = String(d.getUTCMonth() + 1).padStart(2, '0');
       const yr = d.getUTCFullYear();
-      if(!isNaN(yr) && yr > 1900) return `${day}-${mon}-${yr}`;
+      if(!isNaN(yr) && yr > 1900) return `${day}/${mon}/${yr}`;
     } catch(e) {}
   }
   
-  if (s.includes('/')) s = s.replace(/\//g, '-');
-  
   let isoMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (isoMatch) {
-      return `${isoMatch[3]}-${isoMatch[2]}-${isoMatch[1]}`;
+      return `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`;
   }
+  
+  if (s.includes('-')) s = s.replace(/-/g, '/');
+  
   return s;
 };
 
 const parseInputDate = (str) => {
   if (!str) return 0;
-  let p = formatDateStr(str).split('-');
+  let p = formatDateStr(str).split('/');
   if(p.length === 3) return new Date(`${p[2]}-${p[1]}-${p[0]}T12:00:00`).getTime() || 0;
   return 0;
 };
@@ -1661,9 +1662,9 @@ export default function App() {
                         <div className="flex flex-col"><label className="text-xs font-black uppercase">Nome *</label><input required value={formData.titulo} onChange={e=>setFormData({...formData, titulo: e.target.value})} className={theme.input} /></div>
                         <div className="flex flex-col"><label className="text-xs font-black uppercase">Console</label><input list="consoles-list" value={formData.plataforma} onChange={e=>setFormData({...formData, plataforma: e.target.value})} className={theme.input} /></div>
                         <div className="flex flex-col"><label className="text-xs font-black uppercase">Gênero</label><input list="generos-list" value={formData.franquia} onChange={e=>setFormData({...formData, franquia: e.target.value})} className={theme.input} /></div>
-                        <div className="flex flex-col"><label className="text-xs font-black uppercase">Início</label><input placeholder="DD-MM-AAAA" value={formData.inicio} onChange={e=>setFormData({...formData, inicio: e.target.value})} className={theme.input} /></div>
-                        <div className="flex flex-col"><label className="text-xs font-black uppercase">Fim</label><input placeholder="DD-MM-AAAA" value={formData.fim} onChange={e=>setFormData({...formData, fim: e.target.value})} className={theme.input} /></div>
-                        <div className="flex flex-col"><label className="text-xs font-black uppercase">Tempo</label><input placeholder="Ex: 12h ou 120:00:00" value={formData.tempo} onChange={e=>setFormData({...formData, tempo: e.target.value})} className={theme.input} /></div>
+                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Início</label><input placeholder="DD/MM/AAAA" value={formData.inicio} onChange={e=>setFormData({...formData, inicio: e.target.value})} className={theme.input} /></div>
+                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Fim</label><input placeholder="DD/MM/AAAA" value={formData.fim} onChange={e=>setFormData({...formData, fim: e.target.value})} className={theme.input} /></div>
+                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Tempo</label><input placeholder="Ex: 12h ou 120:00:00" value={formData.tempo} onChange={e=>setFormData({...formData, tempo: e.target.value})} className={theme.input} /></div>
                         <div className="flex flex-col"><label className="text-xs font-black uppercase">Nota</label><input placeholder="De 0 a 10 ou S" type="text" value={formData.nota} onChange={e=>setFormData({...formData, nota: e.target.value})} className={theme.input} /></div>
                         <div className="flex flex-col"><label className="text-xs font-black uppercase">Dificuldade</label><select value={formData.dificuldade} onChange={e=>setFormData({...formData, dificuldade: e.target.value})} className={theme.input}><option value=""></option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></div>
                         <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Condição</label><input list="condicoes-list" value={formData.conquistas} onChange={e=>setFormData({...formData, conquistas: e.target.value})} className={theme.input} /></div>
@@ -1678,8 +1679,8 @@ export default function App() {
                         <div className="flex flex-col"><label className="text-xs font-black uppercase">Nome *</label><input required value={formData.titulo} onChange={e=>setFormData({...formData, titulo: e.target.value})} className={theme.input} /></div>
                         <div className="flex flex-col"><label className="text-xs font-black uppercase">Console</label><input list="consoles-list" value={formData.plataforma} onChange={e=>setFormData({...formData, plataforma: e.target.value})} className={theme.input} /></div>
                         <div className="flex flex-col"><label className="text-xs font-black uppercase">Gênero</label><input list="generos-list" value={formData.franquia} onChange={e=>setFormData({...formData, franquia: e.target.value})} className={theme.input} /></div>
-                        <div className="flex flex-col"><label className="text-xs font-black uppercase">Iniciado</label><input placeholder="DD-MM-AAAA" value={formData.inicio} onChange={e=>setFormData({...formData, inicio: e.target.value})} className={theme.input} /></div>
-                        <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input placeholder="69,90" value={formData.preco} onChange={e=>setFormData({...formData, preco: e.target.value})} className={theme.input} /></div>
+                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Iniciado</label><input placeholder="DD/MM/AAAA" value={formData.inicio} onChange={e=>setFormData({...formData, inicio: e.target.value})} className={theme.input} /></div>
+                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input placeholder="69,90" value={formData.preco} onChange={e=>setFormData({...formData, preco: e.target.value})} className={theme.input} /></div>
                         <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço S/ Desconto</label><input placeholder="132,90" value={formData.preco_original} onChange={e=>setFormData({...formData, preco_original: e.target.value})} className={theme.input} /></div>
                         <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input list="suportes-list" value={formData.suporte} onChange={e=>setFormData({...formData, suporte: e.target.value})} className={theme.input} /></div>
                         <div className="flex flex-col"><label className="text-xs font-black uppercase">Prioridade</label><select value={formData.prioridade} onChange={e=>setFormData({...formData, prioridade: e.target.value})} className={theme.input}><option value=""></option>{renderPriorityOptions(null)}</select></div>
@@ -1896,9 +1897,9 @@ export default function App() {
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Nome *</label><input value={fichaData.titulo} onChange={e=>setFichaData({...fichaData, titulo: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Console</label><input list="consoles-list-edit" value={fichaData.plataforma} onChange={e=>setFichaData({...fichaData, plataforma: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Gênero</label><input list="generos-list-edit" value={fichaData.franquia} onChange={e=>setFichaData({...fichaData, franquia: e.target.value})} className={theme.input} /></div>
-                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Início</label><input placeholder="DD-MM-AAAA" value={fichaData.inicio} onChange={e=>setFichaData({...fichaData, inicio: e.target.value})} className={theme.input} /></div>
-                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Fim</label><input placeholder="DD-MM-AAAA" value={fichaData.fim} onChange={e=>setFichaData({...fichaData, fim: e.target.value})} className={theme.input} /></div>
-                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Tempo</label><input placeholder="12h" value={fichaData.tempo} onChange={e=>setFichaData({...fichaData, tempo: e.target.value})} className={theme.input} /></div>
+                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Início</label><input placeholder="DD/MM/AAAA" value={fichaData.inicio} onChange={e=>setFichaData({...fichaData, inicio: e.target.value})} className={theme.input} /></div>
+                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Fim</label><input placeholder="DD/MM/AAAA" value={fichaData.fim} onChange={e=>setFichaData({...fichaData, fim: e.target.value})} className={theme.input} /></div>
+                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Tempo</label><input placeholder="12h" value={fichaData.tempo} onChange={e=>setFichaData({...fichaData, tempo: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Nota</label><input placeholder="De 0 a 10 ou S" type="text" value={fichaData.nota} onChange={e=>setFichaData({...fichaData, nota: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Dificuldade</label><select value={fichaData.dificuldade} onChange={e=>setFichaData({...fichaData, dificuldade: e.target.value})} className={theme.input}><option value=""></option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></div>
                            <div className="md:col-span-3 flex flex-col"><label className="text-xs font-black uppercase">Condição</label><input list="condicoes-list-edit" value={fichaData.conquistas} onChange={e=>setFichaData({...fichaData, conquistas: e.target.value})} className={theme.input} /></div>
@@ -1913,8 +1914,8 @@ export default function App() {
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Nome *</label><input value={fichaData.titulo} onChange={e=>setFichaData({...fichaData, titulo: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Console</label><input list="consoles-list-edit" value={fichaData.plataforma} onChange={e=>setFichaData({...fichaData, plataforma: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Gênero</label><input list="generos-list-edit" value={fichaData.franquia} onChange={e=>setFichaData({...fichaData, franquia: e.target.value})} className={theme.input} /></div>
-                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Iniciado</label><input placeholder="DD-MM-AAAA" value={fichaData.inicio} onChange={e=>setFichaData({...fichaData, inicio: e.target.value})} className={theme.input} /></div>
-                           <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input value={fichaData.preco} onChange={e=>setFichaData({...fichaData, preco: e.target.value})} className={theme.input} /></div>
+                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Iniciado</label><input placeholder="DD/MM/AAAA" value={fichaData.inicio} onChange={e=>setFichaData({...fichaData, inicio: e.target.value})} className={theme.input} /></div>
+                       <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço Pago</label><input value={fichaData.preco} onChange={e=>setFichaData({...fichaData, preco: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Preço s/ Desconto</label><input value={fichaData.preco_original} onChange={e=>setFichaData({...fichaData, preco_original: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Suporte</label><input list="suportes-list-edit" value={fichaData.suporte} onChange={e=>setFichaData({...fichaData, suporte: e.target.value})} className={theme.input} /></div>
                            <div className="flex flex-col"><label className="text-xs font-black uppercase">Prioridade</label><select value={fichaData.prioridade} onChange={e=>setFichaData({...fichaData, prioridade: e.target.value})} className={theme.input}><option value=""></option>{renderPriorityOptions(fichaData.id)}</select></div>
