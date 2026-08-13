@@ -860,7 +860,7 @@ export default function App() {
     <th onClick={() => onClickOverride ? onClickOverride() : handleSort(sortKey)} className={`p-2 border-r-[3px] border-slate-900 cursor-pointer hover:bg-black/10 transition-colors whitespace-nowrap ${className}`}>
       <div className={`flex items-center gap-1 ${className.includes('text-center') ? 'justify-center' : 'justify-between'}`}>
         <span>{label}</span>
-        {sortConfig.key === sortKey && <Icons.SortArrow 'asc'} asc="{sortConfig.direction"/>}
+        {sortConfig.key === sortKey && <Icons.SortArrow asc={sortConfig.direction === 'asc'} />}
       </div>
     </th>
   );
@@ -869,7 +869,7 @@ export default function App() {
     <th onClick={() => handleTopSort(tableKey, sortKey)} className={`pb-1 px-1 cursor-pointer hover:opacity-70 transition-opacity text-${align}`}>
         <div className={`flex items-center gap-1 ${align === 'center' ? 'justify-center' : align === 'right' ? 'justify-end' : 'justify-start'}`}>
             {label}
-            {topSorts[tableKey].key === sortKey && <Icons.SortArrow 'asc'} asc="{topSorts[tableKey].dir"/>}
+            {topSorts[tableKey].key === sortKey && <Icons.SortArrow asc={topSorts[tableKey].dir === 'asc'} />}
         </div>
     </th>
   );
@@ -934,7 +934,7 @@ export default function App() {
                             </div>
                             <div className="font-black text-[11px] text-slate-500 shrink-0 flex items-center justify-center">
                                 {!isBacklog && `#${visualId}`}
-                                {isBacklog && isStartedBacklog && <Icons.Gamepad/>}
+                                {isBacklog && isStartedBacklog && <Icons.Gamepad />}
                                 {isBacklog && !isStartedBacklog && displayClean(prioridade) && (
                                    <span className="inline-block px-1 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(0,0,0,1)] text-[9px]" style={{backgroundColor: getPriorityColorHex(prioridade, dashboardStats.totalBacklog), color: '#0f172a'}} title="Prioridade">
                                       {prioridade}
@@ -979,22 +979,22 @@ export default function App() {
       <table className="w-full text-left border-collapse text-[10px] sm:text-[11px] font-bold">
         <thead className="sticky top-0 z-10 shadow-sm">
           <tr className={`${activeTab === 'finished' || (viewModal && viewModal.type !== 'backlog_iniciado' && viewModal.type !== 'backlog_nao_iniciado') ? theme.gold : theme.cyan} border-b-[3px] border-slate-900 uppercase font-black text-slate-900`}>
-            {!isBacklog && <Th className="text-center w-10" label="#" sortKey="ordem"/>}
-            {isBacklog && <Th className="font-black text-lg text-slate-700" label="{<div" title="Prioridade / Iniciado">!</div>} sortKey="prioridade" className="text-center w-10" />}
-            <Th label="NOME DO JOGO" sortKey="titulo"/>
-            <Th label="CONSOLE" sortKey="plataforma"/>
-            <Th label="GÊNERO" sortKey="franquia"/>
-            {isBacklog ? <Th className="text-center" label="INICIADO" sortKey="inicio"/> : <Th className="text-center" label="INÍCIO" sortKey="inicio"/>}
-            {!isBacklog && <Th className="text-center" label="FIM" sortKey="fim"/>}
-            {!isBacklog && <Th className="text-center" label="TEMPO TOTAL" sortKey="tempo"/>}
-            {!isBacklog && <Th className="text-center" label="DURAÇÃO" sortKey="duracao"/>}
-            {!isBacklog && <Th className="text-center" label="NOTA" sortKey="nota"/>}
-            {!isBacklog && <Th className="text-center" label="DIF" sortKey="dificuldade"/>}
-            {!isBacklog && <Th label="CONDIÇÃO" sortKey="conquistas"/>}
-            <Th className="text-center" label="PREÇO PAGO" sortKey="preco"/>
-            <Th className="text-center" label="PREÇO S/ DESC." sortKey="preco_original"/>
-            {!isBacklog && <Th className="text-center" label="DESCONTO" sortKey="desconto"/>}
-            <Th className="text-center border-r-0" label="SUPORTE" sortKey="suporte"/>
+            {!isBacklog && <Th className="text-center w-10" label="#" sortKey="ordem" />}
+            {isBacklog && <Th label={<div className="font-black text-lg text-slate-700" title="Prioridade / Iniciado">!</div>} sortKey="prioridade" className="text-center w-10" />}
+            <Th label="NOME DO JOGO" sortKey="titulo" />
+            <Th label="CONSOLE" sortKey="plataforma" />
+            <Th label="GÊNERO" sortKey="franquia" />
+            {isBacklog ? <Th className="text-center" label="INICIADO" sortKey="inicio" /> : <Th className="text-center" label="INÍCIO" sortKey="inicio" />}
+            {!isBacklog && <Th className="text-center" label="FIM" sortKey="fim" />}
+            {!isBacklog && <Th className="text-center" label="TEMPO TOTAL" sortKey="tempo" />}
+            {!isBacklog && <Th className="text-center" label="DURAÇÃO" sortKey="duracao" />}
+            {!isBacklog && <Th className="text-center" label="NOTA" sortKey="nota" />}
+            {!isBacklog && <Th className="text-center" label="DIF" sortKey="dificuldade" />}
+            {!isBacklog && <Th label="CONDIÇÃO" sortKey="conquistas" />}
+            <Th className="text-center" label="PREÇO PAGO" sortKey="preco" />
+            <Th className="text-center" label="PREÇO S/ DESC." sortKey="preco_original" />
+            {!isBacklog && <Th className="text-center" label="DESCONTO" sortKey="desconto" />}
+            <Th className="text-center border-r-0" label="SUPORTE" sortKey="suporte" />
           </tr>
         </thead>
         <tbody>
@@ -1027,7 +1027,7 @@ export default function App() {
                 
                 {isBacklog && (
                   <td className={`p-2 border-r-[3px] border-slate-900 text-center font-black whitespace-nowrap ${isStartedBacklog ? 'bg-cyan-100' : 'bg-slate-100 text-slate-500'}`}>
-                    {isStartedBacklog ? <Icons.Gamepad/> : displayClean(prioridade) ? (
+                    {isStartedBacklog ? <Icons.Gamepad /> : displayClean(prioridade) ? (
                         <span className="inline-block px-1.5 py-0.5 border-[2px] border-slate-900 shadow-[1px_1px_0_0_rgba(0,0,0,1)] text-[10px]" style={{backgroundColor: getPriorityColorHex(prioridade, dashboardStats.totalBacklog), color: '#0f172a'}}>
                             {prioridade}
                         </span>
@@ -1136,7 +1136,7 @@ export default function App() {
       <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-4">
         {globalStyles}
         <div className="flex flex-col items-center gap-6 animate-pulse">
-          <img src="[https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png](https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png)" alt="Logo" className="w-36 h-36 drop-shadow-xl" />
+          <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Logo" className="w-36 h-36 drop-shadow-xl" />
           <div className="flex flex-col items-center text-center">
              <div className={`px-4 py-2 ${theme.cyan} ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] inline-block transform -rotate-2`}>
                 <h1 className="text-3xl font-black uppercase tracking-tighter">Ludorum</h1>
@@ -1157,7 +1157,7 @@ export default function App() {
       {/* HEADER */}
       <div className="max-w-[1600px] mx-auto mb-6 flex flex-wrap items-center justify-between gap-4 sm:gap-6">
         <div onClick={resetHome} className="flex items-center gap-4 shrink-0 cursor-pointer hover:opacity-80 transition-opacity" title="Voltar ao Início e Limpar Filtros">
-          <img src="[https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png](https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png)" alt="Logo" className="w-12 h-12 sm:w-14 sm:h-14" />
+          <img src="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" alt="Logo" className="w-12 h-12 sm:w-14 sm:h-14" />
           <div className={`p-1.5 sm:p-2 ${theme.cyan} ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] transform -rotate-1`}>
             <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tighter">Ludorum</h1>
           </div>
@@ -1203,16 +1203,16 @@ export default function App() {
                
                {(activeTab === 'finished' || activeTab === 'backlog') && (
                   <div className="flex items-center gap-1 border-r-[3px] border-slate-900 pr-2 mr-1">
-                     <button onClick={() => setViewMode('table')} className={`p-1.5 border-[2px] border-slate-900 transition-colors hover:-translate-y-0.5 ${viewMode === 'table' ? theme.gold : 'bg-slate-100 hover:bg-slate-200'}`} title="Tabela"><Icons.List/></button>
-                     <button onClick={() => setViewMode('cards')} className={`p-1.5 border-[2px] border-slate-900 transition-colors hover:-translate-y-0.5 ${viewMode === 'cards' ? theme.gold : 'bg-slate-100 hover:bg-slate-200'}`} title="Cards"><Icons.Grid/></button>
+                     <button onClick={() => setViewMode('table')} className={`p-1.5 border-[2px] border-slate-900 transition-colors hover:-translate-y-0.5 ${viewMode === 'table' ? theme.gold : 'bg-slate-100 hover:bg-slate-200'}`} title="Tabela"><Icons.List /></button>
+                     <button onClick={() => setViewMode('cards')} className={`p-1.5 border-[2px] border-slate-900 transition-colors hover:-translate-y-0.5 ${viewMode === 'cards' ? theme.gold : 'bg-slate-100 hover:bg-slate-200'}`} title="Cards"><Icons.Grid /></button>
                   </div>
                )}
 
-               <MultiSelectDropdown label="Consoles" onChange="{(v)" options="{uniqueOptions.console}" selected="{filters.console}"> setFilters({...filters, console: v})} />
-               <MultiSelectDropdown label="Gêneros" onChange="{(v)" options="{uniqueOptions.genero}" selected="{filters.genero}"> setFilters({...filters, genero: v})} />
-               <MultiSelectDropdown label="Notas" onChange="{(v)" options="{uniqueOptions.nota}" selected="{filters.nota}"> setFilters({...filters, nota: v})} />
-               <MultiSelectDropdown label="Dificuldades" onChange="{(v)" options="{uniqueOptions.dif}" selected="{filters.dif}"> setFilters({...filters, dif: v})} />
-               <MultiSelectDropdown label="Suportes" onChange="{(v)" options="{uniqueOptions.suporte}" selected="{filters.suporte}"> setFilters({...filters, suporte: v})} />
+               <MultiSelectDropdown label="Consoles" options={uniqueOptions.console} selected={filters.console} onChange={(v) => setFilters({...filters, console: v})} />
+               <MultiSelectDropdown label="Gêneros" options={uniqueOptions.genero} selected={filters.genero} onChange={(v) => setFilters({...filters, genero: v})} />
+               <MultiSelectDropdown label="Notas" options={uniqueOptions.nota} selected={filters.nota} onChange={(v) => setFilters({...filters, nota: v})} />
+               <MultiSelectDropdown label="Dificuldades" options={uniqueOptions.dif} selected={filters.dif} onChange={(v) => setFilters({...filters, dif: v})} />
+               <MultiSelectDropdown label="Suportes" options={uniqueOptions.suporte} selected={filters.suporte} onChange={(v) => setFilters({...filters, suporte: v})} />
                
                {activeTab === 'dashboard' && (
                   <select value={filters.statusScope} onChange={e => setFilters({...filters, statusScope: e.target.value})} className={`${theme.input} !w-auto !p-1.5 max-w-[160px] shadow-[2px_2px_0_0_rgba(15,23,42,1)] text-[10px] sm:text-[11px]`}>
@@ -1274,18 +1274,14 @@ export default function App() {
 
                 {/* GRÁFICOS DE PIZZA */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 items-start">
-                  <PieChartUI onClickSlice="{(s)" slices="{getPieSlices()}" title="Status da Biblioteca"> setViewModal({type: s.type, data: s.label})} 
-                  />
-                  <PieChartUI 'suporte_cat')} onClickSlice="{(s)" slices="{getGenericPieSlices(dashboardStats.midiaCategoria," title="Mídia: Formatos"> s.type && setViewModal({type: s.type, data: s.data})} 
-                  />
-                  <PieChartUI 'suporte_sub')} onClickSlice="{(s)" slices="{getGenericPieSlices(dashboardStats.midiaSub," title="Mídia: Subtipos"> s.type && setViewModal({type: s.type, data: s.data})} 
-                  />
-                  <PieChartUI 'console')} onClickSlice="{(s)" slices="{getGenericPieSlices(dashboardStats.consoles," title="Top Consoles"> s.type && setViewModal({type: s.type, data: s.data})} 
-                  />
-                  <PieChartUI 'genre')} onClickSlice="{(s)" slices="{getGenericPieSlices(dashboardStats.generos," title="Top Gêneros"> s.type && setViewModal({type: s.type, data: s.data})} 
-                  />
+                  <PieChartUI title="Status da Biblioteca" slices={getPieSlices()} onClickSlice={(s) => setViewModal({type: s.type, data: s.label})} />
+                  <PieChartUI title="Mídia: Formatos" slices={getGenericPieSlices(dashboardStats.midiaCategoria, 'suporte_cat')} onClickSlice={(s) => s.type && setViewModal({type: s.type, data: s.data})} />
+                  <PieChartUI title="Mídia: Subtipos" slices={getGenericPieSlices(dashboardStats.midiaSub, 'suporte_sub')} onClickSlice={(s) => s.type && setViewModal({type: s.type, data: s.data})} />
+                  <PieChartUI title="Top Consoles" slices={getGenericPieSlices(dashboardStats.consoles, 'console')} onClickSlice={(s) => s.type && setViewModal({type: s.type, data: s.data})} />
+                  <PieChartUI title="Top Gêneros" slices={getGenericPieSlices(dashboardStats.generos, 'genre')} onClickSlice={(s) => s.type && setViewModal({type: s.type, data: s.data})} />
                 </div>
 
+                {}
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-start">
                   {/* Descontos por jogo */}
                   <div className={`lg:col-span-2 p-4 bg-white ${theme.border} shadow-[4px_4px_0_0_rgba(15,23,42,1)] h-full min-h-[300px]`}>
@@ -1420,6 +1416,7 @@ export default function App() {
                   </div>
                 </div>
 
+                {}
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
                    
                    {/* Dificuldade */}
@@ -1474,7 +1471,7 @@ export default function App() {
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Horas Jogadas por Ano</h3>
                      <div className="max-h-[250px] overflow-y-auto custom-scrollbar pr-1">
                        <table className="w-full text-left text-[10px] font-black uppercase">
-                         <thead className="sticky top-0 bg-white z-10 shadow-sm"><tr className="border-b-[2px] border-slate-900"><MiniTh label="Ano" sortKey="ano" tableKey="anosTempo"/><MiniTh align="center" label="Jogos" sortKey="count" tableKey="anosTempo"/><MiniTh align="center" label="Tempo" sortKey="tempo" tableKey="anosTempo"/></tr></thead>
+                         <thead className="sticky top-0 bg-white z-10 shadow-sm"><tr className="border-b-[2px] border-slate-900"><MiniTh label="Ano" sortKey="ano" tableKey="anosTempo"/><MiniTh label="Jogos" sortKey="count" tableKey="anosTempo" align="center"/><MiniTh label="Tempo" sortKey="tempo" tableKey="anosTempo" align="center"/></tr></thead>
                          <tbody>
                            {Object.keys(dashboardStats.anos).map(a => ({ ano: a, ...dashboardStats.anos[a] })).sort((a,b) => {
                               let valA = a[topSorts.anosTempo.key]; let valB = b[topSorts.anosTempo.key];
@@ -1497,7 +1494,7 @@ export default function App() {
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Consoles por Ano</h3>
                      <div className="max-h-[250px] overflow-y-auto custom-scrollbar pr-1">
                        <table className="w-full text-left text-[10px] font-black uppercase">
-                         <thead className="sticky top-0 bg-white z-10 shadow-sm"><tr className="border-b-[2px] border-slate-900"><MiniTh label="Ano" sortKey="ano" tableKey="anosConsoles"/><MiniTh label="Console" sortKey="console" tableKey="anosConsoles"/><MiniTh align="center" label="Jogos" sortKey="count" tableKey="anosConsoles"/></tr></thead>
+                         <thead className="sticky top-0 bg-white z-10 shadow-sm"><tr className="border-b-[2px] border-slate-900"><MiniTh label="Ano" sortKey="ano" tableKey="anosConsoles"/><MiniTh label="Console" sortKey="console" tableKey="anosConsoles"/><MiniTh label="Jogos" sortKey="count" tableKey="anosConsoles" align="center"/></tr></thead>
                          <tbody>
                            {Object.keys(dashboardStats.anos).flatMap(a => 
                                Object.keys(dashboardStats.anos[a].consoles).map(c => ({ ano: a, console: c, count: dashboardStats.anos[a].consoles[c] }))
@@ -1526,7 +1523,7 @@ export default function App() {
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Consoles (Nota)</h3>
                      <div className="max-h-[250px] overflow-y-auto custom-scrollbar pr-1">
                        <table className="w-full text-left text-[10px] font-black uppercase">
-                         <thead className="sticky top-0 bg-white z-10 shadow-sm"><tr className="border-b-[2px] border-slate-900"><MiniTh label="Console" sortKey="name" tableKey="consolesNota"/><MiniTh align="center" label="Jogos" sortKey="count" tableKey="consolesNota"/><MiniTh align="center" label="Nota" sortKey="avgNota" tableKey="consolesNota"/></tr></thead>
+                         <thead className="sticky top-0 bg-white z-10 shadow-sm"><tr className="border-b-[2px] border-slate-900"><MiniTh label="Console" sortKey="name" tableKey="consolesNota"/><MiniTh label="Jogos" sortKey="count" tableKey="consolesNota" align="center"/><MiniTh label="Nota" sortKey="avgNota" tableKey="consolesNota" align="center"/></tr></thead>
                          <tbody>
                            {Object.keys(dashboardStats.consoles).map(c => ({ name: c, ...dashboardStats.consoles[c] })).sort((a,b) => {
                               let valA = a[topSorts.consolesNota.key]; let valB = b[topSorts.consolesNota.key];
@@ -1549,7 +1546,7 @@ export default function App() {
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Consoles (Tempo)</h3>
                      <div className="max-h-[250px] overflow-y-auto custom-scrollbar pr-1">
                        <table className="w-full text-left text-[10px] font-black uppercase">
-                         <thead className="sticky top-0 bg-white z-10 shadow-sm"><tr className="border-b-[2px] border-slate-900"><MiniTh label="Console" sortKey="name" tableKey="consolesTempo"/><MiniTh align="center" label="Jogos" sortKey="count" tableKey="consolesTempo"/><MiniTh align="center" label="Tempo" sortKey="totalTempo" tableKey="consolesTempo"/></tr></thead>
+                         <thead className="sticky top-0 bg-white z-10 shadow-sm"><tr className="border-b-[2px] border-slate-900"><MiniTh label="Console" sortKey="name" tableKey="consolesTempo"/><MiniTh label="Jogos" sortKey="count" tableKey="consolesTempo" align="center"/><MiniTh label="Tempo" sortKey="totalTempo" tableKey="consolesTempo" align="center"/></tr></thead>
                          <tbody>
                            {Object.keys(dashboardStats.consoles).map(c => ({ name: c, ...dashboardStats.consoles[c] })).sort((a,b) => {
                               let valA = a[topSorts.consolesTempo.key]; let valB = b[topSorts.consolesTempo.key];
@@ -1572,7 +1569,7 @@ export default function App() {
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Gêneros (Nota)</h3>
                      <div className="max-h-[250px] overflow-y-auto custom-scrollbar pr-1">
                        <table className="w-full text-left text-[10px] font-black uppercase">
-                         <thead className="sticky top-0 bg-white z-10 shadow-sm"><tr className="border-b-[2px] border-slate-900"><MiniTh label="Gênero" sortKey="name" tableKey="generosNota"/><MiniTh align="center" label="Jogos" sortKey="count" tableKey="generosNota"/><MiniTh align="center" label="Nota" sortKey="avgNota" tableKey="generosNota"/></tr></thead>
+                         <thead className="sticky top-0 bg-white z-10 shadow-sm"><tr className="border-b-[2px] border-slate-900"><MiniTh label="Gênero" sortKey="name" tableKey="generosNota"/><MiniTh label="Jogos" sortKey="count" tableKey="generosNota" align="center"/><MiniTh label="Nota" sortKey="avgNota" tableKey="generosNota" align="center"/></tr></thead>
                          <tbody>
                            {Object.keys(dashboardStats.generos).map(c => ({ name: c, ...dashboardStats.generos[c] })).sort((a,b) => {
                               let valA = a[topSorts.generosNota.key]; let valB = b[topSorts.generosNota.key];
@@ -1595,7 +1592,7 @@ export default function App() {
                      <h3 className="text-[10px] font-black uppercase mb-4 border-b-[3px] border-slate-900 pb-1">Top Gêneros (Tempo)</h3>
                      <div className="max-h-[250px] overflow-y-auto custom-scrollbar pr-1">
                        <table className="w-full text-left text-[10px] font-black uppercase">
-                         <thead className="sticky top-0 bg-white z-10 shadow-sm"><tr className="border-b-[2px] border-slate-900"><MiniTh label="Gênero" sortKey="name" tableKey="generosTempo"/><MiniTh align="center" label="Jogos" sortKey="count" tableKey="generosTempo"/><MiniTh align="center" label="Tempo" sortKey="totalTempo" tableKey="generosTempo"/></tr></thead>
+                         <thead className="sticky top-0 bg-white z-10 shadow-sm"><tr className="border-b-[2px] border-slate-900"><MiniTh label="Gênero" sortKey="name" tableKey="generosTempo"/><MiniTh label="Jogos" sortKey="count" tableKey="generosTempo" align="center"/><MiniTh label="Tempo" sortKey="totalTempo" tableKey="generosTempo" align="center"/></tr></thead>
                          <tbody>
                            {Object.keys(dashboardStats.generos).map(c => ({ name: c, ...dashboardStats.generos[c] })).sort((a,b) => {
                               let valA = a[topSorts.generosTempo.key]; let valB = b[topSorts.generosTempo.key];
@@ -1631,7 +1628,7 @@ export default function App() {
                 {viewMode === 'table' ? renderGameTable(currentList, isBacklog) : (
                   <>
                      {renderGameCards(currentList, isBacklog)}
-                     <PaginationControls current="{currentPage}" onChange="{setCurrentPage}" total="{totalPages}"/>
+                     <PaginationControls current={currentPage} total={totalPages} onChange={setCurrentPage} />
                   </>
                 )}
               </div>
@@ -1714,7 +1711,6 @@ export default function App() {
       </div>
 
       {}
-      {}
       {viewModal && (
         <div className="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
           <div className={`w-full max-w-[1400px] bg-white ${theme.border} ${theme.card} flex flex-col my-auto shadow-2xl`}>
@@ -1735,7 +1731,7 @@ export default function App() {
                 {viewModal.type === 'backlog_iniciado' && `Backlog (Em Andamento)`}
                 {viewModal.type === 'backlog_nao_iniciado' && `Backlog (Fila/Pendente)`}
               </h2>
-              <button onClick={() => setViewModal(null)} className="p-1 hover:bg-white/50 rounded-full transition-colors border-2 border-transparent hover:border-slate-900"><Icons.Close/></button>
+              <button onClick={() => setViewModal(null)} className="p-1 hover:bg-white/50 rounded-full transition-colors border-2 border-transparent hover:border-slate-900"><Icons.Close /></button>
             </div>
 
             <div className="p-4 sm:p-6 bg-slate-50 overflow-y-auto max-h-[75vh] custom-scrollbar">
@@ -1873,7 +1869,7 @@ export default function App() {
                          let ytb = getYoutubeId(linkUrl) || getYoutubeId(viewModal.data.suporte);
                          if (ytb) return (
                            <div className="w-full aspect-video border-[3px] border-slate-900 shadow-[6px_6px_0_0_rgba(15,23,42,1)] mt-2">
-                             <iframe className="w-full h-full" src={`[https://www.youtube.com/embed/$](https://www.youtube.com/embed/$){ytb}`} title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+                             <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${ytb}`} title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
                            </div>
                          );
                          if (linkUrl && linkUrl !== '-') return (
