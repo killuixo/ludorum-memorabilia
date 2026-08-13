@@ -585,6 +585,77 @@ export default function App() {
 
   const isValBlank = (val) => val === '' || val === null || val === undefined || val === '-' || (typeof val === 'number' && isNaN(val)) || (typeof val === 'number' && val === -1);
 
+  const sortGamesArray = (list, config) => {
+    return list.sort((a, b) => {
+      let valA, valB;
+      if (config.key === 'ordem') {
+        valA = parseInt(getVal(a, ['#', 'ordem', 'numero'])) || a._fallbackId || 0;
+        valB = parseInt(getVal(b, ['#', 'ordem', 'numero'])) || b._fallbackId || 0;
+      } else if (config.key === 'nota') {
+        const p = x => {
+          let s = String(x).toUpperCase().trim();
+          if (s === 'S' || s === 'RANK S') return 999;
+          return parseFloat(s.replace(',','.')) || -1;
+        };
+        valA = p(getVal(a, ['nota'])); valB = p(getVal(b, ['nota']));
+      } else if (config.key === 'tempo') {
+        valA = getNumericTempo(getVal(a, ['tempo']));
+        valB = getNumericTempo(getVal(b, ['tempo']));
+        if (valA === 0) valA = -1; if (valB === 0) valB = -1;
+      } else if (config.key === 'duracao') {
+        valA = parseDuracaoDays(getVal(a, ['inicio', 'iniciado']), getVal(a, ['fim', 'termino']));
+        valB = parseDuracaoDays(getVal(b, ['inicio', 'iniciado']), getVal(b, ['fim', 'termino']));
+      } else if (config.key === 'preco') {
+        valA = getNumericPrice(getVal(a, ['preco', 'preco pago']));
+        valB = getNumericPrice(getVal(b, ['preco', 'preco pago']));
+        if (valA === 0) valA = -1; if (valB === 0) valB = -1;
+      } else if (config.key === 'preco_original') {
+        valA = getNumericPrice(getVal(a, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
+        valB = getNumericPrice(getVal(b, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
+        if (valA === 0) valA = -1; if (valB === 0) valB = -1;
+      } else if (config.key === 'desconto') {
+        const getDesc = x => calculateDiscount(getVal(x, ['preco', 'preco pago']), getVal(x, ['preco_original', 'preco sem desconto', 'preço sem desconto'])).rawDiff;
+        valA = getDesc(a); valB = getDesc(b);
+      } else if (config.key === 'inicio' || config.key === 'fim') {
+        valA = parseInputDate(getVal(a, [config.key, 'iniciado', 'termino']));
+        valB = parseInputDate(getVal(b, [config.key, 'iniciado', 'termino']));
+        if (valA === 0) valA = -1; if (valB === 0) valB = -1;
+      } else if (config.key === 'prioridade') {
+        let isStartedA = !!getVal(a, ['inicio', 'iniciado']) && getVal(a, ['inicio', 'iniciado']) !== '-';
+        let isStartedB = !!getVal(b, ['inicio', 'iniciado']) && getVal(b, ['inicio', 'iniciado']) !== '-';
+
+        if (isStartedA && !isStartedB) return -1; 
+        if (!isStartedA && isStartedB) return 1; 
+        if (isStartedA && isStartedB) {
+            let dA = parseInputDate(getVal(a, ['inicio', 'iniciado']));
+            let dB = parseInputDate(getVal(b, ['inicio', 'iniciado']));
+            if (dA === 0) dA = -1; if (dB === 0) dB = -1;
+            return config.direction === 'asc' ? dA - dB : dB - dA;
+        }
+
+        let pA = parseInt(getVal(a, ['prioridade']));
+        let pB = parseInt(getVal(b, ['prioridade']));
+        let blankA = isNaN(pA); let blankB = isNaN(pB);
+
+        if (blankA && blankB) return 0;
+        if (blankA) return 1; 
+        if (blankB) return -1;
+        return config.direction === 'asc' ? pA - pB : pB - pA;
+      } else {
+        valA = String(getVal(a, [config.key])).toLowerCase();
+        valB = String(getVal(b, [config.key])).toLowerCase();
+      }
+
+      let blankA = isValBlank(valA); let blankB = isValBlank(valB);
+      if (blankA && blankB) return 0;
+      if (blankA) return 1;  
+      if (blankB) return -1; 
+      if (valA < valB) return config.direction === 'asc' ? -1 : 1;
+      if (valA > valB) return config.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  };
+
   const globalFilteredGames = useMemo(() => {
     let list = games;
 
@@ -627,76 +698,7 @@ export default function App() {
        if (backlogStatusFilter === 'nao_iniciados') list = list.filter(g => { let ini = getVal(g, ['inicio', 'iniciado']); return !ini || ini === '-'; });
     }
 
-    list.sort((a, b) => {
-      let valA, valB;
-      if (sortConfig.key === 'ordem') {
-        valA = parseInt(getVal(a, ['#', 'ordem', 'numero'])) || a._fallbackId || 0;
-        valB = parseInt(getVal(b, ['#', 'ordem', 'numero'])) || b._fallbackId || 0;
-      } else if (sortConfig.key === 'nota') {
-        const p = x => {
-          let s = String(x).toUpperCase().trim();
-          if (s === 'S' || s === 'RANK S') return 999;
-          return parseFloat(s.replace(',','.')) || -1;
-        };
-        valA = p(getVal(a, ['nota'])); valB = p(getVal(b, ['nota']));
-      } else if (sortConfig.key === 'tempo') {
-        valA = getNumericTempo(getVal(a, ['tempo']));
-        valB = getNumericTempo(getVal(b, ['tempo']));
-        if (valA === 0) valA = -1; if (valB === 0) valB = -1;
-      } else if (sortConfig.key === 'duracao') {
-        valA = parseDuracaoDays(getVal(a, ['inicio', 'iniciado']), getVal(a, ['fim', 'termino']));
-        valB = parseDuracaoDays(getVal(b, ['inicio', 'iniciado']), getVal(b, ['fim', 'termino']));
-      } else if (sortConfig.key === 'preco') {
-        valA = getNumericPrice(getVal(a, ['preco', 'preco pago']));
-        valB = getNumericPrice(getVal(b, ['preco', 'preco pago']));
-        if (valA === 0) valA = -1; if (valB === 0) valB = -1;
-      } else if (sortConfig.key === 'preco_original') {
-        valA = getNumericPrice(getVal(a, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
-        valB = getNumericPrice(getVal(b, ['preco_original', 'preco sem desconto', 'preço sem desconto']));
-        if (valA === 0) valA = -1; if (valB === 0) valB = -1;
-      } else if (sortConfig.key === 'desconto') {
-        const getDesc = x => calculateDiscount(getVal(x, ['preco', 'preco pago']), getVal(x, ['preco_original', 'preco sem desconto', 'preço sem desconto'])).rawDiff;
-        valA = getDesc(a); valB = getDesc(b);
-      } else if (sortConfig.key === 'inicio' || sortConfig.key === 'fim') {
-        valA = parseInputDate(getVal(a, [sortConfig.key, 'iniciado', 'termino']));
-        valB = parseInputDate(getVal(b, [sortConfig.key, 'iniciado', 'termino']));
-        if (valA === 0) valA = -1; if (valB === 0) valB = -1;
-      } else if (sortConfig.key === 'prioridade') {
-        let isStartedA = !!getVal(a, ['inicio', 'iniciado']) && getVal(a, ['inicio', 'iniciado']) !== '-';
-        let isStartedB = !!getVal(b, ['inicio', 'iniciado']) && getVal(b, ['inicio', 'iniciado']) !== '-';
-
-        if (isStartedA && !isStartedB) return -1; 
-        if (!isStartedA && isStartedB) return 1; 
-        if (isStartedA && isStartedB) {
-            let dA = parseInputDate(getVal(a, ['inicio', 'iniciado']));
-            let dB = parseInputDate(getVal(b, ['inicio', 'iniciado']));
-            if (dA === 0) dA = -1; if (dB === 0) dB = -1;
-            return sortConfig.direction === 'asc' ? dA - dB : dB - dA;
-        }
-
-        let pA = parseInt(getVal(a, ['prioridade']));
-        let pB = parseInt(getVal(b, ['prioridade']));
-        let blankA = isNaN(pA); let blankB = isNaN(pB);
-
-        if (blankA && blankB) return 0;
-        if (blankA) return 1; 
-        if (blankB) return -1;
-        return sortConfig.direction === 'asc' ? pA - pB : pB - pA;
-      } else {
-        valA = String(getVal(a, [sortConfig.key])).toLowerCase();
-        valB = String(getVal(b, [sortConfig.key])).toLowerCase();
-      }
-
-      let blankA = isValBlank(valA); let blankB = isValBlank(valB);
-      if (blankA && blankB) return 0;
-      if (blankA) return 1;  
-      if (blankB) return -1; 
-      if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
-      if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    return list;
+    return sortGamesArray(list, sortConfig);
   }, [globalFilteredGames, activeTab, sortConfig, backlogStatusFilter]);
 
   const dashboardStats = useMemo(() => {
@@ -2030,6 +2032,8 @@ export default function App() {
                     return false;
                  });
                  
+                 filteredList = sortGamesArray(filteredList, sortConfig);
+
                  let isListBacklog = ['backlog_iniciado', 'backlog_nao_iniciado'].includes(viewModal.type);
                  
                  let totalTimeHrs = filteredList.reduce((acc, g) => acc + getNumericTempo(getVal(g, ['tempo'])), 0);
