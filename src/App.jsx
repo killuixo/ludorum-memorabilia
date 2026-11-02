@@ -1530,7 +1530,7 @@ const TABS = [
   { id: 'add', label: 'Novo jogo', icon: ICON.plus },
   { id: 'config', label: 'Config', icon: ICON.gear },
 ];
-const ICON_URL = '/icon-192.png';
+const ICON_URL = '/icon.png';
 const ITEMS_PER_PAGE = 30;
 const TEXT_SORTS = ['title', 'console', 'genre', 'sup', 'cond', 'dif'];
 
