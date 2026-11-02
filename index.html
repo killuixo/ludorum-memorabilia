@@ -2,21 +2,22 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    
-    <!-- Ícone padrão da aba do navegador -->
-    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" />
-    
-    <!-- Ícone para quando for instalado no celular (iOS/Android) -->
-    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/killuixo/ludorum-memorabilia/refs/heads/main/icon.png" />
-    
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-    <!-- Nome que vai aparecer embaixo do ícone no celular -->
-    <meta name="application-name" content="Ludorum - Memorabilia" />
-    <meta name="apple-mobile-web-app-title" content="Ludorum - Memorabilia" />
-    
-    <!-- Título da aba do navegador -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Ludorum - MEMORABILIA</title>
+    <meta name="description" content="Biblioteca de games finalizados e backlog" />
+
+    <!-- PWA: abre em tela cheia, sem a barra de endereço, quando instalado -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="application-name" content="Ludorum - Memorabilia" />
+    <meta name="apple-mobile-web-app-title" content="Ludorum" />
+
+    <!-- Ícones (arquivos da pasta public/) -->
+    <link rel="icon" type="image/png" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icon-512.png" />
   </head>
   <body>
     <div id="root"></div>
