@@ -2,7 +2,7 @@
 // - Guarda o "esqueleto" do app para abrir sem internet
 // - Só mexe em arquivos do próprio site (nunca guarda Google Sheets, Gemini, capas etc.)
 const CACHE = 'ludorum-v1';
-const SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
+const SHELL = ['/', '/index.html', '/manifest.json', '/icon.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
